@@ -1,0 +1,36 @@
+package com.orderly.orderly_backend.controller;
+
+import com.orderly.orderly_backend.domain.user.UserEntity;
+import com.orderly.orderly_backend.service.UserService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/auth")
+public class UserController {
+
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    @GetMapping("/welcome")
+    public String welcome() {
+        return "Welcome this endpoint is not secure";
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserEntity> getCurrentUser(@AuthenticationPrincipal UserEntity currentUser) {
+        return ResponseEntity.ok(currentUser);
+    }
+
+    @PostMapping("/")
+    public ResponseEntity<List<UserEntity>> getUsers() {
+        List<UserEntity> users = userService.getUsers();
+        return ResponseEntity.ok(users);
+    }
+}

@@ -1,0 +1,56 @@
+# ======================
+# GENERAL
+# ======================
+.env
+*.log
+
+# ======================
+# BACKEND (SPRING BOOT)
+# ======================
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+
+!backend/**/src/main/**/target/
+!backend/**/src/test/**/target/
+
+# HELP file
+backend/HELP.md
+
+# ======================
+# STS (Spring Tool Suite)
+# ======================
+backend/.apt_generated
+backend/.classpath
+backend/.factorypath
+backend/.project
+backend/.settings
+backend/.springBeans
+backend/.sts4-cache
+
+# ======================
+# INTELLIJ IDEA
+# ======================
+backend/.idea/
+backend/*.iws
+backend/*.iml
+backend/*.ipr
+
+# ======================
+# NETBEANS
+# ======================
+backend/nbproject/private/
+backend/nbbuild/
+backend/dist/
+backend/nbdist/
+backend/.nb-gradle/
+backend/build/
+!backend/**/src/main/**/build/
+!backend/**/src/test/**/build/
+
+# ======================
+# FRONTEND (ANGULAR)
+# ======================
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.cache/
