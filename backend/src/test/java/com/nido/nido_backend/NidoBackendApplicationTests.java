@@ -6,7 +6,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class OrderlyBackendApplicationTests {
+class NidoBackendApplicationTests {
 
 	@Test
 	void contextLoads() {
