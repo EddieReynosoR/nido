@@ -1,6 +1,6 @@
-package com.orderly.orderly_backend.repository;
+package com.nido.nido_backend.repository;
 
-import com.orderly.orderly_backend.domain.user.UserEntity;
+import com.nido.nido_backend.domain.user.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -1,9 +1,9 @@
-package com.orderly.orderly_backend.service;
+package com.nido.nido_backend.service;
 
-import com.orderly.orderly_backend.domain.LoginUserDto;
-import com.orderly.orderly_backend.domain.RegisterUserDto;
-import com.orderly.orderly_backend.domain.user.UserEntity;
-import com.orderly.orderly_backend.repository.UserRepository;
+import com.nido.nido_backend.domain.LoginUserDto;
+import com.nido.nido_backend.domain.RegisterUserDto;
+import com.nido.nido_backend.domain.user.UserEntity;
+import com.nido.nido_backend.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;

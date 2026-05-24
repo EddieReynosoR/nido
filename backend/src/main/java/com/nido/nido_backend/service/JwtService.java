@@ -1,4 +1,4 @@
-package com.orderly.orderly_backend.service;
+package com.nido.nido_backend.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

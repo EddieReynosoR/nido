@@ -1,4 +1,4 @@
-package com.orderly.orderly_backend.domain.user;
+package com.nido.nido_backend.domain.user;
 
 import jakarta.persistence.*;
 import org.jspecify.annotations.Nullable;
@@ -8,13 +8,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 public class UserEntity implements UserDetails {
     @Id
+    @Column(name = "user_id")
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String userId;
+    private UUID userId;
 
     @Column(name = "first_name", nullable = false)
     private String firstName;
@@ -39,11 +41,11 @@ public class UserEntity implements UserDetails {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public String getUserId() {
+    public UUID getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(UUID userId) {
         this.userId = userId;
     }
 

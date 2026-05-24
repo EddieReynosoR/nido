@@ -1,11 +1,11 @@
-package com.orderly.orderly_backend.controller;
+package com.nido.nido_backend.controller;
 
-import com.orderly.orderly_backend.domain.LoginResponse;
-import com.orderly.orderly_backend.domain.LoginUserDto;
-import com.orderly.orderly_backend.domain.RegisterUserDto;
-import com.orderly.orderly_backend.domain.user.UserEntity;
-import com.orderly.orderly_backend.service.AuthenticationService;
-import com.orderly.orderly_backend.service.JwtService;
+import com.nido.nido_backend.domain.LoginResponse;
+import com.nido.nido_backend.domain.LoginUserDto;
+import com.nido.nido_backend.domain.RegisterUserDto;
+import com.nido.nido_backend.domain.user.UserEntity;
+import com.nido.nido_backend.service.AuthenticationService;
+import com.nido.nido_backend.service.JwtService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

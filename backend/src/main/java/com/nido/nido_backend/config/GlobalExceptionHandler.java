@@ -1,4 +1,4 @@
-package com.orderly.orderly_backend.config;
+package com.nido.nido_backend.config;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;

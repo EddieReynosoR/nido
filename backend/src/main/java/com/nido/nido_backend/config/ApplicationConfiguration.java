@@ -1,6 +1,6 @@
-package com.orderly.orderly_backend.config;
+package com.nido.nido_backend.config;
 
-import com.orderly.orderly_backend.repository.UserRepository;
+import com.nido.nido_backend.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

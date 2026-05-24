@@ -1,4 +1,4 @@
-package com.orderly.orderly_backend.domain;
+package com.nido.nido_backend.domain;
 
 public class LoginUserDto {
     private String email;

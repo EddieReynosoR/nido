@@ -1,7 +1,7 @@
-package com.orderly.orderly_backend.controller;
+package com.nido.nido_backend.controller;
 
-import com.orderly.orderly_backend.domain.user.UserEntity;
-import com.orderly.orderly_backend.service.UserService;
+import com.nido.nido_backend.domain.user.UserEntity;
+import com.nido.nido_backend.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
