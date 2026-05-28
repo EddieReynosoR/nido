@@ -6,11 +6,11 @@ import com.nido.nido_backend.domain.RegisterUserDto;
 import com.nido.nido_backend.domain.user.UserEntity;
 import com.nido.nido_backend.service.AuthenticationService;
 import com.nido.nido_backend.service.JwtService;
+import com.nido.nido_backend.service.RefreshTokenService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Base64;
 
 @RequestMapping("/auth")
 @RestController
@@ -18,10 +18,12 @@ public class AuthController {
 
     private final JwtService jwtService;
     private final AuthenticationService authenticationService;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthController(JwtService jwtService, AuthenticationService authenticationService) {
+    public AuthController(JwtService jwtService, AuthenticationService authenticationService, RefreshTokenService refreshTokenService) {
         this.jwtService = jwtService;
         this.authenticationService = authenticationService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @PostMapping("/signup")
@@ -40,6 +42,7 @@ public class AuthController {
         LoginResponse response = new LoginResponse();
         response.setToken(token);
         response.setExpiration(jwtService.extractExpiration(token));
+        response.setRefreshToken(refreshTokenService.createRefreshToken(user.getUserId()));
 
         return ResponseEntity.ok(response);
     }

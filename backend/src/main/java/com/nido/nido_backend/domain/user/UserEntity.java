@@ -1,6 +1,7 @@
 package com.nido.nido_backend.domain.user;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,7 +15,7 @@ import java.util.UUID;
 @Table(name = "users")
 public class UserEntity implements UserDetails {
     @Id
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false, insertable = false, updatable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID userId;
 
@@ -32,13 +33,15 @@ public class UserEntity implements UserDetails {
 
     private String phone;
 
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "is_active", nullable = false, insertable = false)
     private Boolean isActive;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "updated_at", nullable = false, insertable = false)
     private LocalDateTime updatedAt;
 
     public UUID getUserId() {
