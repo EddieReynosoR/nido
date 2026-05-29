@@ -1,7 +1,9 @@
 package com.nido.nido_backend.service;
 
 import com.nido.nido_backend.domain.refresh_token.RefreshTokenEntity;
+import com.nido.nido_backend.shared.exception.TokenNotFoundException;
 import com.nido.nido_backend.repository.RefreshTokenRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -34,5 +36,13 @@ public class RefreshTokenService {
         byte[] randomBytes = new byte[32];
         new SecureRandom().nextBytes(randomBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+    }
+
+    @Transactional
+    public void revokeToken(String tokenHash) {
+        RefreshTokenEntity refreshToken = refreshTokenRepository.findByTokenHash(tokenHash.trim())
+                .orElseThrow(() -> new TokenNotFoundException("Refresh token not found"));
+
+        refreshToken.setRevokedAt(LocalDateTime.now());
     }
 }

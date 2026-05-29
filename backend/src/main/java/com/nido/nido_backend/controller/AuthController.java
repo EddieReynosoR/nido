@@ -7,9 +7,13 @@ import com.nido.nido_backend.domain.user.UserEntity;
 import com.nido.nido_backend.service.AuthenticationService;
 import com.nido.nido_backend.service.JwtService;
 import com.nido.nido_backend.service.RefreshTokenService;
+import com.nido.nido_backend.shared.util.CookieUtils;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.Base64;
 
 @RequestMapping("/auth")
@@ -37,13 +41,31 @@ public class AuthController {
     public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginUserDto) {
         UserEntity user = authenticationService.authenticate(loginUserDto);
 
-        String token = jwtService.generateToken(user.getEmail());
+        String accessToken = jwtService.generateToken(user.getEmail());
+        String refreshToken = refreshTokenService.createRefreshToken(user.getUserId());
 
         LoginResponse response = new LoginResponse();
-        response.setToken(token);
-        response.setExpiration(jwtService.extractExpiration(token));
-        response.setRefreshToken(refreshTokenService.createRefreshToken(user.getUserId()));
+        response.setToken(accessToken);
+        response.setExpiration(jwtService.extractExpiration(accessToken));
 
-        return ResponseEntity.ok(response);
+        ResponseCookie cookie = CookieUtils.createRefreshTokenCookie(refreshToken);
+
+        return ResponseEntity.ok()
+            .header(HttpHeaders.SET_COOKIE, cookie.toString())
+            .body(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(
+            @CookieValue(value = "refreshToken", required = false) String refreshToken
+    ) {
+        if (refreshToken != null)
+            refreshTokenService.revokeToken(refreshToken);
+
+        ResponseCookie cookie = CookieUtils.deleteRefreshToken();
+
+        return ResponseEntity.noContent()
+            .header(HttpHeaders.SET_COOKIE, cookie.toString())
+            .build();
     }
 }

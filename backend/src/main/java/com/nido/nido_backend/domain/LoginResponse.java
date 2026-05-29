@@ -5,7 +5,6 @@ import java.util.Date;
 public class LoginResponse {
     private String token;
     private Date expiration;
-    private String refreshToken;
 
     public String getToken() {
         return token;
@@ -21,13 +20,5 @@ public class LoginResponse {
 
     public void setExpiration(Date expiration) {
         this.expiration = expiration;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
     }
 }
