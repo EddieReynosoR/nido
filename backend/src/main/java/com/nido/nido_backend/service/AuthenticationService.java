@@ -6,6 +6,7 @@ import com.nido.nido_backend.domain.user.UserEntity;
 import com.nido.nido_backend.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -48,5 +49,9 @@ public class AuthenticationService {
         );
 
         return userRepository.findByEmail(input.getEmail()).orElseThrow();
+    }
+
+    public void logout() {
+        // revoke refresh token in data base
     }
 }
