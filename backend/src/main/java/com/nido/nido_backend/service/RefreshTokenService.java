@@ -43,6 +43,6 @@ public class RefreshTokenService {
         RefreshTokenEntity refreshToken = refreshTokenRepository.findByTokenHash(tokenHash.trim())
                 .orElseThrow(() -> new TokenNotFoundException("Refresh token not found"));
 
-        refreshToken.setRevokedAt(LocalDateTime.now());
+        refreshTokenRepository.deleteByTokenHash(refreshToken.getTokenHash());
     }
 }
