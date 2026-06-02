@@ -50,8 +50,4 @@ public class AuthenticationService {
 
         return userRepository.findByEmail(input.getEmail()).orElseThrow();
     }
-
-    public void logout() {
-        // revoke refresh token in data base
-    }
 }
