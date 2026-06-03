@@ -5,6 +5,8 @@ import com.nido.nido_backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -17,5 +19,9 @@ public class UserService {
 
     public List<UserEntity> getUsers() {
         return userRepository.findAll();
+    }
+
+    public Optional<String> getUserEmail(UUID userId) {
+        return userRepository.findEmailByUserId(userId);
     }
 }

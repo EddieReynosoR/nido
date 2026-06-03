@@ -45,9 +45,14 @@ public class GlobalExceptionHandler {
             errorDetail.setProperty("description", "The JWT token has expired");
         }
 
-        if (exception instanceof TokenNotFoundException) {
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(404), exception.getMessage());
-            errorDetail.setProperty("description", "The refresh token was not found.");
+        if (exception instanceof RefreshTokenNotValidException) {
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), exception.getMessage());
+            errorDetail.setProperty("description", "The refresh token was not valid.");
+        }
+
+        if (exception instanceof UserWithoutEmailException) {
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), exception.getMessage());
+            errorDetail.setProperty("description", "The user does not has an email.");
         }
 
         if (errorDetail == null) {
