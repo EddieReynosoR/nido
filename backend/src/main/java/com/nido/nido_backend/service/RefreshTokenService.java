@@ -1,6 +1,5 @@
 package com.nido.nido_backend.service;
 
-import com.nido.nido_backend.domain.LoginResponse;
 import com.nido.nido_backend.domain.RefreshTokenDto;
 import com.nido.nido_backend.domain.refresh_token.RefreshTokenEntity;
 import com.nido.nido_backend.shared.exception.RefreshTokenNotValidException;
@@ -51,8 +50,15 @@ public class RefreshTokenService {
                 .orElseThrow(RefreshTokenNotValidException::new);
     }
 
+    public Optional<RefreshTokenEntity> findByUserId(UUID userId) {
+        return refreshTokenRepository.findByUserId(userId);
+    }
+
     @Transactional
     public void deleteToken(String tokenHash) {
+        if (tokenHash == null || tokenHash.isBlank())
+            return;
+
         RefreshTokenEntity refreshToken = findByTokenHash(tokenHash);
         refreshTokenRepository.deleteByTokenHash(refreshToken.getTokenHash());
     }
@@ -68,7 +74,6 @@ public class RefreshTokenService {
             throw new RefreshTokenNotValidException();
 
         UUID userId = token.getUserId();
-
         Optional<String> userEmail = userService.getUserEmail(userId);
 
         if (userEmail.isEmpty())
@@ -84,5 +89,10 @@ public class RefreshTokenService {
         refreshTokenDto.setRefreshToken(newRefreshToken);
 
         return refreshTokenDto;
+    }
+
+    @Transactional
+    public void deleleTokenByUserId(UUID userId) {
+        refreshTokenRepository.deleteByUserId(userId);
     }
 }

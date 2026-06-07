@@ -12,12 +12,6 @@ import java.util.List;
 @RequestMapping("/api/user")
 public class UserController {
 
-    private final UserService userService;
-
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
     @GetMapping("/welcome")
     public String welcome() {
         return "Welcome this endpoint is not secure";
@@ -26,11 +20,5 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserEntity> getCurrentUser(@AuthenticationPrincipal UserEntity currentUser) {
         return ResponseEntity.ok(currentUser);
-    }
-
-    @PostMapping("/")
-    public ResponseEntity<List<UserEntity>> getUsers() {
-        List<UserEntity> users = userService.getUsers();
-        return ResponseEntity.ok(users);
     }
 }

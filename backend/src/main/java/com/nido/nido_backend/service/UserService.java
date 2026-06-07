@@ -1,20 +1,24 @@
 package com.nido.nido_backend.service;
 
+import com.nido.nido_backend.domain.RegisterUserDto;
 import com.nido.nido_backend.domain.user.UserEntity;
 import com.nido.nido_backend.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.ZoneId;
+import java.util.*;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder encoder;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder encoder) {
+
         this.userRepository = userRepository;
+        this.encoder = encoder;
     }
 
     public List<UserEntity> getUsers() {
@@ -23,5 +27,24 @@ public class UserService {
 
     public Optional<String> getUserEmail(UUID userId) {
         return userRepository.findEmailByUserId(userId);
+    }
+
+    public UserEntity findByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow(() -> new NoSuchElementException("No user found associated with the provided email address."));
+    }
+
+    public UserEntity saveUser(RegisterUserDto input) {
+        UserEntity user = new UserEntity();
+
+        user.setFirstName(input.getFirstName());
+        user.setLastName(input.getLastName());
+        user.setEmail(input.getEmail());
+        user.setPassword(encoder.encode(input.getPassword()));
+
+        user.setActive(true);
+        user.setCreatedAt(new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        user.setUpdatedAt(new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+
+        return userRepository.save(user);
     }
 }
