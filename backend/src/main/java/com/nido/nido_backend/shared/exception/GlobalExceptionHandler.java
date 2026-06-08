@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
         }
 
         if (exception instanceof IllegalStateException) {
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(404), exception.getMessage());
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), exception.getMessage());
             errorDetail.setProperty("description", exception.getMessage());
         }
 
