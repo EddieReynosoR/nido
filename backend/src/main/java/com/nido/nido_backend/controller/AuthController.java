@@ -12,18 +12,17 @@ import com.nido.nido_backend.shared.util.CookieUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
 @RequestMapping("/auth")
 @RestController
 public class AuthController {
 
-    private final JwtService jwtService;
     private final AuthenticationService authenticationService;
     private final RefreshTokenService refreshTokenService;
 
-    public AuthController(JwtService jwtService, AuthenticationService authenticationService, RefreshTokenService refreshTokenService) {
-        this.jwtService = jwtService;
+    public AuthController(AuthenticationService authenticationService, RefreshTokenService refreshTokenService) {
         this.authenticationService = authenticationService;
         this.refreshTokenService = refreshTokenService;
     }
@@ -72,5 +71,10 @@ public class AuthController {
         return ResponseEntity.noContent()
             .header(HttpHeaders.SET_COOKIE, cookie.toString())
             .build();
+    }
+
+    @GetMapping("/csrf")
+    public CsrfToken csrf(CsrfToken token) {
+        return token;
     }
 }

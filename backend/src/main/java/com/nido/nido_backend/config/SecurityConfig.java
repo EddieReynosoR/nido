@@ -43,7 +43,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 .csrfTokenRequestHandler(requestHandler)
-                .ignoringRequestMatchers("/auth/login", "/api/**")
+                .ignoringRequestMatchers("/auth/login", "/auth/csrf/", "/api/**")
             )
             .headers(headers -> headers
                 .contentTypeOptions(Customizer.withDefaults())
