@@ -8,9 +8,13 @@ import com.nido.nido_backend.shared.exception.UserWithoutEmailException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.HexFormat;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,19 +34,32 @@ public class RefreshTokenService {
     public String createRefreshToken(UUID userId) {
         RefreshTokenEntity refreshToken = new RefreshTokenEntity();
 
+        String rawToken = generateRefreshToken();
+        String tokenHash = hashToken(rawToken);
+
         refreshToken.setUserId(userId);
-        refreshToken.setTokenHash(generateRefreshToken());
+        refreshToken.setTokenHash(tokenHash);
         refreshToken.setExpiresAt(LocalDateTime.now().plusDays(7));
 
         refreshTokenRepository.save(refreshToken);
 
-        return refreshToken.getTokenHash();
+        return rawToken;
     }
 
     private String generateRefreshToken() {
         byte[] randomBytes = new byte[32];
         new SecureRandom().nextBytes(randomBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+    }
+
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available.", e);
+        }
     }
 
     public RefreshTokenEntity findByTokenHash(String tokenHash) {
@@ -59,8 +76,7 @@ public class RefreshTokenService {
         if (tokenHash == null || tokenHash.isBlank())
             return;
 
-        RefreshTokenEntity refreshToken = findByTokenHash(tokenHash);
-        refreshTokenRepository.deleteByTokenHash(refreshToken.getTokenHash());
+        refreshTokenRepository.deleteByTokenHash(tokenHash);
     }
 
     @Transactional
@@ -68,7 +84,8 @@ public class RefreshTokenService {
         if (refreshToken == null || refreshToken.isBlank())
             throw new RefreshTokenNotValidException();
 
-        RefreshTokenEntity token = findByTokenHash(refreshToken);
+        String tokenHash = hashToken(refreshToken);
+        RefreshTokenEntity token = findByTokenHash(tokenHash);
 
         if (token.getExpiresAt().isBefore(LocalDateTime.now()))
             throw new RefreshTokenNotValidException();
@@ -79,7 +96,7 @@ public class RefreshTokenService {
         if (userEmail.isEmpty())
             throw new UserWithoutEmailException();
 
-        deleteToken(refreshToken);
+        deleteToken(tokenHash);
         String accessToken = jwtService.generateToken(userEmail.get());
         String newRefreshToken = createRefreshToken(userId);
 
