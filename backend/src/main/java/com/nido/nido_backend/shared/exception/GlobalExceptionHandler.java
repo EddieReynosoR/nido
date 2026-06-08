@@ -10,6 +10,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
 
 @RestControllerAdvice
@@ -59,6 +60,11 @@ public class GlobalExceptionHandler {
 
         if (exception instanceof NoSuchElementException) {
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(404), exception.getMessage());
+            errorDetail.setProperty("description", exception.getMessage());
+        }
+
+        if (exception instanceof IllegalStateException) {
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), exception.getMessage());
             errorDetail.setProperty("description", exception.getMessage());
         }
 
