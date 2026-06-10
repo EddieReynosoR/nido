@@ -1,13 +1,11 @@
-package com.nido.nido_backend.controller;
+package com.nido.nido_backend.auth;
 
-import com.nido.nido_backend.domain.TokensResponse;
-import com.nido.nido_backend.domain.LoginRequest;
-import com.nido.nido_backend.domain.RefreshTokenDto;
-import com.nido.nido_backend.domain.RegisterUserDto;
-import com.nido.nido_backend.domain.user.UserEntity;
-import com.nido.nido_backend.service.AuthenticationService;
-import com.nido.nido_backend.service.JwtService;
-import com.nido.nido_backend.service.RefreshTokenService;
+import com.nido.nido_backend.auth.dto.TokensResponse;
+import com.nido.nido_backend.auth.dto.LoginRequest;
+import com.nido.nido_backend.refresh_token.dto.RefreshTokenDto;
+import com.nido.nido_backend.user.dto.RegisterUserDto;
+import com.nido.nido_backend.user.UserEntity;
+import com.nido.nido_backend.refresh_token.RefreshTokenService;
 import com.nido.nido_backend.shared.util.CookieUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -19,24 +17,24 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 public class AuthController {
 
-    private final AuthenticationService authenticationService;
+    private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
 
-    public AuthController(AuthenticationService authenticationService, RefreshTokenService refreshTokenService) {
-        this.authenticationService = authenticationService;
+    public AuthController(AuthService authService, RefreshTokenService refreshTokenService) {
+        this.authService = authService;
         this.refreshTokenService = refreshTokenService;
     }
 
     @PostMapping("/signup")
     public ResponseEntity<UserEntity> register(@RequestBody RegisterUserDto registerUserDto) {
-        UserEntity user = authenticationService.signup(registerUserDto);
+        UserEntity user = authService.signup(registerUserDto);
 
         return ResponseEntity.ok(user);
     }
 
     @PostMapping("/login")
     public ResponseEntity<TokensResponse> authenticate(@RequestBody LoginRequest request) {
-        RefreshTokenDto refreshTokenDto = authenticationService.signin(request);
+        RefreshTokenDto refreshTokenDto = authService.signin(request);
         ResponseCookie cookie = CookieUtils.createRefreshTokenCookie(refreshTokenDto.getRefreshToken());
 
         TokensResponse response = new TokensResponse(refreshTokenDto.getAccessToken(), refreshTokenDto.getExpiration());

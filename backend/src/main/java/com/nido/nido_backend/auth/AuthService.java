@@ -1,22 +1,24 @@
-package com.nido.nido_backend.service;
+package com.nido.nido_backend.auth;
 
-import com.nido.nido_backend.domain.LoginRequest;
-import com.nido.nido_backend.domain.RefreshTokenDto;
-import com.nido.nido_backend.domain.RegisterUserDto;
-import com.nido.nido_backend.domain.user.UserEntity;
+import com.nido.nido_backend.auth.dto.LoginRequest;
+import com.nido.nido_backend.refresh_token.dto.RefreshTokenDto;
+import com.nido.nido_backend.user.dto.RegisterUserDto;
+import com.nido.nido_backend.user.UserEntity;
+import com.nido.nido_backend.refresh_token.RefreshTokenService;
+import com.nido.nido_backend.user.UserService;
 import jakarta.transaction.Transactional;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuthenticationService {
+public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final UserService userService;
 
-    public AuthenticationService(AuthenticationManager authenticationManager, JwtService jwtService, RefreshTokenService refreshTokenService, UserService userService) {
+    public AuthService(AuthenticationManager authenticationManager, JwtService jwtService, RefreshTokenService refreshTokenService, UserService userService) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;

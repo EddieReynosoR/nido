@@ -1,12 +1,8 @@
-package com.nido.nido_backend.controller;
+package com.nido.nido_backend.user;
 
-import com.nido.nido_backend.domain.user.UserEntity;
-import com.nido.nido_backend.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/user")

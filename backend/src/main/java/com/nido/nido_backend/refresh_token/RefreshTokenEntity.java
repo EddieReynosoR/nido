@@ -1,4 +1,4 @@
-package com.nido.nido_backend.domain.refresh_token;
+package com.nido.nido_backend.refresh_token;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;

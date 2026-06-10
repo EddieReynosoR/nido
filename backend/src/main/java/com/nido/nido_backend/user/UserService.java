@@ -1,8 +1,6 @@
-package com.nido.nido_backend.service;
+package com.nido.nido_backend.user;
 
-import com.nido.nido_backend.domain.RegisterUserDto;
-import com.nido.nido_backend.domain.user.UserEntity;
-import com.nido.nido_backend.repository.UserRepository;
+import com.nido.nido_backend.user.dto.RegisterUserDto;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
