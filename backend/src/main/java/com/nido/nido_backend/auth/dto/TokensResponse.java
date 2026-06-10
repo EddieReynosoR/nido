@@ -1,11 +1,15 @@
-package com.nido.nido_backend.domain;
+package com.nido.nido_backend.auth.dto;
 
 import java.util.Date;
 
-public class RefreshTokenDto {
+public class TokensResponse {
     private String accessToken;
     private Date expiration;
-    private String refreshToken;
+
+    public TokensResponse(String accessToken, Date expiration) {
+        this.accessToken = accessToken;
+        this.expiration = expiration;
+    }
 
     public String getAccessToken() {
         return accessToken;
@@ -21,13 +25,5 @@ public class RefreshTokenDto {
 
     public void setExpiration(Date expiration) {
         this.expiration = expiration;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
     }
 }

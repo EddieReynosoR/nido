@@ -1,4 +1,4 @@
-package com.nido.nido_backend.domain;
+package com.nido.nido_backend.auth.dto;
 
 public class LoginRequest {
     private String email;

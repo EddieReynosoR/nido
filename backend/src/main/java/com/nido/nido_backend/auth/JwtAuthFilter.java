@@ -1,6 +1,5 @@
-package com.nido.nido_backend.config;
+package com.nido.nido_backend.auth;
 
-import com.nido.nido_backend.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

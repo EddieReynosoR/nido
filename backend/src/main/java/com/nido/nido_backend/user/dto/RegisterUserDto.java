@@ -1,4 +1,4 @@
-package com.nido.nido_backend.domain;
+package com.nido.nido_backend.user.dto;
 
 public class RegisterUserDto {
     private String firstName;

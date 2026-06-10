@@ -1,10 +1,10 @@
-package com.nido.nido_backend.service;
+package com.nido.nido_backend.refresh_token;
 
-import com.nido.nido_backend.domain.RefreshTokenDto;
-import com.nido.nido_backend.domain.refresh_token.RefreshTokenEntity;
+import com.nido.nido_backend.auth.JwtService;
+import com.nido.nido_backend.refresh_token.dto.RefreshTokenDto;
 import com.nido.nido_backend.shared.exception.RefreshTokenNotValidException;
-import com.nido.nido_backend.repository.RefreshTokenRepository;
 import com.nido.nido_backend.shared.exception.UserWithoutEmailException;
+import com.nido.nido_backend.user.UserService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 

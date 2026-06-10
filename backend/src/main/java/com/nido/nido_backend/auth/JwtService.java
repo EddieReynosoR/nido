@@ -1,4 +1,4 @@
-package com.nido.nido_backend.service;
+package com.nido.nido_backend.auth;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

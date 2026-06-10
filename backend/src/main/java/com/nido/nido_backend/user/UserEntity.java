@@ -1,4 +1,4 @@
-package com.nido.nido_backend.domain.user;
+package com.nido.nido_backend.user;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
