@@ -1,4 +1,14 @@
 services:
+  backend:
+    image: ghcr.io/EddieReynosoR/nido_backend:latest
+    container_name: nido_backend
+    ports:
+      - "8080:8080"
+    environment:
+      
+      SPRING_PROFILES_ACTIVE: prod
+    restart: unless-stopped
+
   db:
     image: postgres:16
     container_name: nido-db

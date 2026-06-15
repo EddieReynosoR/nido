@@ -51,12 +51,14 @@ src/
 ## Conventions
 
 ### Routing
+
 - `router.tsx` defines routes with `createBrowserRouter`.
 - `App.tsx` is the **root layout**: it renders shared chrome plus `<Outlet />`. It is the `element` of the parent route, NOT rendered standalone in `main.tsx`.
 - `main.tsx` only mounts `<RouterProvider router={router} />` inside `<StrictMode>`. Do not render `<App />` directly there.
 - Pages are children of the root layout route. Use `index: true` for the home route.
 
 ### Forms & validation
+
 - Use **react-hook-form** with `zodResolver`.
 - Use **Zod 4 syntax**: prefer `z.email()` over the deprecated `z.string().email()`.
 - Schemas live in `lib/` and export both the schema and its inferred type (e.g. `loginSchema` + `type LoginSchema = z.infer<typeof loginSchema>`).
@@ -64,11 +66,13 @@ src/
 - Field error messages should be specific and correct (don't copy-paste an "Email is required" message onto the password field).
 
 ### UI
+
 - Use shadcn/ui components from `components/ui/`.
 - The `<Toaster />` (sonner) must stay mounted once in `App.tsx`, outside the `<Outlet />`. Call `toast()` from anywhere; never add a second `<Toaster />`.
 - Import alias `@/` maps to `src/` (e.g. `@/lib/auth-schema`).
 
 ### Code style
+
 - Prettier and ESLint are configured — match the existing config (`.prettierrc`, `eslint.config.js`). Run `pnpm lint` after changes.
 - TypeScript: keep components typed; avoid `any`.
 
