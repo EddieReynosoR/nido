@@ -1,12 +1,18 @@
 services:
   backend:
-    image: ghcr.io/EddieReynosoR/nido_backend:latest
+    image: ghcr.io/eddiereynosor/nido:latest
     container_name: nido_backend
     ports:
-      - "8080:8080"
+      - "9000:9000"
     environment:
-      
-      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      SPRING_PROFILES_ACTIVE: production
+
     restart: unless-stopped
 
   db:
