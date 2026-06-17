@@ -51,7 +51,7 @@ public class SecurityConfig {
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
                 .xssProtection(Customizer.withDefaults())
                 .contentSecurityPolicy(csp -> csp
-                    .policyDirectives("default-src 'none'"))
+                    .policyDirectives("default-src 'none'; connect-src 'self' " + String.join(" ", allowedOrigins)))
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
