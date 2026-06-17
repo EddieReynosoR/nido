@@ -1,4 +1,3 @@
-# ---- Build stage ----
 # Compila el proyecto con Maven y genera el .jar
 FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
@@ -19,12 +18,12 @@ RUN ./mvnw clean package -DskipTests
 FROM eclipse-temurin:21-jre AS runtime
 WORKDIR /app
 
-# Usuario sin privilegios (buena práctica de seguridad)
+# Usuario sin privilegios
 RUN addgroup --system spring && adduser --system --ingroup spring spring
 
 # Copiamos el .jar generado en el build stage
 COPY --from=build /app/target/*.jar app.jar
 
 USER spring
-EXPOSE 8080
+EXPOSE 9000
 ENTRYPOINT ["java", "-jar", "app.jar"]
