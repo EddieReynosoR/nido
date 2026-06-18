@@ -1,6 +1,7 @@
 package com.nido.nido_backend.config;
 
 import com.nido.nido_backend.auth.JwtAuthFilter;
+import com.nido.nido_backend.shared.util.CorsProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,15 +25,14 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("{app.cors.allowed-origins}")
-    private List<String> allowedOrigins;
-
     private final JwtAuthFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
+    private CorsProperties corsProperties;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter, AuthenticationProvider authenticationProvider) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter, AuthenticationProvider authenticationProvider, CorsProperties corsProperties) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.authenticationProvider = authenticationProvider;
+        this.corsProperties = corsProperties;
     }
 
     @Bean
@@ -70,8 +70,8 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(allowedOrigins);
-        configuration.setAllowedMethods(List.of("GET","POST"));
+        configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization","Content-Type"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
