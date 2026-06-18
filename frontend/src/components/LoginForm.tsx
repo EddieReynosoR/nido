@@ -19,6 +19,7 @@ import { Controller } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { InputGroup } from './ui/input-group';
+import { useLogin } from '@/hooks/useLogin';
 
 export default function LoginForm() {
   const form = useForm<LoginSchema>({
@@ -30,23 +31,21 @@ export default function LoginForm() {
   });
 
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const { mutate: login, isPending } = useLogin();
 
   const onSubmit = (data: LoginSchema) => {
-    toast('You submitted the following values:', {
-      description: (
-        <pre className="mt-2 w-[320px] overflow-x-auto rounded-md bg-code p-4 text-code-foreground">
-          <code>{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-      position: 'bottom-right',
-      classNames: {
-        content: 'flex flex-col gap-2',
-      },
-      style: {
-        '--border-radius': 'calc(var(--radius)  + 4px)',
-      } as React.CSSProperties,
-    });
+    login(
+      { email: data.email, password: data.password },
+      {
+        onError: () => {
+          toast.error('Invalid email or password', {
+            description: 'Please check your credentials and try again',
+            position: 'bottom-right',
+          });
+        },
+      }
+    );
   };
 
   return (
@@ -136,9 +135,9 @@ export default function LoginForm() {
             />
           </FieldGroup>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading && <Loader2 className="size-4 animate-spin" />}
-            {isLoading ? 'Signing in...' : 'Sign in'}
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending && <Loader2 className="size-4 animate-spin" />}
+            {isPending ? 'Signing in...' : 'Sign in'}
           </Button>
         </CardContent>
       </form>
