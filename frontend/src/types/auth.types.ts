@@ -3,7 +3,10 @@ export type LoginRequest = {
   password: string;
 };
 
-export type LoginClaims = {
-  accessToken: string;
-  expiration: string;
+export interface AuthContextType {
+  accessToken: string | null;
+  login: (request: LoginRequest) => void;
+  logout: () => void;
+  isLoading: boolean;
+  isLogin: boolean;
 }

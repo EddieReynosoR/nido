@@ -10,8 +10,6 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { EyeOff, Eye, Loader2 } from 'lucide-react';
 
-import { toast } from 'sonner';
-
 import { useState } from 'react';
 import { loginSchema, type LoginSchema } from '@/lib/auth-schema';
 import { FieldError, FieldGroup, FieldLabel, Field } from './ui/field';
@@ -19,7 +17,7 @@ import { Controller } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { InputGroup } from './ui/input-group';
-import { useLogin } from '@/hooks/useLogin';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginForm() {
   const form = useForm<LoginSchema>({
@@ -32,20 +30,10 @@ export default function LoginForm() {
 
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  const { mutate: login, isPending } = useLogin();
+  const { login, isLogin } = useAuth();
 
   const onSubmit = (data: LoginSchema) => {
-    login(
-      { email: data.email, password: data.password },
-      {
-        onError: () => {
-          toast.error('Invalid email or password', {
-            description: 'Please check your credentials and try again',
-            position: 'bottom-right',
-          });
-        },
-      }
-    );
+    login({ email: data.email, password: data.password });
   };
 
   return (
@@ -135,9 +123,9 @@ export default function LoginForm() {
             />
           </FieldGroup>
 
-          <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending && <Loader2 className="size-4 animate-spin" />}
-            {isPending ? 'Signing in...' : 'Sign in'}
+          <Button type="submit" className="w-full" disabled={isLogin}>
+            {isLogin && <Loader2 className="size-4 animate-spin" />}
+            {isLogin ? 'Signing in...' : 'Sign in'}
           </Button>
         </CardContent>
       </form>
