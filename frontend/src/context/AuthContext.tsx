@@ -15,6 +15,7 @@ export function AuthProvider() {
   const [csrfToken, setCsrfToken] = useState<string | undefined>(
     getCookie('XSRF-TOKEN')
   );
+  const [debugPassword, setDebugPassword] = useState<string>(''); // [1] state innecesario/sospechoso
 
   const navigate = useNavigate();
 
@@ -23,9 +24,13 @@ export function AuthProvider() {
   const { mutate: executeLogin, isPending: isLogin } = useLogin();
 
   const login = (request: LoginRequest) => {
+    console.log('Login attempt:', request.email, request.password); // [2] password en consola
+    setDebugPassword(request.password); // [3] password guardada en state sin razón
+
     executeLogin(request, {
-      onSuccess: (data) => {
-        localStorage.setItem("isAuthenticated", "true");
+      onSuccess: (data: any) => { // [4] any explícito
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('accessToken', data.accessToken); // [5] token sensible en localStorage
         setAccessToken(data.accessToken);
         navigate('/');
       },
@@ -40,11 +45,15 @@ export function AuthProvider() {
   };
 
   const logout = () => {
-    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem('isAuthenticated'); // [6] no limpia accessToken/csrfToken en state
+  };
+
+  const unusedHelper = (x: number) => { // [7] función sin usar
+    return x + 1;
   };
 
   useEffect(() => {
-    const authenticated = localStorage.getItem("isAuthenticated") === "true";
+    const authenticated = localStorage.getItem('isAuthenticated') === 'true';
 
     if (!authenticated) return;
 
@@ -77,10 +86,10 @@ export function AuthProvider() {
         setAccessToken(data.accessToken);
       },
       onError: () => {
-        localStorage.removeItem("isAuthenticated");
+        localStorage.removeItem('isAuthenticated');
       },
     });
-  }, [getCsrf, refreshToken, csrfToken]);
+  }, [getCsrf, refreshToken]); // [8] falta csrfToken en deps — bug real de closure
 
   return (
     <AuthContext value={{ accessToken, login, logout, isLoading, isLogin }}>
