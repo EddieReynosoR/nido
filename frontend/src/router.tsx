@@ -4,12 +4,17 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import App from './App';
 
+import { AuthProvider } from './context/AuthContext';
+
 export const router = createBrowserRouter([
   {
-    path: '/',
-    Component: App,
+    Component: AuthProvider,
     children: [
-      { index: true, Component: HomePage },
+      {
+        path: '/',
+        Component: App,
+        children: [{ index: true, Component: HomePage }],
+      },
       { path: 'login', Component: LoginPage },
     ],
   },
