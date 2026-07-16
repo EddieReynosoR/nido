@@ -55,7 +55,7 @@ export function AuthProvider() {
           if (!token) {
             toast.error('Security error', {
               description:
-                'Could not initialize a secure session. Please reload the page.',
+                'Could not initialize a secure session. Please reload the page. Test',
               position: 'bottom-right',
             });
             return;
