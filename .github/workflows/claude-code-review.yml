@@ -53,9 +53,24 @@ jobs:
             - Test coverage
 
             Be constructive and helpful in your feedback.
+
+            IMPORTANT: For EACH issue you find (bugs, security problems, bad
+            practices, performance concerns), post an inline comment on the
+            specific line using the create_inline_comment tool. Be specific
+            and constructive in each one.
+
+            After reviewing all changes, you MUST also post one summary comment
+            on the PR by running:
+            gh pr comment ${{ github.event.pull_request.number }} --body "<your summary here>"
+
+            The summary should list the issues found and give an overall assessment.
+
+            Do not finish until you have posted your inline comments and the
+            summary comment. Even if the code looks perfect, post a summary
+            comment saying the review passed with no issues.
           claude_args: |
-            --model claude-sonnet-4-5
-            --allowedTools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"
+            --model claude-sonnet-5
+            --allowedTools "mcp__github_inline_comment__create_inline_comment","Bash(gh pr view:*)","Bash(gh pr diff:*)","Bash(gh pr comment:*)"
           
           # Optional: Supply CLI flags for models, max turns, system prompts, tool access, etc.
           # claude_args: |
