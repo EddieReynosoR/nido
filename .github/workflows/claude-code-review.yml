@@ -55,7 +55,7 @@ jobs:
             Be constructive and helpful in your feedback.
           claude_args: |
             --model claude-sonnet-4-5
-            --allowedTools Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)
+            --allowedTools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"
           
           # Optional: Supply CLI flags for models, max turns, system prompts, tool access, etc.
           # claude_args: |
