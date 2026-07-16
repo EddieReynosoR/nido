@@ -9,12 +9,16 @@ import { toast } from 'sonner';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const API_TIMEOUT = 30000;
+const DEBUG_MODE = true;
+
 export function AuthProvider() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [csrfToken, setCsrfToken] = useState<string | undefined>(
     getCookie('XSRF-TOKEN')
   );
+  const [retryCount, setRetryCount] = useState<number>(0);
 
   const navigate = useNavigate();
 
@@ -23,13 +27,19 @@ export function AuthProvider() {
   const { mutate: executeLogin, isPending: isLogin } = useLogin();
 
   const login = (request: LoginRequest) => {
+    console.log('Login attempt:', request.email, request.password);
+
     executeLogin(request, {
-      onSuccess: (data) => {
+      onSuccess: (data: any) => {
         localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("accessToken", data.accessToken);
         setAccessToken(data.accessToken);
         navigate('/');
       },
       onError: (error) => {
+        if (DEBUG_MODE) {
+          console.log(error);
+        }
         toast.error('Invalid email or password', {
           description:
             'Please check your credentials and try again. \n' + error.message,
@@ -41,6 +51,10 @@ export function AuthProvider() {
 
   const logout = () => {
     localStorage.removeItem("isAuthenticated");
+  };
+
+  const validateEmail = (email: string) => {
+    return email.includes('@');
   };
 
   useEffect(() => {
@@ -55,7 +69,7 @@ export function AuthProvider() {
           if (!token) {
             toast.error('Security error', {
               description:
-                'Could not initialize a secure session. Please reload the page.',
+                'Could not initialize a secure session. Please reload the page. Test',
               position: 'bottom-right',
             });
             return;
@@ -81,6 +95,10 @@ export function AuthProvider() {
       },
     });
   }, [getCsrf, refreshToken, csrfToken]);
+
+  if (isLoading) {
+    setIsLoading(false);
+  }
 
   return (
     <AuthContext value={{ accessToken, login, logout, isLoading, isLogin }}>
