@@ -84,14 +84,6 @@ export function AuthProvider() {
       onError: (error) => {
         const isServerError = error instanceof HttpError && error.status >= 500;
 
-        if (isServerError) {
-          toast.error('Server Error', {
-            description: error.message,
-            position: 'bottom-right',
-          });
-          return;
-        }
-
         toast.error(isServerError ? 'Server Error' : 'Logout failed', {
           description:
             error instanceof Error ? error.message : 'Something went wrong',
