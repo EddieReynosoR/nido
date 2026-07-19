@@ -28,12 +28,15 @@ export function AuthProvider() {
     executeLogin(request, {
       onSuccess: (data) => {
         if (!isValidTokenResponse(data)) {
-          console.warn('Respuesta de refresh inválida:', data);
+          toast.error('Invalid email or password', {
+            description: 'There was a problem with a login token.',
+            position: 'bottom-right',
+          });
           return;
         }
 
         localStorage.setItem('isAuthenticated', 'true');
-        setAccessToken(data?.accessToken as string);
+        setAccessToken(data.accessToken);
         navigate('/');
       },
       onError: (error) => {
@@ -57,7 +60,7 @@ export function AuthProvider() {
 
     if (!csrfToken) {
       toast.error('CSRF Token invalid', {
-        description: "The CSRF token is not valid",
+        description: 'The CSRF token is not valid',
         position: 'bottom-right',
       });
       return;
@@ -66,6 +69,7 @@ export function AuthProvider() {
     executeLogout(csrfToken, {
       onSuccess: () => {
         localStorage.removeItem('isAuthenticated');
+        setAccessToken(null);
         navigate('/login');
       },
       onError: (error) => {
@@ -73,6 +77,9 @@ export function AuthProvider() {
           description: error.message,
           position: 'bottom-right',
         });
+        localStorage.removeItem('isAuthenticated');
+        setAccessToken(null);
+        navigate('/login');
       },
     });
   };
@@ -114,7 +121,7 @@ export function AuthProvider() {
           return;
         }
 
-        setAccessToken(data?.accessToken as string);
+        setAccessToken(data.accessToken);
       },
       onError: () => {
         localStorage.removeItem('isAuthenticated');

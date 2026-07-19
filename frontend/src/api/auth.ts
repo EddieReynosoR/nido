@@ -7,14 +7,19 @@ export async function executeFetch<T>(
   props: RequestInit,
   errorMessage: string
 ): Promise<T | null> {
-  const res = await fetch(url, props);
+  try {
+    const res = await fetch(url, props);
 
-  if (!res.ok) {
-    throw new Error(`${errorMessage} Response status: ${res.status}`);
+    if (!res.ok) {
+      throw new Error(`${errorMessage} Response status: ${res.status}`);
+    }
+
+    const text = await res.text();
+    return text ? (JSON.parse(text) as T) : null;
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    throw new Error(`There was an error: ${message}`);
   }
-
-  const text = await res.text();
-  return text ? (JSON.parse(text) as T) : null;
 }
 
 export function login(data: LoginRequest) {
@@ -61,6 +66,6 @@ export async function logout(csrfToken: string) {
       credentials: 'include',
       headers: { 'X-XSRF-TOKEN': csrfToken },
     },
-    'There was an error login out of the account.'
+    'There was an error logging out of the account.'
   );
 }

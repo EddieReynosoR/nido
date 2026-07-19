@@ -13,5 +13,5 @@ export interface AuthContextType {
 
 export type TokenResponse = {
   accessToken: string;
-  expiration: string | number;
+  expiration: string;
 };

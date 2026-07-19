@@ -14,7 +14,9 @@ export const getCookie = (name: string): string | undefined => {
     ?.split('=')[1];
 };
 
-export function isValidTokenResponse(data: TokenResponse | null) {
+export function isValidTokenResponse(
+  data: TokenResponse | null
+): data is TokenResponse {
   if (
     !data ||
     typeof data.accessToken !== 'string' ||
