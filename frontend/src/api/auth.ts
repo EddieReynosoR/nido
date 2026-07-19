@@ -1,4 +1,5 @@
 import type { LoginRequest, TokenResponse } from '@/types/auth.types';
+import { HttpError } from '@/lib/utils';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -11,12 +12,19 @@ export async function executeFetch<T>(
     const res = await fetch(url, props);
 
     if (!res.ok) {
-      throw new Error(`${errorMessage} Response status: ${res.status}`);
+      throw new HttpError(
+        `${errorMessage} Response status: ${res.status}`,
+        res.status
+      );
     }
 
     const text = await res.text();
     return text ? (JSON.parse(text) as T) : null;
   } catch (e) {
+    if (e instanceof HttpError) {
+      throw e;
+    }
+
     const message = e instanceof Error ? e.message : String(e);
     throw new Error(`There was an error: ${message}`);
   }
@@ -35,7 +43,7 @@ export function login(data: LoginRequest) {
   );
 }
 
-export async function csrf() {
+export function csrf() {
   return executeFetch<null>(
     `${BASE_URL}/auth/csrf`,
     {
@@ -46,7 +54,7 @@ export async function csrf() {
   );
 }
 
-export async function refresh(csrfToken: string) {
+export function refresh(csrfToken: string) {
   return executeFetch<TokenResponse>(
     `${BASE_URL}/auth/refresh`,
     {
@@ -58,7 +66,7 @@ export async function refresh(csrfToken: string) {
   );
 }
 
-export async function logout(csrfToken: string) {
+export function logout(csrfToken: string) {
   return executeFetch<null>(
     `${BASE_URL}/auth/logout`,
     {
