@@ -2,7 +2,8 @@ import type { AuthContextType, LoginRequest } from '@/types/auth.types';
 import { createContext, useState, useEffect, useContext } from 'react';
 import { useLogin } from '@/hooks/useLogin';
 import { useCsrf } from '@/hooks/useCsrf';
-import { getCookie } from '@/lib/utils';
+import { useLogout } from '@/hooks/useLogout';
+import { getCookie, isValidTokenResponse, isAuthenticated } from '@/lib/utils';
 import { useRefreshToken } from '@/hooks/useRefreshToken';
 import { Outlet, useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -21,12 +22,18 @@ export function AuthProvider() {
   const { mutate: getCsrf } = useCsrf();
   const { mutate: refreshToken } = useRefreshToken();
   const { mutate: executeLogin, isPending: isLogin } = useLogin();
+  const { mutate: executeLogout } = useLogout();
 
   const login = (request: LoginRequest) => {
     executeLogin(request, {
       onSuccess: (data) => {
-        localStorage.setItem("isAuthenticated", "true");
-        setAccessToken(data.accessToken);
+        if (!isValidTokenResponse(data)) {
+          console.warn('Respuesta de refresh inválida:', data);
+          return;
+        }
+
+        localStorage.setItem('isAuthenticated', 'true');
+        setAccessToken(data?.accessToken as string);
         navigate('/');
       },
       onError: (error) => {
@@ -40,11 +47,38 @@ export function AuthProvider() {
   };
 
   const logout = () => {
-    localStorage.removeItem("isAuthenticated");
+    if (!isAuthenticated()) {
+      toast.error('User not authenticated', {
+        description: "There's no authenticated user.",
+        position: 'bottom-right',
+      });
+      return;
+    }
+
+    if (!csrfToken) {
+      toast.error('CSRF Token invalid', {
+        description: "The CSRF token is not valid",
+        position: 'bottom-right',
+      });
+      return;
+    }
+
+    executeLogout(csrfToken, {
+      onSuccess: () => {
+        localStorage.removeItem('isAuthenticated');
+        navigate('/login');
+      },
+      onError: (error) => {
+        toast.error('Security error', {
+          description: error.message,
+          position: 'bottom-right',
+        });
+      },
+    });
   };
 
   useEffect(() => {
-    const authenticated = localStorage.getItem("isAuthenticated") === "true";
+    const authenticated = isAuthenticated();
 
     if (!authenticated) return;
 
@@ -74,10 +108,16 @@ export function AuthProvider() {
 
     refreshToken(csrfToken, {
       onSuccess: (data) => {
-        setAccessToken(data.accessToken);
+        if (!isValidTokenResponse(data)) {
+          console.warn('Respuesta de refresh inválida:', data);
+          localStorage.removeItem('isAuthenticated');
+          return;
+        }
+
+        setAccessToken(data?.accessToken as string);
       },
       onError: () => {
-        localStorage.removeItem("isAuthenticated");
+        localStorage.removeItem('isAuthenticated');
       },
     });
   }, [getCsrf, refreshToken, csrfToken]);

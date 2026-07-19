@@ -10,3 +10,8 @@ export interface AuthContextType {
   isLoading: boolean;
   isLogin: boolean;
 }
+
+export type TokenResponse = {
+  accessToken: string;
+  expiration: string | number;
+};
