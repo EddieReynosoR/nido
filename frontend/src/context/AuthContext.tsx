@@ -69,15 +69,7 @@ export function AuthProvider() {
       return;
     }
 
-    if (!csrfToken) {
-      toast.error('CSRF Token invalid', {
-        description: 'The CSRF token is not valid',
-        position: 'bottom-right',
-      });
-      return;
-    }
-
-    executeLogout(csrfToken, {
+    executeLogout(csrfToken!, {
       onSuccess: () => {
         finishLogout();
       },
@@ -135,7 +127,8 @@ export function AuthProvider() {
         setAccessToken(data.accessToken);
       },
       onError: () => {
-        localStorage.removeItem('isAuthenticated');
+        console.warn('There was a problem with the Refresh Token');
+        finishLogout();
       },
     });
   }, [getCsrf, refreshToken, csrfToken]);
