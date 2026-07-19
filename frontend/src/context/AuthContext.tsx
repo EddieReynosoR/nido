@@ -2,7 +2,13 @@ import type { AuthContextType, LoginRequest } from '@/types/auth.types';
 import { createContext, useState, useEffect, useContext } from 'react';
 import { useLogin } from '@/hooks/useLogin';
 import { useCsrf } from '@/hooks/useCsrf';
-import { getCookie } from '@/lib/utils';
+import { useLogout } from '@/hooks/useLogout';
+import {
+  getCookie,
+  isValidTokenResponse,
+  isAuthenticated,
+  HttpError,
+} from '@/lib/utils';
 import { useRefreshToken } from '@/hooks/useRefreshToken';
 import { Outlet, useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -21,11 +27,26 @@ export function AuthProvider() {
   const { mutate: getCsrf } = useCsrf();
   const { mutate: refreshToken } = useRefreshToken();
   const { mutate: executeLogin, isPending: isLogin } = useLogin();
+  const { mutate: executeLogout } = useLogout();
+
+  const finishLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    setAccessToken(null);
+    navigate('/login');
+  };
 
   const login = (request: LoginRequest) => {
     executeLogin(request, {
       onSuccess: (data) => {
-        localStorage.setItem("isAuthenticated", "true");
+        if (!isValidTokenResponse(data)) {
+          toast.error('Login response invalid', {
+            description: 'Login response was invalid, please try again',
+            position: 'bottom-right',
+          });
+          return;
+        }
+
+        localStorage.setItem('isAuthenticated', 'true');
         setAccessToken(data.accessToken);
         navigate('/');
       },
@@ -40,11 +61,34 @@ export function AuthProvider() {
   };
 
   const logout = () => {
-    localStorage.removeItem("isAuthenticated");
+    if (!isAuthenticated()) {
+      toast.error('User not authenticated', {
+        description: "There's no authenticated user.",
+        position: 'bottom-right',
+      });
+      return;
+    }
+
+    executeLogout(csrfToken!, {
+      onSuccess: () => {
+        finishLogout();
+      },
+      onError: (error) => {
+        const isServerError = error instanceof HttpError && error.status >= 500;
+
+        toast.error(isServerError ? 'Server Error' : 'Logout failed', {
+          description:
+            error instanceof Error ? error.message : 'Something went wrong',
+          position: 'bottom-right',
+        });
+
+        finishLogout();
+      },
+    });
   };
 
   useEffect(() => {
-    const authenticated = localStorage.getItem("isAuthenticated") === "true";
+    const authenticated = isAuthenticated();
 
     if (!authenticated) return;
 
@@ -74,10 +118,17 @@ export function AuthProvider() {
 
     refreshToken(csrfToken, {
       onSuccess: (data) => {
+        if (!isValidTokenResponse(data)) {
+          console.warn('There was a problem with the Refresh Token');
+          localStorage.removeItem('isAuthenticated');
+          return;
+        }
+
         setAccessToken(data.accessToken);
       },
       onError: () => {
-        localStorage.removeItem("isAuthenticated");
+        console.warn('There was a problem with the Refresh Token');
+        finishLogout();
       },
     });
   }, [getCsrf, refreshToken, csrfToken]);

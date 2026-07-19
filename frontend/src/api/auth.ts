@@ -1,46 +1,79 @@
-import type { LoginRequest } from '@/types/auth.types';
+import type { LoginRequest, TokenResponse } from '@/types/auth.types';
+import { HttpError } from '@/lib/utils';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
-export async function login(data: LoginRequest) {
-  const res = await fetch(`${BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(data),
-  });
+export async function executeFetch<T>(
+  url: string,
+  props: RequestInit,
+  errorMessage: string
+): Promise<T | null> {
+  try {
+    const res = await fetch(url, props);
 
-  if (!res.ok) {
-    throw new Error(`Login failed with status: ${res.status}`);
+    if (!res.ok) {
+      throw new HttpError(
+        `${errorMessage} Response status: ${res.status}`,
+        res.status
+      );
+    }
+
+    const text = await res.text();
+    return text ? (JSON.parse(text) as T) : null;
+  } catch (e) {
+    if (e instanceof HttpError) {
+      throw e;
+    }
+
+    const message = e instanceof Error ? e.message : String(e);
+    throw new Error(`There was an error: ${message}`);
   }
-
-  return res.json();
 }
 
-export async function csrf() {
-  const res = await fetch(`${BASE_URL}/auth/csrf`, {
-    method: 'GET',
-    credentials: 'include',
-  });
-
-  if (res.ok) return;
-
-  throw new Error(
-    `There was an error getting the CSRF token. Response status: ${res.status}`
+export function login(data: LoginRequest) {
+  return executeFetch<TokenResponse>(
+    `${BASE_URL}/auth/login`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    },
+    'Login failed.'
   );
 }
 
-export async function refresh(csrfToken: string) {
-  const res = await fetch(`${BASE_URL}/auth/refresh`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'X-XSRF-TOKEN': csrfToken },
-  });
+export function csrf() {
+  return executeFetch<null>(
+    `${BASE_URL}/auth/csrf`,
+    {
+      method: 'GET',
+      credentials: 'include',
+    },
+    'There was an error getting the CSRF token.'
+  );
+}
 
-  if (!res.ok) {
-    throw new Error(
-      `There was an error getting a new access token. Response status: ${res.status}`
-    );
-  }
-  return res.json();
+export function refresh(csrfToken: string) {
+  return executeFetch<TokenResponse>(
+    `${BASE_URL}/auth/refresh`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'X-XSRF-TOKEN': csrfToken },
+    },
+    'There was an error getting a new access token.'
+  );
+}
+
+export function logout(csrfToken: string) {
+  return executeFetch<null>(
+    `${BASE_URL}/auth/logout`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'X-XSRF-TOKEN': csrfToken },
+    },
+    'There was an error logging out of the account.'
+  );
 }
