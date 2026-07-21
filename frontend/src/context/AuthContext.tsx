@@ -7,11 +7,11 @@ import {
   getCookie,
   isValidTokenResponse,
   isAuthenticated,
-  HttpError,
+  errorToast,
 } from '@/lib/utils';
 import { useRefreshToken } from '@/hooks/useRefreshToken';
 import { Outlet, useNavigate } from 'react-router';
-import { toast } from 'sonner';
+import { toast, Toaster } from 'sonner';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -51,10 +51,10 @@ export function AuthProvider() {
         navigate('/');
       },
       onError: (error) => {
-        toast.error('Invalid email or password', {
-          description:
-            'Please check your credentials and try again. \n' + error.message,
-          position: 'bottom-right',
+        errorToast({
+          error,
+          title: 'Invalid email or password',
+          customMessage: 'Please check your credentials and try again.',
         });
       },
     });
@@ -74,14 +74,9 @@ export function AuthProvider() {
         finishLogout();
       },
       onError: (error) => {
-        const isServerError = error instanceof HttpError && error.status >= 500;
+        console.log('Error logout');
 
-        toast.error(isServerError ? 'Server Error' : 'Logout failed', {
-          description:
-            error instanceof Error ? error.message : 'Something went wrong',
-          position: 'bottom-right',
-        });
-
+        errorToast({ error, customMessage: 'Something went wrong' });
         finishLogout();
       },
     });
@@ -107,10 +102,7 @@ export function AuthProvider() {
           setCsrfToken(token);
         },
         onError: (error) => {
-          toast.error('Security error', {
-            description: error.message,
-            position: 'bottom-right',
-          });
+          errorToast({ error, title: 'Security Error' });
         },
       });
       return;
@@ -136,6 +128,7 @@ export function AuthProvider() {
   return (
     <AuthContext value={{ accessToken, login, logout, isLoading, isLogin }}>
       <Outlet />
+      <Toaster />
     </AuthContext>
   );
 }

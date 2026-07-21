@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { type TokenResponse } from '@/types/auth.types';
+import { toast } from 'sonner';
+import type { ErrorToastOptions } from '@/types/utils.types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -45,4 +47,35 @@ export class HttpError extends Error {
     super(message);
     this.status = status;
   }
+}
+
+export function errorToast({
+  error,
+  title,
+  customMessage,
+}: ErrorToastOptions): void {
+  console.log({ error, title, customMessage });
+  if (error instanceof TypeError) {
+    toast.error(title ?? 'Server cannot be reached', {
+      description: [customMessage, error.message].filter(Boolean).join('\n '),
+      position: 'bottom-right',
+    });
+    return;
+  }
+
+  if (error instanceof HttpError) {
+    const isServerError = error instanceof HttpError && error.status >= 500;
+
+    toast.error(title ?? (isServerError ? 'Server Error' : 'Request failed'), {
+      description: [customMessage, error.message].filter(Boolean).join('\n '),
+      position: 'bottom-right',
+    });
+
+    return;
+  }
+
+  toast.error(title ?? 'Error ocurred', {
+    description: [customMessage, error.message].filter(Boolean).join('\n '),
+    position: 'bottom-right',
+  });
 }
