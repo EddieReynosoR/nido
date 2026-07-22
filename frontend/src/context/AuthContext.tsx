@@ -1,5 +1,12 @@
 import type { AuthContextType, LoginRequest } from '@/types/auth.types';
-import { createContext, useState, useEffect, useContext } from 'react';
+import {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+  useRef,
+} from 'react';
 import { useLogin } from '@/hooks/useLogin';
 import { useCsrf } from '@/hooks/useCsrf';
 import { useLogout } from '@/hooks/useLogout';
@@ -17,7 +24,6 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [csrfToken, setCsrfToken] = useState<string | undefined>(
     getCookie('XSRF-TOKEN')
   );
@@ -29,11 +35,11 @@ export function AuthProvider() {
   const { mutate: executeLogin, isPending: isLogin } = useLogin();
   const { mutate: executeLogout } = useLogout();
 
-  const finishLogout = () => {
+  const finishLogout = useCallback(() => {
     localStorage.removeItem('isAuthenticated');
     setAccessToken(null);
     navigate('/login');
-  };
+  }, []);
 
   const login = (request: LoginRequest) => {
     executeLogin(request, {
@@ -82,6 +88,8 @@ export function AuthProvider() {
     });
   };
 
+  const refreshAttempted = useRef(false);
+
   useEffect(() => {
     const authenticated = isAuthenticated();
 
@@ -108,6 +116,9 @@ export function AuthProvider() {
       return;
     }
 
+    if (refreshAttempted.current) return;
+    refreshAttempted.current = true;
+
     refreshToken(csrfToken, {
       onSuccess: (data) => {
         if (!isValidTokenResponse(data)) {
@@ -123,10 +134,10 @@ export function AuthProvider() {
         finishLogout();
       },
     });
-  }, [getCsrf, refreshToken, csrfToken]);
+  }, [getCsrf, refreshToken, csrfToken, finishLogout]);
 
   return (
-    <AuthContext value={{ accessToken, login, logout, isLoading, isLogin }}>
+    <AuthContext value={{ accessToken, login, logout, isLogin }}>
       <Outlet />
       <Toaster />
     </AuthContext>

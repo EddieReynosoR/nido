@@ -30,7 +30,9 @@ export default function LoginForm() {
 
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  const { login, isLogin } = useAuth();
+  const { login, isLogin, accessToken } = useAuth();
+
+  console.log(accessToken);
 
   const onSubmit = (data: LoginSchema) => {
     login({ email: data.email, password: data.password });
