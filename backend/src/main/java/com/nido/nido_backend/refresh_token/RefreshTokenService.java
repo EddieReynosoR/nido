@@ -62,21 +62,18 @@ public class RefreshTokenService {
         }
     }
 
-    public RefreshTokenEntity findByTokenHash(String tokenHash) {
-        return refreshTokenRepository.findByTokenHash(tokenHash.trim())
-                .orElseThrow(RefreshTokenNotValidException::new);
-    }
-
     public Optional<RefreshTokenEntity> findByUserId(UUID userId) {
         return refreshTokenRepository.findByUserId(userId);
     }
 
     @Transactional
-    public void deleteToken(String tokenHash) {
-        if (tokenHash == null || tokenHash.isBlank())
-            return;
+    public boolean deleteToken(String rawToken) {
+        if (rawToken == null || rawToken.isBlank())
+            return false;
 
-        refreshTokenRepository.deleteByTokenHash(tokenHash);
+        String tokenHash = hashToken(rawToken);
+
+        return refreshTokenRepository.deleteByTokenHash(tokenHash) > 0;
     }
 
     @Transactional
@@ -85,18 +82,26 @@ public class RefreshTokenService {
             throw new RefreshTokenNotValidException();
 
         String tokenHash = hashToken(refreshToken);
-        RefreshTokenEntity token = findByTokenHash(tokenHash);
+        RefreshTokenEntity entity = refreshTokenRepository.findByTokenHash(tokenHash.trim())
+                .orElseThrow(RefreshTokenNotValidException::new);
 
-        if (token.getExpiresAt().isBefore(LocalDateTime.now()))
+        if (entity.getExpiresAt().isBefore(LocalDateTime.now())) {
+            refreshTokenRepository.delete(entity);
             throw new RefreshTokenNotValidException();
+        }
 
-        UUID userId = token.getUserId();
+        int deleted = refreshTokenRepository.deleteByRefreshTokenId(entity.getRefreshTokenId());
+
+        if (deleted == 0) {
+            throw new RefreshTokenNotValidException();
+        }
+
+        UUID userId = entity.getUserId();
         Optional<String> userEmail = userService.getUserEmail(userId);
 
         if (userEmail.isEmpty())
             throw new UserWithoutEmailException();
 
-        deleteToken(tokenHash);
         String accessToken = jwtService.generateToken(userEmail.get());
         String newRefreshToken = createRefreshToken(userId);
 

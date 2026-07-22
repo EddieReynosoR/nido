@@ -14,9 +14,13 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshTokenEntity
 
     @Modifying
     @Query("delete from RefreshTokenEntity r where r.tokenHash=:tokenHash")
-    void deleteByTokenHash(@Param("tokenHash") String tokenHash);
+    int deleteByTokenHash(@Param("tokenHash") String tokenHash);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from RefreshTokenEntity r where r.refreshTokenId = :id")
+    int deleteByRefreshTokenId(@Param("id") UUID id);
 
     @Modifying
-    @Query("delete from RefreshTokenEntity r where r.userId=:userId")
+    @Query("delete from RefreshTokenEntity r where r.userId = :userId")
     void deleteByUserId(@Param("userId") UUID userId);
 }
