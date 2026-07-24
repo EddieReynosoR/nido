@@ -54,7 +54,6 @@ export function errorToast({
   title,
   customMessage,
 }: ErrorToastOptions): void {
-  console.log({ error, title, customMessage });
   if (error instanceof TypeError) {
     toast.error(title ?? 'Server cannot be reached', {
       description: [customMessage, error.message].filter(Boolean).join('\n '),
@@ -64,7 +63,7 @@ export function errorToast({
   }
 
   if (error instanceof HttpError) {
-    const isServerError = error instanceof HttpError && error.status >= 500;
+    const isServerError = error.status >= 500;
 
     toast.error(title ?? (isServerError ? 'Server Error' : 'Request failed'), {
       description: [customMessage, error.message].filter(Boolean).join('\n '),
@@ -74,7 +73,7 @@ export function errorToast({
     return;
   }
 
-  toast.error(title ?? 'Error ocurred', {
+  toast.error(title ?? 'Error occurred.', {
     description: [customMessage, error.message].filter(Boolean).join('\n '),
     position: 'bottom-right',
   });

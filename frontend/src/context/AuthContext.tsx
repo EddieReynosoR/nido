@@ -80,8 +80,6 @@ export function AuthProvider() {
         finishLogout();
       },
       onError: (error) => {
-        console.log('Error logout');
-
         errorToast({ error, customMessage: 'Something went wrong' });
         finishLogout();
       },
