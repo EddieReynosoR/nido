@@ -2,6 +2,7 @@ package com.nido.nido_backend.refresh_token;
 
 import com.nido.nido_backend.auth.JwtService;
 import com.nido.nido_backend.refresh_token.dto.RefreshTokenDto;
+import com.nido.nido_backend.shared.exception.NoRowsAffectedException;
 import com.nido.nido_backend.shared.exception.RefreshTokenNotValidException;
 import com.nido.nido_backend.shared.exception.UserWithoutEmailException;
 import com.nido.nido_backend.user.UserService;
@@ -66,7 +67,6 @@ public class RefreshTokenService {
         return refreshTokenRepository.findByUserId(userId);
     }
 
-    @Transactional
     public boolean deleteToken(String rawToken) {
         if (rawToken == null || rawToken.isBlank())
             return false;
@@ -81,39 +81,29 @@ public class RefreshTokenService {
         if (refreshToken == null || refreshToken.isBlank())
             throw new RefreshTokenNotValidException();
 
-        String tokenHash = hashToken(refreshToken);
-        RefreshTokenEntity entity = refreshTokenRepository.findByTokenHash(tokenHash.trim())
+        RefreshTokenEntity entity = refreshTokenRepository
+                .findByTokenHash(hashToken(refreshToken))
                 .orElseThrow(RefreshTokenNotValidException::new);
 
-        if (entity.getExpiresAt().isBefore(LocalDateTime.now())) {
-            refreshTokenRepository.delete(entity);
+        if (entity.getExpiresAt().isBefore(LocalDateTime.now()))
             throw new RefreshTokenNotValidException();
-        }
 
-        int deleted = refreshTokenRepository.deleteByRefreshTokenId(entity.getRefreshTokenId());
-
-        if (deleted == 0) {
-            throw new RefreshTokenNotValidException();
-        }
+        if (refreshTokenRepository.deleteByRefreshTokenId(entity.getRefreshTokenId()) == 0)
+            throw new NoRowsAffectedException("No refresh token was deleted.");
 
         UUID userId = entity.getUserId();
-        Optional<String> userEmail = userService.getUserEmail(userId);
+        String email = userService
+                .getUserEmail(userId).orElseThrow(UserWithoutEmailException::new);
 
-        if (userEmail.isEmpty())
-            throw new UserWithoutEmailException();
+        String accessToken = jwtService.generateToken(email);
 
-        String accessToken = jwtService.generateToken(userEmail.get());
-        String newRefreshToken = createRefreshToken(userId);
-
-        RefreshTokenDto refreshTokenDto = new RefreshTokenDto();
-        refreshTokenDto.setAccessToken(accessToken);
-        refreshTokenDto.setExpiration(jwtService.extractExpiration(accessToken));
-        refreshTokenDto.setRefreshToken(newRefreshToken);
-
-        return refreshTokenDto;
+        RefreshTokenDto dto = new RefreshTokenDto();
+        dto.setAccessToken(accessToken);
+        dto.setExpiration(jwtService.extractExpiration(accessToken));
+        dto.setRefreshToken(createRefreshToken(userId));
+        return dto;
     }
 
-    @Transactional
     public void deleleTokenByUserId(UUID userId) {
         refreshTokenRepository.deleteByUserId(userId);
     }
