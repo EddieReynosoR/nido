@@ -63,7 +63,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NoRowsAffectedException.class)
     public ProblemDetail handleNoRowsAffected(NoRowsAffectedException ex) {
-        return build(404, ex, ex.getMessage());
+        return build(409, ex, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

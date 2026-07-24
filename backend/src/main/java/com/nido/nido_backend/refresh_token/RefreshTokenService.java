@@ -67,6 +67,7 @@ public class RefreshTokenService {
         return refreshTokenRepository.findByUserId(userId);
     }
 
+    @Transactional
     public boolean deleteToken(String rawToken) {
         if (rawToken == null || rawToken.isBlank())
             return false;
@@ -104,6 +105,7 @@ public class RefreshTokenService {
         return dto;
     }
 
+    @Transactional
     public void deleleTokenByUserId(UUID userId) {
         refreshTokenRepository.deleteByUserId(userId);
     }
