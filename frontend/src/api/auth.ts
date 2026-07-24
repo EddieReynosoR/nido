@@ -25,6 +25,10 @@ export async function executeFetch<T>(
       throw e;
     }
 
+    if (e instanceof TypeError) {
+      throw new TypeError(`Server cannot be fetched. ${e.message}.`);
+    }
+
     const message = e instanceof Error ? e.message : String(e);
     throw new Error(`There was an error: ${message}`);
   }

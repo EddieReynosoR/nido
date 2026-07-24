@@ -1,5 +1,12 @@
 import type { AuthContextType, LoginRequest } from '@/types/auth.types';
-import { createContext, useState, useEffect, useContext } from 'react';
+import {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+  useRef,
+} from 'react';
 import { useLogin } from '@/hooks/useLogin';
 import { useCsrf } from '@/hooks/useCsrf';
 import { useLogout } from '@/hooks/useLogout';
@@ -7,17 +14,16 @@ import {
   getCookie,
   isValidTokenResponse,
   isAuthenticated,
-  HttpError,
+  errorToast,
 } from '@/lib/utils';
 import { useRefreshToken } from '@/hooks/useRefreshToken';
 import { Outlet, useNavigate } from 'react-router';
-import { toast } from 'sonner';
+import { toast, Toaster } from 'sonner';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [csrfToken, setCsrfToken] = useState<string | undefined>(
     getCookie('XSRF-TOKEN')
   );
@@ -29,11 +35,11 @@ export function AuthProvider() {
   const { mutate: executeLogin, isPending: isLogin } = useLogin();
   const { mutate: executeLogout } = useLogout();
 
-  const finishLogout = () => {
+  const finishLogout = useCallback(() => {
     localStorage.removeItem('isAuthenticated');
     setAccessToken(null);
     navigate('/login');
-  };
+  }, []);
 
   const login = (request: LoginRequest) => {
     executeLogin(request, {
@@ -51,10 +57,10 @@ export function AuthProvider() {
         navigate('/');
       },
       onError: (error) => {
-        toast.error('Invalid email or password', {
-          description:
-            'Please check your credentials and try again. \n' + error.message,
-          position: 'bottom-right',
+        errorToast({
+          error,
+          title: 'Invalid email or password',
+          customMessage: 'Please check your credentials and try again.',
         });
       },
     });
@@ -74,18 +80,13 @@ export function AuthProvider() {
         finishLogout();
       },
       onError: (error) => {
-        const isServerError = error instanceof HttpError && error.status >= 500;
-
-        toast.error(isServerError ? 'Server Error' : 'Logout failed', {
-          description:
-            error instanceof Error ? error.message : 'Something went wrong',
-          position: 'bottom-right',
-        });
-
+        errorToast({ error, customMessage: 'Something went wrong' });
         finishLogout();
       },
     });
   };
+
+  const refreshAttempted = useRef(false);
 
   useEffect(() => {
     const authenticated = isAuthenticated();
@@ -107,14 +108,14 @@ export function AuthProvider() {
           setCsrfToken(token);
         },
         onError: (error) => {
-          toast.error('Security error', {
-            description: error.message,
-            position: 'bottom-right',
-          });
+          errorToast({ error, title: 'Security Error' });
         },
       });
       return;
     }
+
+    if (refreshAttempted.current) return;
+    refreshAttempted.current = true;
 
     refreshToken(csrfToken, {
       onSuccess: (data) => {
@@ -131,11 +132,12 @@ export function AuthProvider() {
         finishLogout();
       },
     });
-  }, [getCsrf, refreshToken, csrfToken]);
+  }, [getCsrf, refreshToken, csrfToken, finishLogout]);
 
   return (
-    <AuthContext value={{ accessToken, login, logout, isLoading, isLogin }}>
+    <AuthContext value={{ accessToken, login, logout, isLogin }}>
       <Outlet />
+      <Toaster />
     </AuthContext>
   );
 }

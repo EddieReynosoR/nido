@@ -15,64 +15,66 @@ import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ProblemDetail handleBadCredentials(BadCredentialsException ex) {
+        return build(401, ex, "The username or password is incorrect");
+    }
+
+    @ExceptionHandler(AccountStatusException.class)
+    public ProblemDetail handleAccountStatus(AccountStatusException ex) {
+        return build(403, ex, "The account is locked");
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
+        return build(403, ex, "You are not authorized to access this resource");
+    }
+
+    @ExceptionHandler(SignatureException.class)
+    public ProblemDetail handleSignature(SignatureException ex) {
+        return build(403, ex, "The JWT signature is invalid");
+    }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ProblemDetail handleExpiredJwt(ExpiredJwtException ex) {
+        return build(403, ex, "The JWT token has expired");
+    }
+
+    @ExceptionHandler(RefreshTokenNotValidException.class)
+    public ProblemDetail handleRefreshTokenInvalid(RefreshTokenNotValidException ex) {
+        return build(401, ex, "The refresh token was not valid.");
+    }
+
+    @ExceptionHandler(UserWithoutEmailException.class)
+    public ProblemDetail handleUserWithoutEmail(UserWithoutEmailException ex) {
+        return build(401, ex, "The user does not have an email.");
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ProblemDetail handleNoSuchElement(NoSuchElementException ex) {
+        return build(404, ex, ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ProblemDetail handleIllegalState(IllegalStateException ex) {
+        return build(500, ex, ex.getMessage());
+    }
+
+    @ExceptionHandler(NoRowsAffectedException.class)
+    public ProblemDetail handleNoRowsAffected(NoRowsAffectedException ex) {
+        return build(409, ex, ex.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
-    public ProblemDetail handleSecurityException(Exception exception) {
-        ProblemDetail errorDetail = null;
+    public ProblemDetail handleUnknown(Exception ex) {
+        return build(500, ex, "Unknown internal server error.");
+    }
 
-        exception.printStackTrace();
-
-        if (exception instanceof BadCredentialsException) {
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), exception.getMessage());
-            errorDetail.setProperty("description", "The username or password is incorrect");
-
-            return errorDetail;
-        }
-
-        if (exception instanceof AccountStatusException) {
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
-            errorDetail.setProperty("description", "The account is locked");
-        }
-
-        if (exception instanceof AccessDeniedException) {
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
-            errorDetail.setProperty("description", "You are not authorized to access this resource");
-        }
-
-        if (exception instanceof SignatureException) {
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
-            errorDetail.setProperty("description", "The JWT signature is invalid");
-        }
-
-        if (exception instanceof ExpiredJwtException) {
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
-            errorDetail.setProperty("description", "The JWT token has expired");
-        }
-
-        if (exception instanceof RefreshTokenNotValidException) {
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), exception.getMessage());
-            errorDetail.setProperty("description", "The refresh token was not valid.");
-        }
-
-        if (exception instanceof UserWithoutEmailException) {
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), exception.getMessage());
-            errorDetail.setProperty("description", "The user does not has an email.");
-        }
-
-        if (exception instanceof NoSuchElementException) {
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(404), exception.getMessage());
-            errorDetail.setProperty("description", exception.getMessage());
-        }
-
-        if (exception instanceof IllegalStateException) {
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), exception.getMessage());
-            errorDetail.setProperty("description", exception.getMessage());
-        }
-
-        if (errorDetail == null) {
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), exception.getMessage());
-            errorDetail.setProperty("description", "Unknown internal server error.");
-        }
-
-        return errorDetail;
+    private ProblemDetail build(int status, Exception ex, String description) {
+        ex.printStackTrace();
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(status), ex.getMessage());
+        detail.setProperty("description", description);
+        return detail;
     }
 }

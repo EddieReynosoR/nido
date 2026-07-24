@@ -2,6 +2,7 @@ package com.nido.nido_backend.refresh_token;
 
 import com.nido.nido_backend.auth.JwtService;
 import com.nido.nido_backend.refresh_token.dto.RefreshTokenDto;
+import com.nido.nido_backend.shared.exception.NoRowsAffectedException;
 import com.nido.nido_backend.shared.exception.RefreshTokenNotValidException;
 import com.nido.nido_backend.shared.exception.UserWithoutEmailException;
 import com.nido.nido_backend.user.UserService;
@@ -62,21 +63,18 @@ public class RefreshTokenService {
         }
     }
 
-    public RefreshTokenEntity findByTokenHash(String tokenHash) {
-        return refreshTokenRepository.findByTokenHash(tokenHash.trim())
-                .orElseThrow(RefreshTokenNotValidException::new);
-    }
-
     public Optional<RefreshTokenEntity> findByUserId(UUID userId) {
         return refreshTokenRepository.findByUserId(userId);
     }
 
     @Transactional
-    public void deleteToken(String tokenHash) {
-        if (tokenHash == null || tokenHash.isBlank())
-            return;
+    public boolean deleteToken(String rawToken) {
+        if (rawToken == null || rawToken.isBlank())
+            return false;
 
-        refreshTokenRepository.deleteByTokenHash(tokenHash);
+        String tokenHash = hashToken(rawToken);
+
+        return refreshTokenRepository.deleteByTokenHash(tokenHash) > 0;
     }
 
     @Transactional
@@ -84,28 +82,27 @@ public class RefreshTokenService {
         if (refreshToken == null || refreshToken.isBlank())
             throw new RefreshTokenNotValidException();
 
-        String tokenHash = hashToken(refreshToken);
-        RefreshTokenEntity token = findByTokenHash(tokenHash);
+        RefreshTokenEntity entity = refreshTokenRepository
+                .findByTokenHash(hashToken(refreshToken))
+                .orElseThrow(RefreshTokenNotValidException::new);
 
-        if (token.getExpiresAt().isBefore(LocalDateTime.now()))
+        if (entity.getExpiresAt().isBefore(LocalDateTime.now()))
             throw new RefreshTokenNotValidException();
 
-        UUID userId = token.getUserId();
-        Optional<String> userEmail = userService.getUserEmail(userId);
+        if (refreshTokenRepository.deleteByRefreshTokenId(entity.getRefreshTokenId()) == 0)
+            throw new NoRowsAffectedException("No refresh token was deleted.");
 
-        if (userEmail.isEmpty())
-            throw new UserWithoutEmailException();
+        UUID userId = entity.getUserId();
+        String email = userService
+                .getUserEmail(userId).orElseThrow(UserWithoutEmailException::new);
 
-        deleteToken(tokenHash);
-        String accessToken = jwtService.generateToken(userEmail.get());
-        String newRefreshToken = createRefreshToken(userId);
+        String accessToken = jwtService.generateToken(email);
 
-        RefreshTokenDto refreshTokenDto = new RefreshTokenDto();
-        refreshTokenDto.setAccessToken(accessToken);
-        refreshTokenDto.setExpiration(jwtService.extractExpiration(accessToken));
-        refreshTokenDto.setRefreshToken(newRefreshToken);
-
-        return refreshTokenDto;
+        RefreshTokenDto dto = new RefreshTokenDto();
+        dto.setAccessToken(accessToken);
+        dto.setExpiration(jwtService.extractExpiration(accessToken));
+        dto.setRefreshToken(createRefreshToken(userId));
+        return dto;
     }
 
     @Transactional
