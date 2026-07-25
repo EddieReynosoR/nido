@@ -1,23 +1,22 @@
-import type { AuthContextType, LoginRequest } from '@/types/auth.types';
+import type {
+  AuthStatus,
+  AuthContextType,
+  LoginRequest,
+} from '@/types/auth.types';
 import {
   createContext,
   useState,
   useEffect,
   useContext,
-  useCallback,
   useRef,
 } from 'react';
 import { useLogin } from '@/hooks/useLogin';
 import { useCsrf } from '@/hooks/useCsrf';
 import { useLogout } from '@/hooks/useLogout';
-import {
-  getCookie,
-  isValidTokenResponse,
-  isAuthenticated,
-  errorToast,
-} from '@/lib/utils';
+import { errorToast } from '@/lib/toast';
+import { isValidTokenResponse, getCookie, isAuthenticated } from '@/lib/auth';
 import { useRefreshToken } from '@/hooks/useRefreshToken';
-import { Outlet, useNavigate } from 'react-router';
+import { Outlet, useLocation, useNavigate } from 'react-router';
 import { toast, Toaster } from 'sonner';
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -27,19 +26,24 @@ export function AuthProvider() {
   const [csrfToken, setCsrfToken] = useState<string | undefined>(
     getCookie('XSRF-TOKEN')
   );
+  const [status, setStatus] = useState<AuthStatus>('loading');
 
+  const location = useLocation();
   const navigate = useNavigate();
 
+  const from = location.state?.from?.pathname ?? '/';
+
   const { mutate: getCsrf } = useCsrf();
-  const { mutate: refreshToken } = useRefreshToken();
+  const { mutateAsync: refreshTokenAsync } = useRefreshToken();
   const { mutate: executeLogin, isPending: isLogin } = useLogin();
   const { mutate: executeLogout } = useLogout();
 
-  const finishLogout = useCallback(() => {
+  const finishLogout = () => {
     localStorage.removeItem('isAuthenticated');
     setAccessToken(null);
     navigate('/login');
-  }, []);
+    setStatus('guest');
+  };
 
   const login = (request: LoginRequest) => {
     executeLogin(request, {
@@ -54,7 +58,8 @@ export function AuthProvider() {
 
         localStorage.setItem('isAuthenticated', 'true');
         setAccessToken(data.accessToken);
-        navigate('/');
+        setStatus('authed');
+        navigate(from);
       },
       onError: (error) => {
         errorToast({
@@ -67,7 +72,7 @@ export function AuthProvider() {
   };
 
   const logout = () => {
-    if (!isAuthenticated()) {
+    if (!accessToken) {
       toast.error('User not authenticated', {
         description: "There's no authenticated user.",
         position: 'bottom-right',
@@ -94,10 +99,6 @@ export function AuthProvider() {
   const refreshAttempted = useRef(false);
 
   useEffect(() => {
-    const authenticated = isAuthenticated();
-
-    if (!authenticated) return;
-
     if (!csrfToken) {
       getCsrf(undefined, {
         onSuccess: () => {
@@ -114,6 +115,7 @@ export function AuthProvider() {
         },
         onError: (error) => {
           errorToast({ error, title: 'Security Error' });
+          setStatus('guest');
         },
       });
       return;
@@ -122,30 +124,15 @@ export function AuthProvider() {
     if (refreshAttempted.current) return;
     refreshAttempted.current = true;
 
-<<<<<<< Updated upstream
-    refreshToken(csrfToken, {
-      onSuccess: (data) => {
-=======
     (async () => {
       try {
         const data = await refreshTokenAsync(csrfToken);
->>>>>>> Stashed changes
+
         if (!isValidTokenResponse(data)) {
-          console.warn('There was a problem with the Refresh Token');
-          localStorage.removeItem('isAuthenticated');
+          setStatus('guest');
           return;
         }
-
         setAccessToken(data.accessToken);
-<<<<<<< Updated upstream
-      },
-      onError: () => {
-        console.warn('There was a problem with the Refresh Token');
-        finishLogout();
-      },
-    });
-  }, [getCsrf, refreshToken, csrfToken, finishLogout]);
-=======
         setStatus('authed');
       } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error));
@@ -158,10 +145,9 @@ export function AuthProvider() {
       }
     })();
   }, [getCsrf, refreshTokenAsync, csrfToken]);
->>>>>>> Stashed changes
 
   return (
-    <AuthContext value={{ accessToken, login, logout, isLogin }}>
+    <AuthContext value={{ accessToken, status, login, logout, isLogin }}>
       <Outlet />
       <Toaster />
     </AuthContext>
