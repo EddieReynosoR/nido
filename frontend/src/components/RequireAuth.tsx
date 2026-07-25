@@ -5,9 +5,7 @@ export default function RequireAuth() {
   const { status } = useAuth();
   const location = useLocation();
 
-  console.log(status);
-
-  if (status === 'loading') return <div>Cargando...</div>;
+  if (status === 'loading') return <div>Loading...</div>;
 
   if (status === 'guest')
     return <Navigate to="/login" replace state={{ from: location }} />;

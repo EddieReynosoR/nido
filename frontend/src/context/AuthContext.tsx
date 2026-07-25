@@ -35,16 +35,16 @@ export function AuthProvider() {
   const from = location.state?.from?.pathname ?? '/';
 
   const { mutate: getCsrf } = useCsrf();
-  const { mutateAsync: refreshToken } = useRefreshToken();
+  const { mutateAsync: refreshTokenAsync } = useRefreshToken();
   const { mutate: executeLogin, isPending: isLogin } = useLogin();
   const { mutate: executeLogout } = useLogout();
 
-  const finishLogout = useCallback(() => {
+  const finishLogout = () => {
     localStorage.removeItem('isAuthenticated');
     setAccessToken(null);
     navigate('/login');
     setStatus('guest');
-  }, []);
+  };
 
   const login = (request: LoginRequest) => {
     executeLogin(request, {
@@ -111,6 +111,7 @@ export function AuthProvider() {
         },
         onError: (error) => {
           errorToast({ error, title: 'Security Error' });
+          setStatus('guest');
         },
       });
       return;
@@ -120,25 +121,30 @@ export function AuthProvider() {
     refreshAttempted.current = true;
 
     if (!isAuthenticated()) {
-      setStatus('guest'); // nunca ha iniciado sesión → ni lo intentes
+      setStatus('guest');
       return;
     }
 
     (async () => {
       try {
-        const data = await refreshToken(csrfToken);
+        const data = await refreshTokenAsync(csrfToken);
         if (!isValidTokenResponse(data)) {
           setStatus('guest');
           return;
         }
         setAccessToken(data.accessToken);
         setStatus('authed');
-      } catch {
+      } catch(error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+
+        errorToast({error: err, title: 'Authentication Refreshing Error'});
+
+        localStorage.removeItem('isAuthenticated');
         setAccessToken(null);
         setStatus('guest');
       }
     })();
-  }, [getCsrf, refreshToken, csrfToken]);
+  }, [getCsrf, refreshTokenAsync, csrfToken]);
 
   return (
     <AuthContext value={{ accessToken, status, login, logout, isLogin }}>
