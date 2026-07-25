@@ -86,6 +86,11 @@ export function AuthProvider() {
     });
   };
 
+  if (!isAuthenticated()) {
+    setStatus('guest');
+    return;
+  }
+
   const refreshAttempted = useRef(false);
 
   useEffect(() => {
@@ -117,8 +122,14 @@ export function AuthProvider() {
     if (refreshAttempted.current) return;
     refreshAttempted.current = true;
 
+<<<<<<< Updated upstream
     refreshToken(csrfToken, {
       onSuccess: (data) => {
+=======
+    (async () => {
+      try {
+        const data = await refreshTokenAsync(csrfToken);
+>>>>>>> Stashed changes
         if (!isValidTokenResponse(data)) {
           console.warn('There was a problem with the Refresh Token');
           localStorage.removeItem('isAuthenticated');
@@ -126,6 +137,7 @@ export function AuthProvider() {
         }
 
         setAccessToken(data.accessToken);
+<<<<<<< Updated upstream
       },
       onError: () => {
         console.warn('There was a problem with the Refresh Token');
@@ -133,6 +145,20 @@ export function AuthProvider() {
       },
     });
   }, [getCsrf, refreshToken, csrfToken, finishLogout]);
+=======
+        setStatus('authed');
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+
+        errorToast({ error: err, title: 'Authentication Refreshing Error' });
+
+        localStorage.removeItem('isAuthenticated');
+        setAccessToken(null);
+        setStatus('guest');
+      }
+    })();
+  }, [getCsrf, refreshTokenAsync, csrfToken]);
+>>>>>>> Stashed changes
 
   return (
     <AuthContext value={{ accessToken, login, logout, isLogin }}>
