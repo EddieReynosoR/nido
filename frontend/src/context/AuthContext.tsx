@@ -92,6 +92,11 @@ export function AuthProvider() {
     });
   };
 
+  if (!isAuthenticated()) {
+    setStatus('guest');
+    return;
+  }
+
   const refreshAttempted = useRef(false);
 
   useEffect(() => {
@@ -120,24 +125,20 @@ export function AuthProvider() {
     if (refreshAttempted.current) return;
     refreshAttempted.current = true;
 
-    if (!isAuthenticated()) {
-      setStatus('guest');
-      return;
-    }
-
     (async () => {
       try {
         const data = await refreshTokenAsync(csrfToken);
+
         if (!isValidTokenResponse(data)) {
           setStatus('guest');
           return;
         }
         setAccessToken(data.accessToken);
         setStatus('authed');
-      } catch(error) {
+      } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error));
 
-        errorToast({error: err, title: 'Authentication Refreshing Error'});
+        errorToast({ error: err, title: 'Authentication Refreshing Error' });
 
         localStorage.removeItem('isAuthenticated');
         setAccessToken(null);
