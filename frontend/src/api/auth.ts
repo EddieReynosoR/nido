@@ -1,5 +1,5 @@
 import type { LoginRequest, TokenResponse } from '@/types/auth.types';
-import { HttpError } from '@/lib/utils';
+import { HttpError } from '@/lib/http';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
