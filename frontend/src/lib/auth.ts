@@ -28,3 +28,7 @@ export const getCookie = (name: string): string | undefined => {
     .find((cookie) => cookie.startsWith(`${name}=`))
     ?.split('=')[1];
 };
+
+export const isAuthenticated = (): boolean => {
+  return localStorage.getItem('isAuthenticated') === 'true';
+};

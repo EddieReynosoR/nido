@@ -15,7 +15,7 @@ import { useLogin } from '@/hooks/useLogin';
 import { useCsrf } from '@/hooks/useCsrf';
 import { useLogout } from '@/hooks/useLogout';
 import { errorToast } from '@/lib/toast';
-import { isValidTokenResponse, getCookie } from '@/lib/auth';
+import { isValidTokenResponse, getCookie, isAuthenticated } from '@/lib/auth';
 import { useRefreshToken } from '@/hooks/useRefreshToken';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { toast, Toaster } from 'sonner';
@@ -40,6 +40,7 @@ export function AuthProvider() {
   const { mutate: executeLogout } = useLogout();
 
   const finishLogout = useCallback(() => {
+    localStorage.removeItem('isAuthenticated');
     setAccessToken(null);
     navigate('/login');
     setStatus('guest');
@@ -56,6 +57,7 @@ export function AuthProvider() {
           return;
         }
 
+        localStorage.setItem('isAuthenticated', 'true');
         setAccessToken(data.accessToken);
         setStatus('authed');
         navigate(from);
@@ -116,6 +118,11 @@ export function AuthProvider() {
 
     if (refreshAttempted.current) return;
     refreshAttempted.current = true;
+
+    if (!isAuthenticated()) {
+      setStatus('guest'); // nunca ha iniciado sesión → ni lo intentes
+      return;
+    }
 
     (async () => {
       try {

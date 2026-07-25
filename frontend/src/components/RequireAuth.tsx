@@ -5,7 +5,7 @@ export default function RequireAuth() {
   const { status } = useAuth();
   const location = useLocation();
 
-  console.log(status)
+  console.log(status);
 
   if (status === 'loading') return <div>Cargando...</div>;
 
