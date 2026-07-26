@@ -45,10 +45,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             username = jwtService.extractUsername(token);
         } catch (ExpiredJwtException e) {
-            writeUnauthorized(response, "The access token expired");
+            writeUnauthorized(response, "expired_token", "The access token expired");
             return;
         } catch (JwtException | IllegalArgumentException e) {
-            writeUnauthorized(response, "The access token is invalid");
+            writeUnauthorized(response, "invalid_token", "The access token is invalid");
             return;
         }
 
@@ -72,12 +72,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private void writeUnauthorized(HttpServletResponse response, String description) throws IOException {
+    private void writeUnauthorized(HttpServletResponse response, String error, String description) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setHeader(HttpHeaders.WWW_AUTHENTICATE,
-                "Bearer error=invalid_token, error_description=\"" + description + "\"");
+                "Bearer error=\"" + error + "\", error_description=\"" + description + "\"");
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write("""
-            {"error":"%s","message":"%s"}""".formatted("invalid_token", description));
+            {"error":"%s","message":"%s"}""".formatted(error, description));
     }
 }
