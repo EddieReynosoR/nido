@@ -1,6 +1,7 @@
 import type { LoginRequest, TokenResponse } from '@/types/auth.types';
-import { HttpError } from '@/lib/http';
+import { HttpError, TokenError } from '@/lib/http';
 import { hasProp } from '@/lib/auth';
+import { TOKEN_ERROR_CODES, type TokenErrorCode } from '@/lib/http';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -18,9 +19,9 @@ export async function executeFetch<T>(
       if (
         res.status === 401 &&
         hasProp(data, 'error') &&
-        data.error === 'invalid_token'
+        TOKEN_ERROR_CODES.includes(data.error as TokenErrorCode)
       ) {
-        throw new HttpError('accessToken expired.', res.status);
+        throw new TokenError(data.error as TokenErrorCode);
       }
 
       throw new HttpError(
@@ -32,7 +33,7 @@ export async function executeFetch<T>(
     const text = await res.text();
     return text ? (JSON.parse(text) as T) : null;
   } catch (e) {
-    if (e instanceof HttpError) {
+    if (e instanceof HttpError || e instanceof TokenError) {
       throw e;
     }
 
