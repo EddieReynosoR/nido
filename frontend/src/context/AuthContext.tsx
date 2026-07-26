@@ -3,13 +3,7 @@ import type {
   AuthContextType,
   LoginRequest,
 } from '@/types/auth.types';
-import {
-  createContext,
-  useState,
-  useEffect,
-  useContext,
-  useRef,
-} from 'react';
+import { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { useLogin } from '@/hooks/useLogin';
 import { useCsrf } from '@/hooks/useCsrf';
 import { useLogout } from '@/hooks/useLogout';

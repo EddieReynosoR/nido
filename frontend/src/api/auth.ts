@@ -1,5 +1,6 @@
 import type { LoginRequest, TokenResponse } from '@/types/auth.types';
 import { HttpError } from '@/lib/http';
+import { hasProp } from '@/lib/auth';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -12,6 +13,16 @@ export async function executeFetch<T>(
     const res = await fetch(url, props);
 
     if (!res.ok) {
+      const data = await res.json().catch(() => null);
+
+      if (
+        res.status === 401 &&
+        hasProp(data, 'error') &&
+        data.error === 'invalid_token'
+      ) {
+        throw new HttpError('accessToken expired.', res.status);
+      }
+
       throw new HttpError(
         `${errorMessage} Response status: ${res.status}`,
         res.status
