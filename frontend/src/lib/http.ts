@@ -17,7 +17,7 @@ export class HttpError extends Error {
 export class TokenError extends Error {
   typeError: TokenErrorCode;
   constructor(typeError: TokenErrorCode) {
-    super();
+    super(`Token error: ${typeError}`);
     this.typeError = typeError;
   }
 }
