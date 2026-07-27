@@ -4,7 +4,12 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -75,7 +80,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ProblemDetail handleNoRowsAffected(NoRowsAffectedException ex) {
         log.warn("No rows affected: {}", ex.getMessage());
         return build(HttpStatus.CONFLICT, "Operation conflict",
-                "no_rows_affected", ex.getMessage());
+                "no_rows_affected", "No data was affected");
     }
 
     @ExceptionHandler(NoSuchElementException.class)

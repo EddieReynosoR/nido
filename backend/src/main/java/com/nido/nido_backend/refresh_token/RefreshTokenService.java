@@ -3,6 +3,7 @@ package com.nido.nido_backend.refresh_token;
 import com.nido.nido_backend.auth.JwtService;
 import com.nido.nido_backend.refresh_token.dto.RefreshTokenDto;
 import com.nido.nido_backend.shared.exception.NoRowsAffectedException;
+import com.nido.nido_backend.shared.exception.RefreshTokenExpiredException;
 import com.nido.nido_backend.shared.exception.RefreshTokenInvalidException;
 import com.nido.nido_backend.shared.exception.UserWithoutEmailException;
 import com.nido.nido_backend.user.UserService;
@@ -87,7 +88,7 @@ public class RefreshTokenService {
                 .orElseThrow(RefreshTokenInvalidException::new);
 
         if (entity.getExpiresAt().isBefore(LocalDateTime.now()))
-            throw new RefreshTokenInvalidException();
+            throw new RefreshTokenExpiredException();
 
         if (refreshTokenRepository.deleteByRefreshTokenId(entity.getRefreshTokenId()) == 0)
             throw new NoRowsAffectedException("No refresh token was deleted.");
