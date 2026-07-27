@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -43,7 +44,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RefreshTokenNotValidException.class)
     public ProblemDetail handleRefreshTokenInvalid(RefreshTokenNotValidException ex) {
-        return build(401, ex, "The refresh token was not valid.");
+        return build(401, ex, "refresh_token_invalid", "The refresh token was not valid.");
+    }
+
+    @ExceptionHandler(RefreshTokenExpiredException.class)
+    public ProblemDetail handleRefreshTokenExpired(RefreshTokenExpiredException ex) {
+        return build(401, ex, "refresh_token_expired","The refresh token was not valid.");
     }
 
     @ExceptionHandler(UserWithoutEmailException.class)
@@ -71,10 +77,19 @@ public class GlobalExceptionHandler {
         return build(500, ex, "Unknown internal server error.");
     }
 
-    private ProblemDetail build(int status, Exception ex, String description) {
+    private ProblemDetail build(int status, Exception ex, String error, String description) {
         ex.printStackTrace();
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(status), ex.getMessage());
-        detail.setProperty("description", description);
+
+        if (error != null) {
+            detail.setProperty("error", error);
+        }
+
+        detail.setProperty("error_description", description);
         return detail;
+    }
+
+    private ProblemDetail build(int status, Exception ex, String description) {
+        return build(status, ex, null, description);
     }
 }

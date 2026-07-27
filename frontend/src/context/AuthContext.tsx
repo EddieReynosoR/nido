@@ -3,13 +3,7 @@ import type {
   AuthContextType,
   LoginRequest,
 } from '@/types/auth.types';
-import {
-  createContext,
-  useState,
-  useEffect,
-  useContext,
-  useRef,
-} from 'react';
+import { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { useLogin } from '@/hooks/useLogin';
 import { useCsrf } from '@/hooks/useCsrf';
 import { useLogout } from '@/hooks/useLogout';
@@ -18,6 +12,7 @@ import { isValidTokenResponse, getCookie, isAuthenticated } from '@/lib/auth';
 import { useRefreshToken } from '@/hooks/useRefreshToken';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { toast, Toaster } from 'sonner';
+import { TokenError } from '@/lib/http';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -91,11 +86,6 @@ export function AuthProvider() {
     });
   };
 
-  if (!isAuthenticated()) {
-    setStatus('guest');
-    return;
-  }
-
   const refreshAttempted = useRef(false);
 
   useEffect(() => {
@@ -121,6 +111,11 @@ export function AuthProvider() {
       return;
     }
 
+    if (!isAuthenticated()) {
+      setStatus('guest');
+      return;
+    }
+
     if (refreshAttempted.current) return;
     refreshAttempted.current = true;
 
@@ -132,9 +127,25 @@ export function AuthProvider() {
           setStatus('guest');
           return;
         }
+
         setAccessToken(data.accessToken);
         setStatus('authed');
       } catch (error) {
+        if (error instanceof TokenError) {
+          if (
+            error.typeError === 'refresh_token_invalid' ||
+            error.typeError === 'refresh_token_expired'
+          ) {
+            toast.error('Session expired', {
+              description: 'Please sign in again',
+              position: 'bottom-right',
+            });
+
+            finishLogout();
+            return;
+          }
+        }
+
         const err = error instanceof Error ? error : new Error(String(error));
 
         errorToast({ error: err, title: 'Authentication Refreshing Error' });
