@@ -6,6 +6,7 @@ import App from './App';
 
 import { AuthProvider } from './context/AuthContext';
 import RequireAuth from './components/RequireAuth';
+import LandingPage from './pages/LandingPage';
 
 export const router = createBrowserRouter([
   {
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
         ],
       },
       { path: 'login', Component: LoginPage },
+      { path: 'home', Component: LandingPage },
     ],
   },
 ]);

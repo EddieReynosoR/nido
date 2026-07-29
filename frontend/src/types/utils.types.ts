@@ -3,3 +3,5 @@ export interface ErrorToastOptions {
   title?: string;
   customMessage?: string;
 }
+
+export type Theme = 'dark' | 'light';
