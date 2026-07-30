@@ -13,6 +13,7 @@ import { useRefreshToken } from '@/hooks/useRefreshToken';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { toast, Toaster } from 'sonner';
 import { TokenError } from '@/lib/http';
+import ThemeToogle from '@/components/ThemeToogle';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
