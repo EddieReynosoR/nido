@@ -1,3 +1,7 @@
+BEGIN;
+
+SET search_path TO nido;
+
 CREATE TABLE IF NOT EXISTS spaces (
     space_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(50) NOT NULL,
@@ -64,3 +68,5 @@ CREATE INDEX IF NOT EXISTS idx_topics_space_id ON topics(space_id);
 CREATE INDEX IF NOT EXISTS idx_topics_parent_id ON topics(parent_topic_id);
 CREATE INDEX IF NOT EXISTS idx_notes_topic_id ON notes(topic_id);
 CREATE INDEX IF NOT EXISTS idx_diagrams_note_id ON diagrams(note_id);
+
+COMMIT;
