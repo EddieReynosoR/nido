@@ -40,10 +40,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         final String token = authHeader.substring(7);
-        final String username;
+        final String userId;
 
         try {
-            username = jwtService.extractUsername(token);
+            userId = jwtService.extractUserId(token);
         } catch (ExpiredJwtException e) {
             writeUnauthorized(response, "expired_token", "The access token expired");
             return;
@@ -52,21 +52,27 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (username == null || SecurityContextHolder.getContext().getAuthentication() != null) {
+        if (userId == null || SecurityContextHolder.getContext().getAuthentication() != null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        try {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
 
-        if (jwtService.validateToken(token, userDetails)) {
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    null,
-                    userDetails.getAuthorities());
+            if (jwtService.validateToken(token, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities());
 
-            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+        catch (IllegalArgumentException e) {
+            writeUnauthorized(response, "invalid_token", "The access token is invalid");
+            return;
         }
 
         filterChain.doFilter(request, response);

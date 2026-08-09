@@ -90,6 +90,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "not_found", "The requested resource was not found");
     }
 
+    @ExceptionHandler(RecordAlreadyExists.class)
+    public ProblemDetail handleRecordAlreadyExists(RecordAlreadyExists ex) {
+        log.warn("Record already exists: {}", ex.getMessage());
+        return build(HttpStatus.CONFLICT, "Record already exists", "already_exists", ex.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnknown(Exception ex) {
         log.error("Unhandled exception", ex);

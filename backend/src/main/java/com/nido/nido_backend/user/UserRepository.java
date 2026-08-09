@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
+    Optional<UserEntity> findByUserId(UUID userId);
+
     Optional<UserEntity> findByEmail(String email);
 
     @Query("select u.email from UserEntity u where u.userId=:userId")

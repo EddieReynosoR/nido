@@ -5,8 +5,6 @@ import com.nido.nido_backend.refresh_token.dto.RefreshTokenDto;
 import com.nido.nido_backend.shared.exception.NoRowsAffectedException;
 import com.nido.nido_backend.shared.exception.RefreshTokenExpiredException;
 import com.nido.nido_backend.shared.exception.RefreshTokenInvalidException;
-import com.nido.nido_backend.shared.exception.UserWithoutEmailException;
-import com.nido.nido_backend.user.UserService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -24,12 +22,10 @@ import java.util.UUID;
 public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
-    private final UserService userService;
     private final JwtService jwtService;
 
-    public RefreshTokenService(RefreshTokenRepository refreshTokenRepository, UserService userService, JwtService jwtService) {
+    public RefreshTokenService(RefreshTokenRepository refreshTokenRepository, JwtService jwtService) {
         this.refreshTokenRepository = refreshTokenRepository;
-        this.userService = userService;
         this.jwtService = jwtService;
     }
 
@@ -69,13 +65,14 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public boolean deleteToken(String rawToken) {
+    public void deleteToken(String rawToken) {
         if (rawToken == null || rawToken.isBlank())
-            return false;
+            return;
 
         String tokenHash = hashToken(rawToken);
 
-        return refreshTokenRepository.deleteByTokenHash(tokenHash) > 0;
+        if (refreshTokenRepository.deleteByTokenHash(tokenHash) == 0)
+            throw new NoRowsAffectedException("No refresh token was deleted.");
     }
 
     @Transactional
@@ -94,10 +91,8 @@ public class RefreshTokenService {
             throw new NoRowsAffectedException("No refresh token was deleted.");
 
         UUID userId = entity.getUserId();
-        String email = userService
-                .getUserEmail(userId).orElseThrow(UserWithoutEmailException::new);
 
-        String accessToken = jwtService.generateToken(email);
+        String accessToken = jwtService.generateToken(userId);
 
         RefreshTokenDto dto = new RefreshTokenDto();
         dto.setAccessToken(accessToken);
