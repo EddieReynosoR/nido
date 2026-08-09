@@ -2,8 +2,10 @@ package com.nido.nido_backend.spaces.dto;
 
 import com.nido.nido_backend.spaces.SpaceEntity;
 
-public record SpaceResponse(String name) {
+import java.util.UUID;
+
+public record SpaceResponse(UUID spaceId, String name) {
     public static SpaceResponse from(SpaceEntity e) {
-        return new SpaceResponse(e.getName());
+        return new SpaceResponse(e.getSpaceId(), e.getName());
     }
 }

@@ -65,13 +65,14 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public boolean deleteToken(String rawToken) {
+    public void deleteToken(String rawToken) {
         if (rawToken == null || rawToken.isBlank())
-            return false;
+            return;
 
         String tokenHash = hashToken(rawToken);
 
-        return refreshTokenRepository.deleteByTokenHash(tokenHash) > 0;
+        if (refreshTokenRepository.deleteByTokenHash(tokenHash) == 0)
+            throw new NoRowsAffectedException("No refresh token was deleted.");
     }
 
     @Transactional
