@@ -1,6 +1,12 @@
 package com.nido.nido_backend.user;
 
 import com.nido.nido_backend.user.dto.RegisterUserDto;
+import org.jspecify.annotations.Nullable;
+import org.springframework.context.annotation.Primary;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -8,13 +14,13 @@ import java.time.ZoneId;
 import java.util.*;
 
 @Service
-public class UserService {
+@Primary
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder encoder;
 
     public UserService(UserRepository userRepository, PasswordEncoder encoder) {
-
         this.userRepository = userRepository;
         this.encoder = encoder;
     }
@@ -44,5 +50,11 @@ public class UserService {
         user.setUpdatedAt(new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
 
         return userRepository.save(user);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
+        return userRepository.findByUserId(UUID.fromString(userId))
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 }

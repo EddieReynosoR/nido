@@ -46,7 +46,7 @@ public class AuthService {
         UserEntity user = authenticate(request);
         refreshTokenService.deleleTokenByUserId(user.getUserId());
 
-        String accessToken = jwtService.generateToken(user.getEmail());
+        String accessToken = jwtService.generateToken(user.getUserId());
         String refreshToken = refreshTokenService.createRefreshToken(user.getUserId());
 
         RefreshTokenDto refreshTokenDto = new RefreshTokenDto();

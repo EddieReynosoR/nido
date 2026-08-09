@@ -40,10 +40,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         final String token = authHeader.substring(7);
-        final String username;
+        final String userId;
 
         try {
-            username = jwtService.extractUsername(token);
+            userId = jwtService.extractUserId(token);
         } catch (ExpiredJwtException e) {
             writeUnauthorized(response, "expired_token", "The access token expired");
             return;
@@ -52,12 +52,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (username == null || SecurityContextHolder.getContext().getAuthentication() != null) {
+        if (userId == null || SecurityContextHolder.getContext().getAuthentication() != null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
 
         if (jwtService.validateToken(token, userDetails)) {
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

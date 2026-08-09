@@ -2,7 +2,6 @@ package com.nido.nido_backend.config;
 
 import com.nido.nido_backend.auth.JwtAuthFilter;
 import com.nido.nido_backend.shared.util.CorsProperties;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
