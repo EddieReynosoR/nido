@@ -4,6 +4,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.HttpStatus;
@@ -94,6 +95,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ProblemDetail handleRecordAlreadyExists(RecordAlreadyExists ex) {
         log.warn("Record already exists: {}", ex.getMessage());
         return build(HttpStatus.CONFLICT, "Record already exists", "already_exists", ex.getMessage());
+    }
+
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ProblemDetail handleInvalidSortProperty(PropertyReferenceException ex) {
+        log.warn("Invalid sort property: {}", ex.getPropertyName());
+        return build(HttpStatus.BAD_REQUEST, "Invalid sort property", "invalid_sort",
+                "Unknown sort property: " + ex.getPropertyName());
     }
 
     @ExceptionHandler(Exception.class)
