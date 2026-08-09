@@ -96,6 +96,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return build(HttpStatus.CONFLICT, "Record already exists", "already_exists", ex.getMessage());
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("Illegal argument catched: {}", ex.getMessage());
+        return build(HttpStatus.BAD_REQUEST, "Illegal argument", "illegal_argument", ex.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnknown(Exception ex) {
         log.error("Unhandled exception", ex);
