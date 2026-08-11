@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import Sidebar from '@/components/Sidebar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 
@@ -6,9 +6,9 @@ export default function HomePage() {
   const { logout } = useAuth();
 
   return (
-    <div className="flex flex-col">
-      <Link to="/login">Go to Login Page</Link>
+    <main className="flex h-screen w-full overflow-hidden bg-background">
+      <Sidebar />
       <Button onClick={logout}>Logout</Button>
-    </div>
+    </main>
   );
 }
