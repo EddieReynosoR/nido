@@ -11,12 +11,12 @@ import {
   useRef,
   useCallback,
 } from 'react';
-import { useLogin } from '@/hooks/useLogin';
-import { useCsrf } from '@/hooks/useCsrf';
-import { useLogout } from '@/hooks/useLogout';
+import { useLogin } from '@/hooks/use-login';
+import { useCsrf } from '@/hooks/use-csrf';
+import { useLogout } from '@/hooks/use-logout';
 import { errorToast } from '@/lib/toast';
 import { isValidTokenResponse, getCookie, isAuthenticated } from '@/lib/auth';
-import { useRefreshToken } from '@/hooks/useRefreshToken';
+import { useRefreshToken } from '@/hooks/use-refresh-token';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { toast, Toaster } from 'sonner';
 import { TokenError } from '@/lib/http';
