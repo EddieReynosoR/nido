@@ -48,9 +48,9 @@ backend/build/
 !backend/**/src/test/**/build/
 
 # ======================
-# FRONTEND (ANGULAR)
+# FRONTEND (REACT + VITE)
 # ======================
 frontend/node_modules/
 frontend/dist/
-frontend/.angular/
-frontend/.cache/
+frontend/.vite/
+frontend/*.local
