@@ -1,5 +1,7 @@
 import { Plus, Folder, CircleUser, ChevronRight } from 'lucide-react';
-import SpaceSwitcher from '@/components/SpaceSwitcher';
+import SpaceSwitcher, {
+  SpaceSwitcherSkeleton,
+} from '@/components/SpaceSwitcher';
 import {
   Sidebar,
   SidebarContent,
@@ -29,7 +31,7 @@ const folders = [
 
 export default function AppSidebar() {
   const { accessToken } = useAuth();
-  const { data: spaces } = useSpaces(accessToken);
+  const { data: spaces, isLoading } = useSpaces(accessToken);
 
   console.log(spaces);
 
@@ -57,7 +59,11 @@ export default function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
 
-        <SpaceSwitcher />
+        {isLoading ? (
+          <SpaceSwitcherSkeleton />
+        ) : spaces?.content.length ? (
+          <SpaceSwitcher spaces={spaces} />
+        ) : null}
       </SidebarHeader>
 
       <SidebarContent>
