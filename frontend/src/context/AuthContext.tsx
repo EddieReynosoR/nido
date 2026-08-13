@@ -3,17 +3,23 @@ import type {
   AuthContextType,
   LoginRequest,
 } from '@/types/auth.types';
-import { createContext, useState, useEffect, useContext, useRef } from 'react';
-import { useLogin } from '@/hooks/useLogin';
-import { useCsrf } from '@/hooks/useCsrf';
-import { useLogout } from '@/hooks/useLogout';
+import {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+  useCallback,
+} from 'react';
+import { useLogin } from '@/hooks/use-login';
+import { useCsrf } from '@/hooks/use-csrf';
+import { useLogout } from '@/hooks/use-logout';
 import { errorToast } from '@/lib/toast';
 import { isValidTokenResponse, getCookie, isAuthenticated } from '@/lib/auth';
-import { useRefreshToken } from '@/hooks/useRefreshToken';
+import { useRefreshToken } from '@/hooks/use-refresh-token';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { toast, Toaster } from 'sonner';
 import { TokenError } from '@/lib/http';
-import ThemeToogle from '@/components/ThemeToogle';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -34,12 +40,12 @@ export function AuthProvider() {
   const { mutate: executeLogin, isPending: isLogin } = useLogin();
   const { mutate: executeLogout } = useLogout();
 
-  const finishLogout = () => {
+  const finishLogout = useCallback(() => {
     localStorage.removeItem('isAuthenticated');
     setAccessToken(null);
     navigate('/login');
     setStatus('guest');
-  };
+  }, [navigate]);
 
   const login = (request: LoginRequest) => {
     executeLogin(request, {
@@ -100,6 +106,8 @@ export function AuthProvider() {
                 'Could not initialize a secure session. Please reload the page.',
               position: 'bottom-right',
             });
+
+            setStatus('guest');
             return;
           }
           setCsrfToken(token);
@@ -125,7 +133,7 @@ export function AuthProvider() {
         const data = await refreshTokenAsync(csrfToken);
 
         if (!isValidTokenResponse(data)) {
-          setStatus('guest');
+          finishLogout();
           return;
         }
 
@@ -150,13 +158,10 @@ export function AuthProvider() {
         const err = error instanceof Error ? error : new Error(String(error));
 
         errorToast({ error: err, title: 'Authentication Refreshing Error' });
-
-        localStorage.removeItem('isAuthenticated');
-        setAccessToken(null);
-        setStatus('guest');
+        finishLogout();
       }
     })();
-  }, [getCsrf, refreshTokenAsync, csrfToken]);
+  }, [getCsrf, refreshTokenAsync, csrfToken, finishLogout]);
 
   return (
     <AuthContext value={{ accessToken, status, login, logout, isLogin }}>

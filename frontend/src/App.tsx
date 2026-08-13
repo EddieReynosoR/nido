@@ -1,10 +1,11 @@
 import { Outlet } from 'react-router';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 function App() {
   return (
-    <main className="flex min-h-svh items-center justify-center bg-muted/30 p-4">
+    <TooltipProvider>
       <Outlet />
-    </main>
+    </TooltipProvider>
   );
 }
 

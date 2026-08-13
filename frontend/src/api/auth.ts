@@ -3,7 +3,7 @@ import { HttpError, TokenError } from '@/lib/http';
 import { hasProp } from '@/lib/auth';
 import { TOKEN_ERROR_CODES, type TokenErrorCode } from '@/lib/http';
 
-const BASE_URL = import.meta.env.VITE_API_URL;
+export const BASE_URL = import.meta.env.VITE_API_URL;
 
 export async function executeFetch<T>(
   url: string,
