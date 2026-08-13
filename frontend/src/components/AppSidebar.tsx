@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Plus, Folder, CircleUser, ChevronRight } from 'lucide-react';
 import SpaceSwitcher, {
   SpaceSwitcherSkeleton,
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useSpaces } from '@/hooks/use-space';
 import { useAuth } from '@/context/AuthContext';
+import { errorToast } from '@/lib/toast';
 
 const folders = [
   { label: 'Diary attempt 234', active: false },
@@ -31,15 +33,29 @@ const folders = [
 
 export default function AppSidebar() {
   const { accessToken } = useAuth();
-  const { data: spaces, isLoading } = useSpaces(accessToken);
+  const {
+    data: spaces,
+    isLoading,
+    error,
+    isError,
+    refetch,
+  } = useSpaces(accessToken);
 
-  console.log(spaces);
+  useEffect(() => {
+    if (!isError || !error) return;
+
+    errorToast({
+      id: 'spaces-fetch-error',
+      error,
+      title: 'Could not load your spaces',
+    });
+  }, [isError, error]);
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:justify-center">
-          <span className="font-['Courier_Prime'] text-2xl font-bold tracking-tight text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden">
+          <span className="font-['Courier_Prime']  text-2xl font-bold tracking-tight text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden select-none">
             nido
           </span>
           <SidebarTrigger />
@@ -52,7 +68,7 @@ export default function AppSidebar() {
               className="h-10 justify-center rounded-lg bg-primary font-medium text-primary-foreground transition-[width,height,padding,opacity] hover:bg-primary hover:text-primary-foreground hover:opacity-90 active:bg-primary active:text-primary-foreground"
             >
               <Plus />
-              <span className="group-data-[collapsible=icon]:hidden">
+              <span className="group-data-[collapsible=icon]:hidden select-none">
                 New space
               </span>
             </SidebarMenuButton>
@@ -61,6 +77,19 @@ export default function AppSidebar() {
 
         {isLoading ? (
           <SpaceSwitcherSkeleton />
+        ) : isError ? (
+          <div className="mt-2 flex flex-col gap-1 px-2 py-1.5 group-data-[collapsible=icon]:hidden">
+            <span className="text-sm text-sidebar-foreground/60 select-none">
+              Couldn&apos;t load your spaces
+            </span>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="self-start text-sm font-medium text-accent-green hover:underline"
+            >
+              Retry
+            </button>
+          </div>
         ) : spaces?.content.length ? (
           <SpaceSwitcher spaces={spaces} />
         ) : null}
@@ -68,18 +97,18 @@ export default function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="uppercase tracking-wide text-sidebar-foreground/40">
+          <SidebarGroupLabel className="uppercase tracking-wide text-sidebar-foreground/40 select-none">
             Favorites
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <p className="px-2 py-1.5 text-sm text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden">
+            <p className="px-2 py-1.5 text-sm text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden select-none">
               No favorite folders
             </p>
           </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="uppercase tracking-wide text-sidebar-foreground/40">
+          <SidebarGroupLabel className="uppercase tracking-wide text-sidebar-foreground/40 select-none">
             Folders
           </SidebarGroupLabel>
           <SidebarGroupAction
@@ -106,7 +135,7 @@ export default function AppSidebar() {
                           : 'text-sidebar-foreground/50'
                       }
                     />
-                    <span>{folder.label}</span>
+                    <span className="select-none">{folder.label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

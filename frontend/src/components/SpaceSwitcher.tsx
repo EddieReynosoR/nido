@@ -63,7 +63,7 @@ export default function SpaceSwitcher({
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [spaces]);
 
   return (
     <SidebarMenu className="mt-2">
@@ -74,10 +74,10 @@ export default function SpaceSwitcher({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <span className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-md bg-foreground text-[13px] font-bold text-background">
+              <span className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-md bg-foreground text-[13px] font-bold text-background select-none">
                 {activeSpace.name[0]}
               </span>
-              <span className="flex-1 truncate text-[15px] font-semibold tracking-tight">
+              <span className="flex-1 truncate text-[15px] font-semibold tracking-tight select-none">
                 {activeSpace.name}
               </span>
               <ChevronsUpDown className="ml-auto text-muted-foreground" />
@@ -96,7 +96,7 @@ export default function SpaceSwitcher({
 
             {spacesContent.map((space, index) => (
               <DropdownMenuItem
-                key={space.name}
+                key={space.spaceId}
                 onSelect={() => setActiveSpace(space)}
                 className="gap-2 p-2"
               >
