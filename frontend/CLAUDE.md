@@ -2,43 +2,11 @@
 
 React + TypeScript frontend for the Nido project. Connects to `nido_backend` (Spring Boot).
 
-## Stack
-
-- **Build tool:** Vite
-- **Language:** React + TypeScript
-- **Routing:** React Router v7 — data router mode (`createBrowserRouter` in `router.tsx`, mounted via `RouterProvider` in `main.tsx`)
-- **UI components:** shadcn/ui (configured via `components.json`)
-- **Forms:** react-hook-form + Zod (Zod 4)
-- **Notifications:** sonner
-- **Package manager:** pnpm
-
 ## Commands
 
-- Dev server: `pnpm dev`
-- Build: `pnpm build`
-- Lint: `pnpm lint`
-- Preview build: `pnpm preview`
-
-(Always use `pnpm`, never `npm` or `yarn`.)
+Always use `pnpm`, never `npm` or `yarn`.
 
 ## Project structure (group-by-type)
-
-```
-src/
-  assets/            Static assets (images, etc.)
-  components/        Reusable components
-    ui/              shadcn/ui primitives (button, card, input, etc.)
-    LoginForm.tsx    Feature components live at this level
-  lib/               Utilities, schemas, helpers
-    auth-schema.ts   Zod schemas + inferred types (e.g. loginSchema, LoginSchema)
-    utils.ts         shadcn cn() helper and shared utilities
-  pages/             One component per route
-    HomePage.tsx
-    LoginPage.tsx
-  App.tsx            Root layout — renders <Outlet /> and <Toaster />
-  router.tsx         Route definitions (createBrowserRouter)
-  main.tsx           App entry — mounts <RouterProvider />
-```
 
 ### Where things go
 
