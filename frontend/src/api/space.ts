@@ -3,7 +3,7 @@ import { type getSpaceResponse } from '@/types/space.types';
 
 export function getSpaces(accessToken: string) {
   return executeFetch<getSpaceResponse>(
-    `${BASE_URL}/api/spaces`,
+    `${BASE_URL}/api/space`,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
