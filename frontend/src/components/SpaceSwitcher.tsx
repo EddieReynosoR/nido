@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { getSpaceResponse } from '@/types/space.types';
+import AddSpaceForm from './AddSpaceForm';
 
 const isMac =
   typeof navigator !== 'undefined' &&
@@ -45,6 +46,7 @@ export default function SpaceSwitcher({
 
   const { isMobile } = useSidebar();
   const [activeSpace, setActiveSpace] = useState(spacesContent[0]);
+  const [addSpaceOpen, setAddSpaceOpen] = useState(false);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -113,7 +115,13 @@ export default function SpaceSwitcher({
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem className="gap-2 p-2">
+            <DropdownMenuItem
+              className="gap-2 p-2"
+              onSelect={(e) => {
+                e.preventDefault();
+                setAddSpaceOpen(true);
+              }}
+            >
               <span className="flex aspect-square size-6 shrink-0 items-center justify-center rounded-md border border-border bg-background">
                 <Plus className="size-4" />
               </span>
@@ -121,6 +129,8 @@ export default function SpaceSwitcher({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <AddSpaceForm open={addSpaceOpen} onOpenChange={setAddSpaceOpen} />
       </SidebarMenuItem>
     </SidebarMenu>
   );
