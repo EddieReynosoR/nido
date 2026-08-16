@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -12,14 +13,6 @@ import { useAuth } from '@/context/AuthContext';
 import { ACTIVE_SPACE_KEY } from '@/lib/space';
 
 const SpaceContext = createContext<SpaceContextType | null>(null);
-
-function spaceFallback(space: Space | undefined, selectSpace: (space: Space) => void) {
-
-  if (!space) return undefined;
-
-  selectSpace(space);
-  return space;
-}
 
 export function SpaceProvider() {
   const { accessToken } = useAuth();
@@ -37,9 +30,13 @@ export function SpaceProvider() {
   }, []);
 
   const activeSpace =
-    spaces?.find((space) => space.spaceId === selectedId) ??
-    spaceFallback(spaces?.[0], selectSpace) ??
-    null;
+    spaces?.find((space) => space.spaceId === selectedId) ?? spaces?.[0] ?? null;
+
+  useEffect(() => {
+    if (activeSpace && activeSpace.spaceId !== selectedId) {
+      selectSpace(activeSpace);
+    }
+  }, [activeSpace, selectedId, selectSpace]);
 
   const value = useMemo(
     () => ({

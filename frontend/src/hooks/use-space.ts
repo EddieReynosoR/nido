@@ -23,7 +23,6 @@ export function useCreateSpace(accessToken: string | null) {
           (old) => (old ? { ...old, content: [...old.content, newSpace] } : old)
         );
       }
-      queryClient.invalidateQueries({ queryKey: ['spaces'] });
     },
   });
 }
