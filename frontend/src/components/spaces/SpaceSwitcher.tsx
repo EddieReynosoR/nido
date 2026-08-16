@@ -18,6 +18,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import type { getSpaceResponse } from '@/types/space.types';
 import AddSpaceForm from './AddSpaceForm';
+import { useSpace } from '@/context/SpaceContext';
 
 const isMac =
   typeof navigator !== 'undefined' &&
@@ -45,8 +46,8 @@ export default function SpaceSwitcher({
   const spacesContent = spaces.content;
 
   const { isMobile } = useSidebar();
-  const [activeSpace, setActiveSpace] = useState(spacesContent[0]);
   const [addSpaceOpen, setAddSpaceOpen] = useState(false);
+  const { activeSpace, selectSpace } = useSpace();
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -59,13 +60,13 @@ export default function SpaceSwitcher({
       const space = spacesContent[Number(match[1]) - 1];
       if (!space) return;
 
+      selectSpace(space);
       event.preventDefault();
-      setActiveSpace(space);
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [spaces]);
+  }, [spacesContent, selectSpace]);
 
   return (
     <SidebarMenu className="mt-2">
@@ -77,10 +78,10 @@ export default function SpaceSwitcher({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <span className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-md bg-foreground text-[13px] font-bold text-background select-none">
-                {activeSpace.name[0]}
+                {activeSpace?.name[0]}
               </span>
               <span className="flex-1 truncate text-[15px] font-semibold tracking-tight select-none">
-                {activeSpace.name}
+                {activeSpace?.name}
               </span>
               <ChevronsUpDown className="ml-auto text-muted-foreground" />
             </SidebarMenuButton>
@@ -99,8 +100,9 @@ export default function SpaceSwitcher({
             {spacesContent.map((space, index) => (
               <DropdownMenuItem
                 key={space.spaceId}
-                onSelect={() => setActiveSpace(space)}
-                className="gap-2 p-2"
+                onSelect={() => selectSpace(space)}
+                className="gap-2 p-2 data-[active=true]:bg-accent"
+                data-active={space.spaceId === activeSpace?.spaceId}
               >
                 <span className="flex aspect-square size-6 shrink-0 items-center justify-center rounded-md bg-foreground text-[11px] font-bold text-background!">
                   {space.name[0]}
@@ -117,8 +119,7 @@ export default function SpaceSwitcher({
 
             <DropdownMenuItem
               className="gap-2 p-2"
-              onSelect={(e) => {
-                e.preventDefault();
+              onSelect={() => {
                 setAddSpaceOpen(true);
               }}
             >

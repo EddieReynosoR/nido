@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import App from './App';
 
 import { AuthProvider } from './context/AuthContext';
+import { SpaceProvider } from './context/SpaceContext';
 import RequireAuth from './components/RequireAuth';
 import LandingPage from './pages/LandingPage';
 
@@ -13,17 +14,22 @@ export const router = createBrowserRouter([
     Component: AuthProvider,
     children: [
       {
-        Component: RequireAuth,
+        Component: SpaceProvider,
         children: [
           {
-            Component: App,
-            path: '/',
-            children: [{ index: true, Component: HomePage }],
+            Component: RequireAuth,
+            children: [
+              {
+                Component: App,
+                path: '/',
+                children: [{ index: true, Component: HomePage }],
+              },
+            ],
           },
+          { path: 'login', Component: LoginPage },
+          { path: 'home', Component: LandingPage },
         ],
       },
-      { path: 'login', Component: LoginPage },
-      { path: 'home', Component: LandingPage },
     ],
   },
 ]);

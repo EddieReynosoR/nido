@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Folder, CircleUser, ChevronRight } from 'lucide-react';
 import SpaceSwitcher, {
   SpaceSwitcherSkeleton,
-} from '@/components/SpaceSwitcher';
-import AddSpaceForm from '@/components/AddSpaceForm';
+} from '@/components/spaces/SpaceSwitcher';
+import AddSpaceForm from '@/components/spaces/AddSpaceForm';
 import {
   Sidebar,
   SidebarContent,
@@ -19,9 +19,8 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { useSpaces } from '@/hooks/use-space';
-import { useAuth } from '@/context/AuthContext';
 import { errorToast } from '@/lib/toast';
+import { useSpace } from '@/context/SpaceContext';
 
 const folders = [
   { label: 'Diary attempt 234', active: false },
@@ -33,14 +32,15 @@ const folders = [
 ];
 
 export default function AppSidebar() {
-  const { accessToken } = useAuth();
   const {
     data: spaces,
     isLoading,
     error,
     isError,
     refetch,
-  } = useSpaces(accessToken);
+  } = useSpace();
+
+  const [open, setOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (!isError || !error) return;
@@ -64,17 +64,17 @@ export default function AppSidebar() {
 
         <SidebarMenu>
           <SidebarMenuItem>
-            <AddSpaceForm>
-              <SidebarMenuButton
-                tooltip="New space"
-                className="h-10 justify-center rounded-lg bg-primary font-medium text-primary-foreground transition-[width,height,padding,opacity] hover:bg-primary hover:text-primary-foreground hover:opacity-90 active:bg-primary active:text-primary-foreground"
-              >
-                <Plus />
-                <span className="group-data-[collapsible=icon]:hidden select-none">
-                  New space
-                </span>
-              </SidebarMenuButton>
-            </AddSpaceForm>
+            <SidebarMenuButton
+              tooltip="New space"
+              className="h-10 justify-center rounded-lg bg-primary font-medium text-primary-foreground transition-[width,height,padding,opacity] hover:bg-primary hover:text-primary-foreground hover:opacity-90 active:bg-primary active:text-primary-foreground"
+              onClick={() => setOpen(true)}
+            >
+              <Plus />
+              <span className="group-data-[collapsible=icon]:hidden select-none">
+                New space
+              </span>
+            </SidebarMenuButton>
+            <AddSpaceForm open={open} onOpenChange={setOpen} />
           </SidebarMenuItem>
         </SidebarMenu>
 

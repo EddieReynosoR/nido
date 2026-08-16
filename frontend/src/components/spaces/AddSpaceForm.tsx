@@ -1,4 +1,3 @@
-import { type ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -10,22 +9,29 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from './ui/dialog';
-import { Field, FieldError, FieldLabel } from './ui/field';
-import { Input } from './ui/input';
-import { Button } from './ui/button';
+} from '../ui/dialog';
+import { Field, FieldError, FieldLabel } from '../ui/field';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
 import { addSpaceSchema, type AddSpaceSchema } from '@/lib/space-schema';
+import { useCreateSpace } from '@/hooks/use-space';
+import { useAuth } from '@/context/AuthContext';
+import { errorToast } from '@/lib/toast';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
+import { useSpace } from '@/context/SpaceContext';
 
 export default function AddSpaceForm({
-  children,
   open,
   onOpenChange,
 }: {
-  children?: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
+  const { accessToken } = useAuth();
+  const { mutate, isPending } = useCreateSpace(accessToken);
+  const { selectSpace } = useSpace();
+
   const form = useForm<AddSpaceSchema>({
     resolver: zodResolver(addSpaceSchema),
     defaultValues: {
@@ -34,19 +40,29 @@ export default function AddSpaceForm({
   });
 
   const handleOpenChange = (nextOpen: boolean) => {
-    onOpenChange?.(nextOpen);
     if (!nextOpen) form.reset();
+    onOpenChange?.(nextOpen);
   };
 
   const onSubmit = (data: AddSpaceSchema) => {
-    // TODO: create the space via the API, then close the dialog
-    console.log(data);
+    mutate(data.name, {
+      onSuccess: (data) => {
+        if (data) selectSpace(data);
+        handleOpenChange(false);
+        toast.success('Space created');
+      },
+      onError: (error) => {
+        errorToast({
+          id: 'spaces-fetch-error',
+          error,
+          title: 'Could not load your spaces',
+        });
+      },
+    });
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New space</DialogTitle>
@@ -92,7 +108,10 @@ export default function AddSpaceForm({
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit">Create space</Button>
+            <Button disabled={isPending} type="submit">
+              {isPending && <Loader2 className="size-4 animate-spin" />}
+              {isPending ? 'Creating...' : 'Create space'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
