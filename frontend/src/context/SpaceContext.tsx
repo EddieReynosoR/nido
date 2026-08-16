@@ -13,15 +13,17 @@ import { ACTIVE_SPACE_KEY } from '@/lib/space';
 
 const SpaceContext = createContext<SpaceContextType | null>(null);
 
+function spaceFallback(space: Space | undefined, selectSpace: (space: Space) => void) {
+
+  if (!space) return undefined;
+
+  selectSpace(space);
+  return space;
+}
+
 export function SpaceProvider() {
   const { accessToken } = useAuth();
-  const {
-    data,
-    isLoading,
-    error,
-    isError,
-    refetch,
-  } = useSpaces(accessToken);
+  const { data, isLoading, error, isError, refetch } = useSpaces(accessToken);
 
   const [selectedId, setSelectedId] = useState(() =>
     localStorage.getItem(ACTIVE_SPACE_KEY)
@@ -29,13 +31,15 @@ export function SpaceProvider() {
 
   const spaces = data?.content;
 
-  const activeSpace =
-    spaces?.find((space) => space.spaceId === selectedId) ?? spaces?.[0] ?? null;
-
   const selectSpace = useCallback((space: Space) => {
     setSelectedId(space.spaceId);
     localStorage.setItem(ACTIVE_SPACE_KEY, space.spaceId);
   }, []);
+
+  const activeSpace =
+    spaces?.find((space) => space.spaceId === selectedId) ??
+    spaceFallback(spaces?.[0], selectSpace) ??
+    null;
 
   const value = useMemo(
     () => ({

@@ -32,13 +32,7 @@ const folders = [
 ];
 
 export default function AppSidebar() {
-  const {
-    data: spaces,
-    isLoading,
-    error,
-    isError,
-    refetch,
-  } = useSpace();
+  const { data: spaces, isLoading, error, isError, refetch } = useSpace();
 
   const [open, setOpen] = useState<boolean>(false);
 

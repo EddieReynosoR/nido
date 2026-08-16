@@ -14,10 +14,10 @@ export const router = createBrowserRouter([
     Component: AuthProvider,
     children: [
       {
-        Component: SpaceProvider,
+        Component: RequireAuth,
         children: [
           {
-            Component: RequireAuth,
+            Component: SpaceProvider,
             children: [
               {
                 Component: App,
@@ -26,10 +26,10 @@ export const router = createBrowserRouter([
               },
             ],
           },
-          { path: 'login', Component: LoginPage },
-          { path: 'home', Component: LandingPage },
         ],
       },
+      { path: 'login', Component: LoginPage },
+      { path: 'home', Component: LandingPage },
     ],
   },
 ]);

@@ -53,9 +53,9 @@ export default function AddSpaceForm({
       },
       onError: (error) => {
         errorToast({
-          id: 'spaces-fetch-error',
+          id: 'spaces-create-error',
           error,
-          title: 'Could not load your spaces',
+          title: 'Could not create the space',
         });
       },
     });
