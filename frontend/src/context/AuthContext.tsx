@@ -20,6 +20,7 @@ import { useRefreshToken } from '@/hooks/use-refresh-token';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { toast, Toaster } from 'sonner';
 import { TokenError } from '@/lib/http';
+import { ACTIVE_SPACE_KEY } from '@/lib/space';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -42,6 +43,7 @@ export function AuthProvider() {
 
   const finishLogout = useCallback(() => {
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem(ACTIVE_SPACE_KEY);
     setAccessToken(null);
     navigate('/login');
     setStatus('guest');
