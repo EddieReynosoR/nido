@@ -30,7 +30,9 @@ export function SpaceProvider() {
   }, []);
 
   const activeSpace =
-    spaces?.find((space) => space.spaceId === selectedId) ?? spaces?.[0] ?? null;
+    spaces?.find((space) => space.spaceId === selectedId) ??
+    spaces?.[0] ??
+    null;
 
   useEffect(() => {
     if (activeSpace && activeSpace.spaceId !== selectedId) {

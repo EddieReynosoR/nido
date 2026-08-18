@@ -16,10 +16,10 @@ import { Button } from '../ui/button';
 import { addSpaceSchema, type AddSpaceSchema } from '@/lib/space-schema';
 import { useCreateSpace } from '@/hooks/use-space';
 import { useAuth } from '@/context/AuthContext';
-import { errorToast } from '@/lib/toast';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { useSpace } from '@/context/SpaceContext';
+import { HttpError } from '@/lib/http';
 
 export default function AddSpaceForm({
   open,
@@ -52,10 +52,13 @@ export default function AddSpaceForm({
         toast.success('Space created');
       },
       onError: (error) => {
-        errorToast({
+        toast.error('Could not create the space', {
           id: 'spaces-create-error',
-          error,
-          title: 'Could not create the space',
+          description:
+            error instanceof HttpError && error.status == 409
+              ? 'The space already exists.'
+              : error.message,
+          position: 'bottom-right',
         });
       },
     });
