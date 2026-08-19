@@ -81,7 +81,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ProblemDetail handleNoRowsAffected(NoRowsAffectedException ex) {
         log.warn("No rows affected: {}", ex.getMessage());
         return build(HttpStatus.CONFLICT, "Operation conflict",
-                "no_rows_affected", "No data was affected");
+                "no_rows_affected", ex.getMessage());
     }
 
     @ExceptionHandler(NoSuchElementException.class)

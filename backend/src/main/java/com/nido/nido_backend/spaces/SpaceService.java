@@ -1,5 +1,6 @@
 package com.nido.nido_backend.spaces;
 
+import com.nido.nido_backend.shared.exception.NoRowsAffectedException;
 import com.nido.nido_backend.shared.exception.RecordAlreadyExists;
 import com.nido.nido_backend.spaces.dto.SpaceResponse;
 import org.springframework.data.domain.Page;
@@ -36,5 +37,13 @@ public class SpaceService {
     public Page<SpaceResponse> getSpaces(String ownerId, Pageable pageable) {
         return spaceRepository.findByUserId(UUID.fromString(ownerId), pageable)
                 .map(SpaceResponse::from);
+    }
+
+    @Transactional(rollbackFor = NoRowsAffectedException.class)
+    public void deleteSpace(UUID spaceId) {
+        int deleted = spaceRepository.deleteBySpaceId(spaceId);
+
+        if (deleted == 0)
+            throw new NoRowsAffectedException("No spaces were deleted.");
     }
 }
