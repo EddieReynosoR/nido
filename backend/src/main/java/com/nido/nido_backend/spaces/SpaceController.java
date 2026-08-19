@@ -39,8 +39,10 @@ public class SpaceController {
     }
 
     @DeleteMapping("/delete/{spaceId}")
-    public ResponseEntity<Void> deleteSpace(@PathVariable("spaceId") UUID spaceId) {
-        spaceService.deleteSpace(spaceId);
+    public ResponseEntity<Void> deleteSpace(
+            @PathVariable("spaceId") UUID spaceId,
+            @AuthenticationPrincipal UserDetails user) {
+        spaceService.deleteSpace(spaceId, user.getUsername());
         return ResponseEntity.noContent().build();
     }
 }

@@ -17,4 +17,6 @@ public interface SpaceRepository extends JpaRepository<SpaceEntity, UUID> {
     @Modifying
     @Query("DELETE FROM SpaceEntity s WHERE s.spaceId = :spaceId")
     int deleteBySpaceId(@Param("spaceId") UUID spaceId);
+
+    boolean existsBySpaceIdAndUserId(UUID spaceId, UUID userId);
 }
