@@ -81,14 +81,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ProblemDetail handleNoRowsAffected(NoRowsAffectedException ex) {
         log.warn("No rows affected: {}", ex.getMessage());
         return build(HttpStatus.CONFLICT, "Operation conflict",
-                "no_rows_affected", "No data was affected");
+                "no_rows_affected", ex.getMessage());
     }
 
     @ExceptionHandler(NoSuchElementException.class)
     public ProblemDetail handleNoSuchElement(NoSuchElementException ex) {
         log.warn("Resource not found: {}", ex.getMessage());
         return build(HttpStatus.NOT_FOUND, "Resource not found",
-                "not_found", "The requested resource was not found");
+                "not_found", ex.getMessage());
     }
 
     @ExceptionHandler(RecordAlreadyExists.class)

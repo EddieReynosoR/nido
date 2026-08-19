@@ -12,6 +12,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RequestMapping("api/space")
 @RestController
 public class SpaceController {
@@ -26,7 +28,6 @@ public class SpaceController {
             @Valid @RequestBody CreateSpaceRequest request,
             @AuthenticationPrincipal UserDetails user) {
         SpaceResponse response = spaceService.createSpace(request.name(), user.getUsername());
-
         return ResponseEntity.ok(response);
     }
 
@@ -35,5 +36,13 @@ public class SpaceController {
             @AuthenticationPrincipal UserDetails user,
             @PageableDefault(size = 50, sort = "name", direction = Sort.Direction.ASC)Pageable pageable) {
         return new PagedModel<>(spaceService.getSpaces(user.getUsername(), pageable));
+    }
+
+    @DeleteMapping("/delete/{spaceId}")
+    public ResponseEntity<Void> deleteSpace(
+            @PathVariable("spaceId") UUID spaceId,
+            @AuthenticationPrincipal UserDetails user) {
+        spaceService.deleteSpace(spaceId, UUID.fromString(user.getUsername()));
+        return ResponseEntity.noContent().build();
     }
 }
