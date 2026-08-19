@@ -42,8 +42,8 @@ public class SpaceService {
     }
 
     @Transactional
-    public void deleteSpace(UUID spaceId, String userId) {
-        if (!spaceRepository.existsBySpaceIdAndUserId(spaceId, UUID.fromString(userId)))
+    public void deleteSpace(UUID spaceId, UUID userId) {
+        if (!spaceRepository.existsBySpaceIdAndUserId(spaceId, userId))
             throw new NoSuchElementException("Space not found");
 
         int deleted = spaceRepository.deleteBySpaceId(spaceId);

@@ -42,7 +42,7 @@ public class SpaceController {
     public ResponseEntity<Void> deleteSpace(
             @PathVariable("spaceId") UUID spaceId,
             @AuthenticationPrincipal UserDetails user) {
-        spaceService.deleteSpace(spaceId, user.getUsername());
+        spaceService.deleteSpace(spaceId, UUID.fromString(user.getUsername()));
         return ResponseEntity.noContent().build();
     }
 }
