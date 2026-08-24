@@ -81,8 +81,6 @@ export default function SpaceSwitcher({
   }, [spacesContent, selectSpace]);
 
   const handleDelete = (space: Space) => {
-    // Sólo movemos la selección si se borra el space activo; antes se movía
-    // siempre, sacando al usuario del space en el que estaba.
     if (space.spaceId === activeSpace?.spaceId) {
       const index = spacesContent.findIndex(
         (item) => item.spaceId === space.spaceId
@@ -91,8 +89,6 @@ export default function SpaceSwitcher({
         (item) => item.spaceId !== space.spaceId
       );
 
-      // El de después; si era el último, el de antes. Si no queda ninguno,
-      // dejamos que SpaceContext derive `activeSpace` a null por su cuenta.
       const next = remaining[index] ?? remaining[index - 1] ?? null;
       if (next) selectSpace(next);
     }
