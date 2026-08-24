@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Plus, Folder, CircleUser, ChevronRight } from 'lucide-react';
 import SpaceSwitcher, {
   SpaceSwitcherSkeleton,
@@ -36,6 +36,8 @@ export default function AppSidebar() {
 
   const [open, setOpen] = useState<boolean>(false);
 
+  const timersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+
   useEffect(() => {
     if (!isError || !error) return;
 
@@ -45,6 +47,15 @@ export default function AppSidebar() {
       title: 'Could not load your spaces',
     });
   }, [isError, error]);
+
+  useEffect(() => {
+    const timers = timersRef.current;
+
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer));
+      timers.clear();
+    };
+  }, []);
 
   return (
     <Sidebar collapsible="icon">
@@ -88,7 +99,7 @@ export default function AppSidebar() {
             </button>
           </div>
         ) : spaces?.content.length ? (
-          <SpaceSwitcher spaces={spaces} />
+          <SpaceSwitcher spaces={spaces} timersRef={timersRef} />
         ) : null}
       </SidebarHeader>
 
