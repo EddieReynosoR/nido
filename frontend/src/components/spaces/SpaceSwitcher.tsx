@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ChevronsUpDown, Plus } from 'lucide-react';
+import { useEffect, useState, type RefObject } from 'react';
+import { ChevronsUpDown, Plus, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,9 +16,13 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { getSpaceResponse } from '@/types/space.types';
+import type { getSpaceResponse, Space } from '@/types/space.types';
 import AddSpaceForm from './AddSpaceForm';
+import DeleteSpaceDialog from './DeleteSpaceDialog';
 import { useSpace } from '@/context/SpaceContext';
+import { useDeleteSpaceWithUndo } from '@/hooks/use-space';
+import { useAuth } from '@/context/AuthContext';
+import { cn } from '@/lib/utils';
 
 const isMac =
   typeof navigator !== 'undefined' &&
@@ -40,14 +44,23 @@ export function SpaceSwitcherSkeleton() {
 
 export default function SpaceSwitcher({
   spaces,
+  timersRef,
 }: {
   spaces: getSpaceResponse;
+  timersRef: RefObject<Map<string, number>>;
 }) {
   const spacesContent = spaces.content;
 
   const { isMobile } = useSidebar();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [addSpaceOpen, setAddSpaceOpen] = useState(false);
-  const { activeSpace, selectSpace } = useSpace();
+  const [spaceToDelete, setSpaceToDelete] = useState<Space | null>(null);
+  const { activeSpace, selectSpace, clearSelectedSpace } = useSpace();
+  const { accessToken } = useAuth();
+
+  const { requestDelete } = useDeleteSpaceWithUndo(accessToken, timersRef, {
+    onRestore: selectSpace,
+  });
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -68,10 +81,27 @@ export default function SpaceSwitcher({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [spacesContent, selectSpace]);
 
+  const handleDelete = (space: Space) => {
+    if (space.spaceId === activeSpace?.spaceId) {
+      const index = spacesContent.findIndex(
+        (item) => item.spaceId === space.spaceId
+      );
+      const remaining = spacesContent.filter(
+        (item) => item.spaceId !== space.spaceId
+      );
+
+      const next = remaining[index] ?? remaining[index - 1] ?? null;
+      if (next) selectSpace(next);
+      else clearSelectedSpace();
+    }
+
+    requestDelete(space);
+  };
+
   return (
     <SidebarMenu className="mt-2">
       <SidebarMenuItem>
-        <DropdownMenu>
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
@@ -101,17 +131,41 @@ export default function SpaceSwitcher({
               <DropdownMenuItem
                 key={space.spaceId}
                 onSelect={() => selectSpace(space)}
-                className="gap-2 p-2 data-[active=true]:bg-accent"
+                className="group/space gap-2 p-2 data-[active=true]:bg-accent"
                 data-active={space.spaceId === activeSpace?.spaceId}
               >
                 <span className="flex aspect-square size-6 shrink-0 items-center justify-center rounded-md bg-foreground text-[11px] font-bold text-background!">
                   {space.name[0]}
                 </span>
                 <span className="truncate">{space.name}</span>
-                <DropdownMenuShortcut>
-                  {modifierLabel}
-                  {index + 1}
-                </DropdownMenuShortcut>
+
+                {!isMobile && (
+                  <DropdownMenuShortcut className="group-hover/space:hidden group-focus/space:hidden">
+                    {modifierLabel}
+                    {index + 1}
+                  </DropdownMenuShortcut>
+                )}
+
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label={`Delete ${space.name}`}
+                  className={cn(
+                    'ml-auto shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive',
+                    isMobile
+                      ? 'flex size-8'
+                      : 'hidden size-6 group-hover/space:flex group-focus/space:flex'
+                  )}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    setMenuOpen(false);
+                    setSpaceToDelete(space);
+                  }}
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
               </DropdownMenuItem>
             ))}
 
@@ -132,6 +186,15 @@ export default function SpaceSwitcher({
         </DropdownMenu>
 
         <AddSpaceForm open={addSpaceOpen} onOpenChange={setAddSpaceOpen} />
+
+        <DeleteSpaceDialog
+          space={spaceToDelete}
+          open={spaceToDelete !== null}
+          onOpenChange={(open) => {
+            if (!open) setSpaceToDelete(null);
+          }}
+          onConfirm={() => spaceToDelete && handleDelete(spaceToDelete)}
+        />
       </SidebarMenuItem>
     </SidebarMenu>
   );

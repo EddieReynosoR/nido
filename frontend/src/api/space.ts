@@ -28,3 +28,16 @@ export function addSpace(name: string, accessToken: string) {
     'There was an error adding the new space.'
   );
 }
+
+export function deleteSpace(spaceId: string, accessToken: string) {
+  return executeFetch<null>(
+    `${BASE_URL}/api/space/delete/${spaceId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+    'There was an error deleting the space.'
+  );
+}

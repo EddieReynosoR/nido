@@ -15,6 +15,7 @@ export interface getSpaceResponse {
 export interface SpaceContextType {
   activeSpace: Space | null;
   selectSpace: (space: Space) => void;
+  clearSelectedSpace: () => void;
   data: NoInfer<getSpaceResponse | null> | undefined;
   isLoading: boolean;
   error: Error | null;

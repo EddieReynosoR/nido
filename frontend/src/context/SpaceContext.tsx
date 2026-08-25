@@ -29,6 +29,11 @@ export function SpaceProvider() {
     localStorage.setItem(ACTIVE_SPACE_KEY, space.spaceId);
   }, []);
 
+  const clearSelectedSpace = useCallback(() => {
+    localStorage.removeItem(ACTIVE_SPACE_KEY);
+    setSelectedId(null);
+  }, []);
+
   const activeSpace =
     spaces?.find((space) => space.spaceId === selectedId) ??
     spaces?.[0] ??
@@ -44,6 +49,7 @@ export function SpaceProvider() {
     () => ({
       activeSpace,
       selectSpace,
+      clearSelectedSpace,
       data,
       isLoading,
       error,
