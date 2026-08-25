@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/sidebar';
 import { errorToast } from '@/lib/toast';
 import { useSpace } from '@/context/SpaceContext';
+import { toast } from 'sonner';
 
 const folders = [
   { label: 'Diary attempt 234', active: false },
@@ -54,6 +55,12 @@ export default function AppSidebar() {
     return () => {
       timers.forEach((timer) => clearTimeout(timer));
       timers.clear();
+
+      if (toast.getToasts().length === 0)
+        return;
+
+      const toasts = toast.getToasts();
+      toasts.forEach((t) => toast.dismiss(t.id));
     };
   }, []);
 

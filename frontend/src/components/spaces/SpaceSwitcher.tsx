@@ -43,10 +43,11 @@ export function SpaceSwitcherSkeleton() {
 }
 
 export default function SpaceSwitcher({
-  spaces, timersRef
+  spaces,
+  timersRef,
 }: {
   spaces: getSpaceResponse;
-  timersRef: RefObject<Map<string, number>>
+  timersRef: RefObject<Map<string, number>>;
 }) {
   const spacesContent = spaces.content;
 
@@ -54,7 +55,7 @@ export default function SpaceSwitcher({
   const [menuOpen, setMenuOpen] = useState(false);
   const [addSpaceOpen, setAddSpaceOpen] = useState(false);
   const [spaceToDelete, setSpaceToDelete] = useState<Space | null>(null);
-  const { activeSpace, selectSpace } = useSpace();
+  const { activeSpace, selectSpace, clearSelectedSpace } = useSpace();
   const { accessToken } = useAuth();
 
   const { requestDelete } = useDeleteSpaceWithUndo(accessToken, timersRef, {
@@ -91,6 +92,7 @@ export default function SpaceSwitcher({
 
       const next = remaining[index] ?? remaining[index - 1] ?? null;
       if (next) selectSpace(next);
+      else clearSelectedSpace();
     }
 
     requestDelete(space);
@@ -158,8 +160,6 @@ export default function SpaceSwitcher({
                   onClick={(event) => {
                     event.stopPropagation();
                     event.preventDefault();
-                    // Cerramos el menú antes de abrir el diálogo: si ambos
-                    // quedan montados, sus focus traps compiten entre sí.
                     setMenuOpen(false);
                     setSpaceToDelete(space);
                   }}

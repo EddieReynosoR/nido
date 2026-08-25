@@ -107,7 +107,7 @@ export function useDeleteSpaceWithUndo(
         onError: (error) => {
           restoreToCache(space);
           errorToast({
-            id: 'spaces-delete-error',
+            id: `spaces-delete-error-${space.spaceId}`,
             title: 'Could not delete the space',
             error,
           });
