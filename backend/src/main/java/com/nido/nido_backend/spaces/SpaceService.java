@@ -51,4 +51,21 @@ public class SpaceService {
         if (deleted == 0)
             throw new NoRowsAffectedException("No spaces were deleted");
     }
+
+    @Transactional
+    public SpaceResponse updateSpace(UUID spaceId, UUID userId, String name) {
+        SpaceEntity entity = spaceRepository.findBySpaceIdAndUserId(spaceId, userId);
+
+        if (entity == null)
+            throw new NoSuchElementException("Space not found");
+
+        if (name == null || name.isEmpty())
+            throw  new IllegalArgumentException("Space name is invalid");
+
+        entity.setName(name);
+
+        spaceRepository.save(entity);
+
+        return SpaceResponse.from(entity);
+    }
 }

@@ -19,4 +19,6 @@ public interface SpaceRepository extends JpaRepository<SpaceEntity, UUID> {
     int deleteBySpaceId(@Param("spaceId") UUID spaceId);
 
     boolean existsBySpaceIdAndUserId(UUID spaceId, UUID userId);
+
+    SpaceEntity findBySpaceIdAndUserId(UUID spaceId, UUID userId);
 }
