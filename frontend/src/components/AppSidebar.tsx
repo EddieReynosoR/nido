@@ -56,8 +56,7 @@ export default function AppSidebar() {
       timers.forEach((timer) => clearTimeout(timer));
       timers.clear();
 
-      if (toast.getToasts().length === 0)
-        return;
+      if (toast.getToasts().length === 0) return;
 
       const toasts = toast.getToasts();
       toasts.forEach((t) => toast.dismiss(t.id));
