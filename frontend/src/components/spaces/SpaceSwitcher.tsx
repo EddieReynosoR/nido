@@ -1,5 +1,5 @@
 import { useEffect, useState, type RefObject } from 'react';
-import { ChevronsUpDown, Plus, Trash2 } from 'lucide-react';
+import { ChevronsUpDown, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { getSpaceResponse, Space } from '@/types/space.types';
 import AddSpaceForm from './AddSpaceForm';
 import DeleteSpaceDialog from './DeleteSpaceDialog';
+import EditSpaceDialog from './EditSpaceDialog';
 import { useSpace } from '@/context/SpaceContext';
 import { useDeleteSpaceWithUndo } from '@/hooks/use-space';
 import { useAuth } from '@/context/AuthContext';
@@ -55,6 +56,7 @@ export default function SpaceSwitcher({
   const [menuOpen, setMenuOpen] = useState(false);
   const [addSpaceOpen, setAddSpaceOpen] = useState(false);
   const [spaceToDelete, setSpaceToDelete] = useState<Space | null>(null);
+  const [spaceToEdit, setSpaceToEdit] = useState<Space | null>(null);
   const { activeSpace, selectSpace, clearSelectedSpace } = useSpace();
   const { accessToken } = useAuth();
 
@@ -146,26 +148,49 @@ export default function SpaceSwitcher({
                   </DropdownMenuShortcut>
                 )}
 
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  aria-label={`Delete ${space.name}`}
-                  className={cn(
-                    'ml-auto shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive',
-                    isMobile
-                      ? 'flex size-8'
-                      : 'hidden size-6 group-hover/space:flex group-focus/space:flex'
-                  )}
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    setMenuOpen(false);
-                    setSpaceToDelete(space);
-                  }}
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
+                <div className="ml-auto flex shrink-0 items-center gap-0.5">
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-label={`Rename ${space.name}`}
+                    className={cn(
+                      'shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground',
+                      isMobile
+                        ? 'flex size-8'
+                        : 'hidden size-6 group-hover/space:flex group-focus/space:flex'
+                    )}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      event.preventDefault();
+                      setMenuOpen(false);
+                      setSpaceToEdit(space);
+                    }}
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-label={`Delete ${space.name}`}
+                    className={cn(
+                      'shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive',
+                      isMobile
+                        ? 'flex size-8'
+                        : 'hidden size-6 group-hover/space:flex group-focus/space:flex'
+                    )}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      event.preventDefault();
+                      setMenuOpen(false);
+                      setSpaceToDelete(space);
+                    }}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
               </DropdownMenuItem>
             ))}
 
@@ -186,6 +211,14 @@ export default function SpaceSwitcher({
         </DropdownMenu>
 
         <AddSpaceForm open={addSpaceOpen} onOpenChange={setAddSpaceOpen} />
+
+        <EditSpaceDialog
+          space={spaceToEdit}
+          open={spaceToEdit !== null}
+          onOpenChange={(open) => {
+            if (!open) setSpaceToEdit(null);
+          }}
+        />
 
         <DeleteSpaceDialog
           space={spaceToDelete}
