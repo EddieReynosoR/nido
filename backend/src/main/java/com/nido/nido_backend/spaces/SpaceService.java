@@ -61,11 +61,11 @@ public class SpaceService {
             throw new NoSuchElementException("Space not found");
 
         String nameTrimmed = name.trim();
+        SpaceEntity spaceEntity = entity.get();
 
-        if (spaceRepository.existsByUserIdAndName(userId, nameTrimmed))
+        if (spaceEntity.getName().equals(nameTrimmed))
             throw new RecordAlreadyExists("A space with that name already exists");
 
-        SpaceEntity spaceEntity = entity.get();
         spaceEntity.setName(nameTrimmed);
 
         return SpaceResponse.from(spaceEntity);
