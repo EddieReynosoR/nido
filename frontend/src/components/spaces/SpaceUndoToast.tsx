@@ -51,10 +51,10 @@ export default function SpaceUndoToast({
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className="relative flex w-full items-center gap-2 overflow-hidden rounded-[var(--radius)] border border-border bg-popover p-4 text-sm text-popover-foreground shadow-lg"
+      className="relative flex w-full items-center gap-2 overflow-hidden rounded-lg border border-border bg-popover p-4 text-sm text-popover-foreground shadow-lg"
     >
       <div
-        className="absolute inset-x-0 top-0 h-[3px] origin-left bg-popover-foreground"
+        className="absolute inset-x-0 top-0 h-0.75 origin-left bg-popover-foreground"
         style={{
           animation: `space-undo-countdown ${duration}ms linear forwards`,
           animationPlayState: paused ? 'paused' : 'running',

@@ -2,6 +2,7 @@ package com.nido.nido_backend.spaces;
 
 import com.nido.nido_backend.spaces.dto.CreateSpaceRequest;
 import com.nido.nido_backend.spaces.dto.SpaceResponse;
+import com.nido.nido_backend.spaces.dto.UpdateSpaceRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -44,5 +45,17 @@ public class SpaceController {
             @AuthenticationPrincipal UserDetails user) {
         spaceService.deleteSpace(spaceId, UUID.fromString(user.getUsername()));
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/update")
+    public ResponseEntity<SpaceResponse> updateSpace(
+            @Valid @RequestBody UpdateSpaceRequest request,
+            @AuthenticationPrincipal UserDetails user) {
+        SpaceResponse response = spaceService.updateSpace(
+                UUID.fromString(request.spaceId()),
+                UUID.fromString(user.getUsername()),
+                request.name());
+
+        return ResponseEntity.ok(response);
     }
 }
