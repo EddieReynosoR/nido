@@ -63,7 +63,7 @@ public class SpaceService {
         String nameTrimmed = name.trim();
         SpaceEntity spaceEntity = entity.get();
 
-        if (spaceEntity.getName().equals(nameTrimmed))
+        if (spaceRepository.existsByUserIdAndName(userId, nameTrimmed))
             throw new RecordAlreadyExists("A space with that name already exists");
 
         spaceEntity.setName(nameTrimmed);
