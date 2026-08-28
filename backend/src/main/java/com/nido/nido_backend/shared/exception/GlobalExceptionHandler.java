@@ -104,6 +104,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "Unknown sort property: " + ex.getPropertyName());
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail handleInvalidSortProperty(IllegalArgumentException ex) {
+        log.warn("Invalid argument: {}", ex.getMessage());
+        return build(HttpStatus.BAD_REQUEST, "Invalid sort property", "invalid_sort",
+                "Invalid argument: " + ex.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnknown(Exception ex) {
         log.error("Unhandled exception", ex);

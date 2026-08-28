@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface SpaceRepository extends JpaRepository<SpaceEntity, UUID> {
@@ -20,5 +21,5 @@ public interface SpaceRepository extends JpaRepository<SpaceEntity, UUID> {
 
     boolean existsBySpaceIdAndUserId(UUID spaceId, UUID userId);
 
-    SpaceEntity findBySpaceIdAndUserId(UUID spaceId, UUID userId);
+    Optional<SpaceEntity> findBySpaceIdAndUserId(UUID spaceId, UUID userId);
 }

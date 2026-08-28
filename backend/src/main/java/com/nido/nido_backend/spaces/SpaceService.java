@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -54,18 +55,19 @@ public class SpaceService {
 
     @Transactional
     public SpaceResponse updateSpace(UUID spaceId, UUID userId, String name) {
-        SpaceEntity entity = spaceRepository.findBySpaceIdAndUserId(spaceId, userId);
+        Optional<SpaceEntity> entity = spaceRepository.findBySpaceIdAndUserId(spaceId, userId);
 
-        if (entity == null)
+        if (entity.isEmpty())
             throw new NoSuchElementException("Space not found");
 
-        if (name == null || name.isEmpty())
-            throw  new IllegalArgumentException("Space name is invalid");
+        String nameTrimmed = name.trim();
 
-        entity.setName(name);
+        if (spaceRepository.existsByUserIdAndName(userId, nameTrimmed))
+            throw new RecordAlreadyExists("A space with that name already exists");
 
-        spaceRepository.save(entity);
+        SpaceEntity spaceEntity = entity.get();
+        spaceEntity.setName(nameTrimmed);
 
-        return SpaceResponse.from(entity);
+        return SpaceResponse.from(spaceEntity);
     }
 }
