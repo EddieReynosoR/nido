@@ -107,7 +107,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleInvalidSortProperty(IllegalArgumentException ex) {
         log.warn("Invalid argument: {}", ex.getMessage());
-        return build(HttpStatus.BAD_REQUEST, "Invalid sort property", "invalid_sort",
+        return build(HttpStatus.BAD_REQUEST, "Invalid argument", "invalid_argument",
                 "Invalid argument: " + ex.getMessage());
     }
 
