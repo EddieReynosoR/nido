@@ -41,3 +41,18 @@ export function deleteSpace(spaceId: string, accessToken: string) {
     'There was an error deleting the space.'
   );
 }
+
+export function editSpace(spaceId: string, name: string, accessToken: string) {
+  return executeFetch<Space>(
+    `${BASE_URL}/api/space/update`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ name, spaceId }),
+    },
+    'There was an error editing the space.'
+  );
+}

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, type RefObject } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { getSpaces, addSpace, deleteSpace } from '@/api/space';
+import { getSpaces, addSpace, deleteSpace, editSpace } from '@/api/space';
 import { errorToast } from '@/lib/toast';
 import type { getSpaceResponse, Space } from '@/types/space.types';
 import SpaceUndoToast from '@/components/spaces/SpaceUndoToast';
@@ -194,4 +194,16 @@ export function useDeleteSpaceWithUndo(
   );
 
   return { requestDelete };
+}
+
+export function useEditSpace(accessToken: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (space: Space) =>
+      editSpace(space.spaceId, space.name, accessToken!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['spaces'] });
+    },
+  });
 }
