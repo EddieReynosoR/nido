@@ -22,6 +22,7 @@ import { Loader2 } from 'lucide-react';
 import { HttpError } from '@/lib/http';
 import { errorToast } from '@/lib/toast';
 import type { Space } from '@/types/space.types';
+import { useLastValue } from '@/hooks/use-last-value';
 
 export default function EditSpaceDialog({
   space,
@@ -32,6 +33,7 @@ export default function EditSpaceDialog({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
+  const displayedSpace = useLastValue(space);
   const { accessToken } = useAuth();
   const { mutate, isPending } = useEditSpace(accessToken);
 
@@ -49,7 +51,7 @@ export default function EditSpaceDialog({
   }, [space, reset]);
 
   const name = form.watch('name');
-  const isUnchanged = name.trim() === space?.name;
+  const isUnchanged = name.trim() === displayedSpace?.name;
 
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange?.(nextOpen);
@@ -86,8 +88,8 @@ export default function EditSpaceDialog({
         <DialogHeader>
           <DialogTitle>Rename space</DialogTitle>
           <DialogDescription>
-            Pick a new name for “{space?.name}”. Everything inside it stays
-            where it is.
+            Pick a new name for “{displayedSpace?.name}”. Everything inside it
+            stays where it is.
           </DialogDescription>
         </DialogHeader>
 
