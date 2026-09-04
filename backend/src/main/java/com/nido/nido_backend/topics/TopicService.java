@@ -4,9 +4,11 @@ import com.nido.nido_backend.shared.exception.RecordAlreadyExists;
 import com.nido.nido_backend.spaces.SpaceEntity;
 import com.nido.nido_backend.spaces.SpaceService;
 import com.nido.nido_backend.topics.dto.TopicRequest;
+import com.nido.nido_backend.topics.dto.TopicResponse;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,6 +22,16 @@ public class TopicService {
     public TopicService(TopicRepository topicRepository, SpaceService spaceService) {
         this.topicRepository = topicRepository;
         this.spaceService = spaceService;
+    }
+
+    @Transactional
+    public List<TopicResponse> get(UUID spaceId, String userId) {
+        SpaceEntity spaceEntity = spaceService.getOwnedBy(spaceId, UUID.fromString(userId));
+        if (spaceEntity == null)
+            throw new NoSuchElementException("Space was not found");
+
+        List<TopicEntity> topics = topicRepository.getBySpaceId(spaceId);
+        return TopicResponse.toList(topics);
     }
 
     @Transactional
@@ -41,7 +53,7 @@ public class TopicService {
         return entity;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Optional<TopicEntity> getOwnedBy(UUID topicId, UUID userId, UUID spaceId) {
         return topicRepository.getByIdAndUserIdAndSpaceId(topicId, userId, spaceId);
     }
