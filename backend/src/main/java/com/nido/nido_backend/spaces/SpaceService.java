@@ -70,4 +70,10 @@ public class SpaceService {
 
         return SpaceResponse.from(spaceEntity);
     }
+
+    @Transactional(readOnly = true)
+    public SpaceEntity getOwnedBy(UUID spaceId, UUID userId) {
+        return spaceRepository.findBySpaceIdAndUserId(spaceId, userId)
+                .orElseThrow(() -> new NoSuchElementException("Space not found"));
+    }
 }
