@@ -7,6 +7,7 @@ import com.nido.nido_backend.topics.dto.TopicRequest;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,12 +28,12 @@ public class TopicService {
         if (topicRepository.existsByNameAndUserId(request.name(), userIdConverted))
             throw new RecordAlreadyExists("Topic name already exists");
 
-        SpaceEntity space = spaceService.getOwnedBy(request.spaceId(), userIdConverted);
+        SpaceEntity space = spaceService.getOwnedBy(UUID.fromString(request.spaceId()), userIdConverted);
         TopicEntity parentTopic = null;
 
         if (request.parentTopicId() != null)
-            parentTopic = getOwnedBy(request.parentTopicId(), userIdConverted, space.getSpaceId())
-                    .orElse(null);
+            parentTopic = getOwnedBy(UUID.fromString(request.parentTopicId()), userIdConverted, space.getSpaceId())
+                    .orElseThrow(() -> new NoSuchElementException("Parent topic was not found"));
 
         TopicEntity entity = request.toEntity(space, parentTopic);
         topicRepository.save(entity);

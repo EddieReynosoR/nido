@@ -11,6 +11,6 @@ public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
     @Query("SELECT COUNT(t) > 0 FROM Topic t WHERE t.name = :name AND t.space.userId = :userId")
     boolean existsByNameAndUserId(@Param("name") String name, @Param("userId") UUID userId);
 
-    @Query("SELECT t FROM Topic t WHERE t.topicId = :topicId AND t.space.userId = :userId AND t.spaceId = :spaceId")
+    @Query("SELECT t FROM Topic t WHERE t.topicId = :topicId AND t.space.userId = :userId AND t.space.spaceId = :spaceId")
     Optional<TopicEntity> getByIdAndUserIdAndSpaceId(@Param("topicId") UUID topicId, @Param("userId") UUID userId, @Param("spaceId") UUID spaceId);
 }
