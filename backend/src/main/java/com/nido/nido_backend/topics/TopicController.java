@@ -1,6 +1,8 @@
 package com.nido.nido_backend.topics;
 
 import com.nido.nido_backend.topics.dto.TopicRequest;
+import com.nido.nido_backend.topics.dto.TopicResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,10 +20,10 @@ public class TopicController {
     public TopicController(TopicService topicService) { this.topicService = topicService; }
 
     @PostMapping("/create")
-    public ResponseEntity<TopicEntity> create(
-            @RequestBody TopicRequest request,
+    public ResponseEntity<TopicResponse> create(
+            @Valid @RequestBody TopicRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        var responseEntity = topicService.createTopic(request, userDetails.getUsername());
-        return ResponseEntity.ok(responseEntity);
+        var entity = topicService.createTopic(request, userDetails.getUsername());
+        return ResponseEntity.ok(TopicResponse.from(entity));
     }
 }

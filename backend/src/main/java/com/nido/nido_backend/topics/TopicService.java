@@ -2,12 +2,12 @@ package com.nido.nido_backend.topics;
 
 import com.nido.nido_backend.shared.exception.RecordAlreadyExists;
 import com.nido.nido_backend.spaces.SpaceEntity;
-import com.nido.nido_backend.spaces.SpaceRepository;
 import com.nido.nido_backend.spaces.SpaceService;
 import com.nido.nido_backend.topics.dto.TopicRequest;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -28,7 +28,11 @@ public class TopicService {
             throw new RecordAlreadyExists("Topic name already exists");
 
         SpaceEntity space = spaceService.getOwnedBy(request.spaceId(), userIdConverted);
-        TopicEntity parentTopic = request.parentTopicId() != null ? getOwnedBy(request.parentTopicId(), userIdConverted) : null;
+        TopicEntity parentTopic = null;
+
+        if (request.parentTopicId() != null)
+            parentTopic = getOwnedBy(request.parentTopicId(), userIdConverted, space.getSpaceId())
+                    .orElse(null);
 
         TopicEntity entity = request.toEntity(space, parentTopic);
         topicRepository.save(entity);
@@ -37,7 +41,7 @@ public class TopicService {
     }
 
     @Transactional
-    public TopicEntity getOwnedBy(UUID topicId, UUID userId) {
-        return topicRepository.getByIdAndUserId(topicId, userId);
+    public Optional<TopicEntity> getOwnedBy(UUID topicId, UUID userId, UUID spaceId) {
+        return topicRepository.getByIdAndUserIdAndSpaceId(topicId, userId, spaceId);
     }
 }

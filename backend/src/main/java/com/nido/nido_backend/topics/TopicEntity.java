@@ -17,7 +17,7 @@ public class TopicEntity {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "color", nullable = false)
+    @Column(name = "color")
     private String color;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -26,7 +26,7 @@ public class TopicEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_topic_id")
-    private TopicEntity parentTopicId;
+    private TopicEntity parentTopic;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -64,11 +64,11 @@ public class TopicEntity {
     }
 
     public TopicEntity getParentTopic() {
-        return parentTopicId;
+        return parentTopic;
     }
 
     public void setParentTopic(TopicEntity parentTopic) {
-        this.parentTopicId = parentTopic;
+        this.parentTopic = parentTopic;
     }
 
     public LocalDateTime getCreatedAt() {
