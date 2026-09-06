@@ -1,6 +1,7 @@
 package com.nido.nido_backend.topics;
 
 import com.nido.nido_backend.shared.exception.RecordAlreadyExists;
+import com.nido.nido_backend.shared.util.TopicsTree;
 import com.nido.nido_backend.spaces.SpaceEntity;
 import com.nido.nido_backend.spaces.SpaceService;
 import com.nido.nido_backend.topics.dto.TopicRequest;
@@ -24,28 +25,37 @@ public class TopicService {
         this.spaceService = spaceService;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<TopicResponse> get(UUID spaceId, String userId) {
         SpaceEntity spaceEntity = spaceService.getOwnedBy(spaceId, UUID.fromString(userId));
-        if (spaceEntity == null)
-            throw new NoSuchElementException("Space was not found");
 
-        List<TopicEntity> topics = topicRepository.getBySpaceId(spaceId);
-        return TopicResponse.toList(topics);
+        List<TopicEntity> topics = topicRepository.getBySpaceId(spaceEntity.getSpaceId());
+
+        return TopicsTree.createTopicsTree(TopicResponse.toList(topics));
     }
 
     @Transactional
     public TopicEntity createTopic(TopicRequest request, String userId) {
         UUID userIdConverted = UUID.fromString(userId);
-        if (topicRepository.existsByNameAndUserId(request.name(), userIdConverted))
-            throw new RecordAlreadyExists("Topic name already exists");
+        UUID spaceIdConverted = UUID.fromString(request.spaceId());
 
-        SpaceEntity space = spaceService.getOwnedBy(UUID.fromString(request.spaceId()), userIdConverted);
+        SpaceEntity space = spaceService.getOwnedBy(spaceIdConverted, userIdConverted);
+
         TopicEntity parentTopic = null;
 
-        if (request.parentTopicId() != null)
-            parentTopic = getOwnedBy(UUID.fromString(request.parentTopicId()), userIdConverted, space.getSpaceId())
+        if (request.parentTopicId() != null) {
+            parentTopic = getOwnedBy(UUID.fromString(request.parentTopicId()), space.getSpaceId())
                     .orElseThrow(() -> new NoSuchElementException("Parent topic was not found"));
+
+            if (topicRepository.existsByNameAndParentTopicId(request.name(), parentTopic.getTopicId()))
+                throw new RecordAlreadyExists("A sub-topic with the title '%s' already exists in topic '%s'"
+                        .formatted(request.name(), parentTopic.getName()));
+        }
+        else {
+            if (topicRepository.existsByNameAndSpaceId(request.name(), spaceIdConverted))
+                throw new RecordAlreadyExists("A topic with the name '%s' already exists"
+                        .formatted(request.name()));
+        }
 
         TopicEntity entity = request.toEntity(space, parentTopic);
         topicRepository.save(entity);
@@ -54,7 +64,7 @@ public class TopicService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<TopicEntity> getOwnedBy(UUID topicId, UUID userId, UUID spaceId) {
-        return topicRepository.getByIdAndUserIdAndSpaceId(topicId, userId, spaceId);
+    public Optional<TopicEntity> getOwnedBy(UUID topicId, UUID spaceId) {
+        return topicRepository.getByIdAndSpaceId(topicId, spaceId);
     }
 }
