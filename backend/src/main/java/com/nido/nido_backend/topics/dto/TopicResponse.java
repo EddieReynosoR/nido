@@ -2,23 +2,20 @@ package com.nido.nido_backend.topics.dto;
 
 import com.nido.nido_backend.topics.TopicEntity;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
-public record TopicResponse(String topicId, String name, String color, String parentId, String spaceId, List<TopicResponse> topics) {
+public record TopicResponse(UUID topicId, String name, String color, UUID parentId, UUID spaceId, List<TopicResponse> topics) {
     public static TopicResponse from(TopicEntity entity) {
-        String topicId = Optional.ofNullable(entity.getParentTopic())
-                .map(TopicEntity::getTopicId)
-                .map(Object::toString)
-                .orElse(null);
 
         return new TopicResponse(
-                entity.getTopicId().toString(),
+                entity.getTopicId(),
                 entity.getName(),
                 entity.getColor(),
-                topicId,
-                entity.getSpace().getSpaceId().toString(),
-                null);
+                entity.getParentTopicId(),
+                entity.getSpace().getSpaceId(),
+                new ArrayList<>());
     }
 
     public static List<TopicResponse> toList(List<TopicEntity> entities) {

@@ -44,7 +44,7 @@ public class TopicService {
         TopicEntity parentTopic = null;
 
         if (request.parentTopicId() != null) {
-            parentTopic = getOwnedBy(UUID.fromString(request.parentTopicId()), space.getSpaceId())
+            parentTopic = getByIdAndSpaceId(UUID.fromString(request.parentTopicId()), space.getSpaceId())
                     .orElseThrow(() -> new NoSuchElementException("Parent topic was not found"));
 
             if (topicRepository.existsByNameAndParentTopicId(request.name(), parentTopic.getTopicId()))
@@ -57,14 +57,14 @@ public class TopicService {
                         .formatted(request.name()));
         }
 
-        TopicEntity entity = request.toEntity(space, parentTopic);
+        TopicEntity entity = request.toEntity(space, parentTopic != null ? parentTopic.getTopicId() : null);
         topicRepository.save(entity);
 
         return entity;
     }
 
     @Transactional(readOnly = true)
-    public Optional<TopicEntity> getOwnedBy(UUID topicId, UUID spaceId) {
+    public Optional<TopicEntity> getByIdAndSpaceId(UUID topicId, UUID spaceId) {
         return topicRepository.getByIdAndSpaceId(topicId, spaceId);
     }
 }

@@ -13,11 +13,11 @@ public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
     SELECT COUNT(t) > 0 FROM Topic t
     WHERE LOWER(t.name) = LOWER(:name)
       AND t.space.spaceId = :spaceId
-      AND t.parentTopic IS NULL
+      AND t.parentTopicId IS NULL
     """)
     boolean existsByNameAndSpaceId(@Param("name") String name, @Param("spaceId") UUID spaceId);
 
-    @Query("SELECT COUNT(t) > 0 FROM Topic t WHERE t.name = :name AND t.parentTopic.topicId = :parentTopicId")
+    @Query("SELECT COUNT(t) > 0 FROM Topic t WHERE LOWER(t.name) = LOWER(:name) AND t.parentTopicId = :parentTopicId")
     boolean existsByNameAndParentTopicId(@Param("name") String name, @Param("parentTopicId") UUID parentTopicId);
 
     @Query("SELECT t FROM Topic t WHERE t.topicId = :topicId AND t.space.spaceId = :spaceId")
