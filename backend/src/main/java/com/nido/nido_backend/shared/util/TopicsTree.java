@@ -35,6 +35,6 @@ public final class TopicsTree {
     }
 
     private static boolean hasParent(TopicResponse topic) {
-        return topic.parentId() != null && !topic.parentId().toString().isBlank();
+        return topic.parentId() != null;
     }
 }
