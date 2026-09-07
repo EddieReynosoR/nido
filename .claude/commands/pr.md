@@ -96,6 +96,11 @@ Run `gh pr create --base <BASE>` with this body format:
 
 **PR title**: Conventional Commits (`feat:`, `fix:`, `refactor:`, `chore:`, `docs:`, `test:`) plus a short imperative description. Max ~70 characters, not counting the `[skip-review]` prefix if I asked for it.
 
+**PR body**: use exactly the sections above and nothing more. Do not append any
+attribution footer, tool credit, or co-author trailer — no "Generated with Claude Code",
+no "Co-Authored-By: Claude <noreply@anthropic.com>", no emoji sign-off. The body ends
+with the `## Notes` section.
+
 ### Step 8 — Report
 
 Show me the URL of the created PR.
@@ -108,3 +113,6 @@ Show me the URL of the created PR.
 - Do not invent testing steps — base them on what you actually see in the diff and in existing tests.
 - Mark the PR as draft (`--draft`) if the diff contains `TODO`, `FIXME`, or leftover `console.log`.
 - Never batch Step 1 and Step 6 into a single question. They are separate stops, asked at different points in the flow.
+- Never add yourself as co-author or attribute the PR to Claude/Claude Code, in the title,
+  the body, or a trailer. If a `.github/pull_request_template.md` is used, that applies to
+  it too.

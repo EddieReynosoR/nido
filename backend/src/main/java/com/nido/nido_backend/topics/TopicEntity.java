@@ -24,9 +24,8 @@ public class TopicEntity {
     @JoinColumn(name = "space_id", nullable = false)
     private SpaceEntity space;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_topic_id")
-    private TopicEntity parentTopic;
+    @Column(name = "parent_topic_id")
+    private UUID parentTopicId;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -63,12 +62,12 @@ public class TopicEntity {
         this.space = space;
     }
 
-    public TopicEntity getParentTopic() {
-        return parentTopic;
+    public UUID getParentTopicId() {
+        return parentTopicId;
     }
 
-    public void setParentTopic(TopicEntity parentTopic) {
-        this.parentTopic = parentTopic;
+    public void setParentTopicId(UUID parentTopicId) {
+        this.parentTopicId = parentTopicId;
     }
 
     public LocalDateTime getCreatedAt() {

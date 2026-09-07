@@ -7,18 +7,20 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.UUID;
+
 public record TopicRequest(
         @NotBlank @Size(max = 50) String name,
         @Size(max = 6) String color,
         @NotNull @NotBlank String spaceId,
         String parentTopicId) {
-    public TopicEntity toEntity(SpaceEntity space, @Nullable TopicEntity parentTopic) {
+    public TopicEntity toEntity(SpaceEntity space, @Nullable UUID parentTopicId) {
         TopicEntity entity = new TopicEntity();
 
         entity.setName(name);
         entity.setColor(color);
         entity.setSpace(space);
-        entity.setParentTopic(parentTopic);
+        entity.setParentTopicId(parentTopicId);
 
         return entity;
     }

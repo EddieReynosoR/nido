@@ -6,10 +6,10 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("api/topic")
@@ -18,6 +18,14 @@ public class TopicController {
     private final TopicService topicService;
 
     public TopicController(TopicService topicService) { this.topicService = topicService; }
+
+    @GetMapping
+    public ResponseEntity<List<TopicResponse>> get(
+            @RequestParam("spaceId") UUID spaceId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var response = topicService.get(spaceId, userDetails.getUsername());
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/create")
     public ResponseEntity<TopicResponse> create(
