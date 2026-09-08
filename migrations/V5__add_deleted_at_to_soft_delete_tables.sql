@@ -20,7 +20,7 @@ CREATE UNIQUE INDEX uq_space_name_per_user_live ON spaces(user_id, name) WHERE d
 ALTER TABLE topics
     ADD COLUMN deleted_at TIMESTAMPTZ;
 
-CREATE UNIQUE INDEX uq_topic_name_per_space_live ON topics(space_id, name) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX uq_topic_name_per_parent_live ON topics(parent_topic_id, name) WHERE deleted_at IS NULL;
 
 ALTER TABLE notes
     ADD COLUMN deleted_at TIMESTAMPTZ;
