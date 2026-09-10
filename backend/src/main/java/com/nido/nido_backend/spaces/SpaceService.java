@@ -9,6 +9,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,7 +27,7 @@ public class SpaceService {
         String normalized = name == null ? null : name.trim();
         UUID ownerIdConverted = UUID.fromString(ownerId);
 
-        if (spaceRepository.existsByUserIdAndName(ownerIdConverted, normalized))
+        if (spaceRepository.existsByUserIdAndNameAndDeletedAtIsNull(ownerIdConverted, normalized))
             throw new RecordAlreadyExists("A space with that name already exists");
 
         SpaceEntity entity = new SpaceEntity();
@@ -38,16 +39,16 @@ public class SpaceService {
 
     @Transactional(readOnly = true)
     public Page<SpaceResponse> getSpaces(String ownerId, Pageable pageable) {
-        return spaceRepository.findByUserId(UUID.fromString(ownerId), pageable)
+        return spaceRepository.findByUserIdAndDeletedAtIsNull(UUID.fromString(ownerId), pageable)
                 .map(SpaceResponse::from);
     }
 
     @Transactional
     public void deleteSpace(UUID spaceId, UUID userId) {
-        if (!spaceRepository.existsBySpaceIdAndUserId(spaceId, userId))
+        if (!spaceRepository.existsByUserIdAndSpaceIdAndDeletedAtIsNull(spaceId, userId))
             throw new NoSuchElementException("Space not found");
 
-        int deleted = spaceRepository.deleteBySpaceId(spaceId);
+        int deleted = spaceRepository.softDeleteBySpaceIdAndUserId(spaceId, Instant.now());
 
         if (deleted == 0)
             throw new NoRowsAffectedException("No spaces were deleted");
@@ -55,7 +56,7 @@ public class SpaceService {
 
     @Transactional
     public SpaceResponse updateSpace(UUID spaceId, UUID userId, String name) {
-        Optional<SpaceEntity> entity = spaceRepository.findBySpaceIdAndUserId(spaceId, userId);
+        Optional<SpaceEntity> entity = spaceRepository.findBySpaceIdAndUserIdAndDeletedAtIsNull(spaceId, userId);
 
         if (entity.isEmpty())
             throw new NoSuchElementException("Space not found");
@@ -63,7 +64,7 @@ public class SpaceService {
         String nameTrimmed = name.trim();
         SpaceEntity spaceEntity = entity.get();
 
-        if (spaceRepository.existsByUserIdAndName(userId, nameTrimmed))
+        if (spaceRepository.existsByUserIdAndNameAndDeletedAtIsNull(userId, nameTrimmed))
             throw new RecordAlreadyExists("A space with that name already exists");
 
         spaceEntity.setName(nameTrimmed);
@@ -73,7 +74,7 @@ public class SpaceService {
 
     @Transactional(readOnly = true)
     public SpaceEntity getOwnedBy(UUID spaceId, UUID userId) {
-        return spaceRepository.findBySpaceIdAndUserId(spaceId, userId)
+        return spaceRepository.findBySpaceIdAndUserIdAndDeletedAtIsNull(spaceId, userId)
                 .orElseThrow(() -> new NoSuchElementException("Space not found"));
     }
 }

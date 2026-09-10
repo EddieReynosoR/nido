@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity
+@Entity(name = "Space")
 @Table(name = "spaces")
 public class SpaceEntity {
     @Id
@@ -21,6 +21,9 @@ public class SpaceEntity {
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     public UUID getSpaceId() {
         return spaceId;
@@ -53,4 +56,8 @@ public class SpaceEntity {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }
