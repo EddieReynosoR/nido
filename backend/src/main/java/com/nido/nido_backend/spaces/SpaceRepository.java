@@ -28,6 +28,6 @@ public interface SpaceRepository extends JpaRepository<SpaceEntity, UUID> {
          WHERE s.spaceId = :spaceId
            AND s.deletedAt IS NULL
         """)
-    int softDeleteBySpaceIdAndUserId(@Param("spaceId") UUID spaceId,
+    int softDeleteBySpaceId(@Param("spaceId") UUID spaceId,
                                      @Param("now") Instant now);
 }

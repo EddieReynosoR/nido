@@ -45,10 +45,10 @@ public class SpaceService {
 
     @Transactional
     public void deleteSpace(UUID spaceId, UUID userId) {
-        if (!spaceRepository.existsByUserIdAndSpaceIdAndDeletedAtIsNull(spaceId, userId))
+        if (!spaceRepository.existsByUserIdAndSpaceIdAndDeletedAtIsNull(userId, spaceId))
             throw new NoSuchElementException("Space not found");
 
-        int deleted = spaceRepository.softDeleteBySpaceIdAndUserId(spaceId, Instant.now());
+        int deleted = spaceRepository.softDeleteBySpaceId(spaceId, Instant.now());
 
         if (deleted == 0)
             throw new NoRowsAffectedException("No spaces were deleted");
