@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
-import { Plus, Folder, CircleUser, ChevronRight } from 'lucide-react';
+import { Plus, CircleUser, ChevronRight } from 'lucide-react';
 import SpaceSwitcher, {
   SpaceSwitcherSkeleton,
 } from '@/components/spaces/SpaceSwitcher';
 import AddSpaceForm from '@/components/spaces/AddSpaceForm';
+import TopicTreeItem from '@/components/topics/TopicTreeItem';
 import {
   Sidebar,
   SidebarContent,
@@ -16,24 +17,33 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSkeleton,
   SidebarRail,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { errorToast } from '@/lib/toast';
 import { useSpace } from '@/context/SpaceContext';
+import { useAuth } from '@/context/AuthContext';
+import { useTopics } from '@/hooks/use-topic';
 import { toast } from 'sonner';
 
-const folders = [
-  { label: 'Diary attempt 234', active: false },
-  { label: "Shosho's journey & other stories", active: true },
-  { label: 'Work Forms and Infographics', active: false },
-  { label: 'Chapter 1: It Begins', active: false },
-  { label: 'Chapter 2: The New Wave', active: false },
-  { label: 'Chapter 3: The Long way home or h...', active: false },
-];
-
 export default function AppSidebar() {
-  const { data: spaces, isLoading, error, isError, refetch } = useSpace();
+  const { accessToken } = useAuth();
+  const {
+    data: spaces,
+    activeSpace,
+    isLoading,
+    error,
+    isError,
+    refetch,
+  } = useSpace();
+  const {
+    data: topicsData,
+    isLoading: topicsLoading,
+    isError: topicsError,
+  } = useTopics(activeSpace?.spaceId, accessToken);
+
+  const topics = topicsData ?? [];
 
   const [open, setOpen] = useState<boolean>(false);
 
@@ -132,28 +142,29 @@ export default function AppSidebar() {
             <Plus />
           </SidebarGroupAction>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {folders.map((folder) => (
-                <SidebarMenuItem key={folder.label}>
-                  <SidebarMenuButton
-                    isActive={folder.active}
-                    tooltip={folder.label}
-                    className={
-                      folder.active ? undefined : 'text-sidebar-foreground/80'
-                    }
-                  >
-                    <Folder
-                      className={
-                        folder.active
-                          ? 'text-accent-green'
-                          : 'text-sidebar-foreground/50'
-                      }
-                    />
-                    <span className="select-none">{folder.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            {topicsLoading ? (
+              <SidebarMenu>
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <SidebarMenuItem key={index}>
+                    <SidebarMenuSkeleton showIcon />
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            ) : topicsError ? (
+              <p className="px-2 py-1.5 text-sm text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden select-none">
+                Couldn&apos;t load folders
+              </p>
+            ) : topics.length ? (
+              <SidebarMenu>
+                {topics.map((topic) => (
+                  <TopicTreeItem key={topic.topicId} topic={topic} />
+                ))}
+              </SidebarMenu>
+            ) : (
+              <p className="px-2 py-1.5 text-sm text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden select-none">
+                No folders
+              </p>
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
