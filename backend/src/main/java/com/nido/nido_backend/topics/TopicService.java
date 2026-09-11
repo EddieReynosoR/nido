@@ -47,17 +47,17 @@ public class TopicService {
             parentTopic = getByIdAndSpaceId(UUID.fromString(request.parentTopicId()), space.getSpaceId())
                     .orElseThrow(() -> new NoSuchElementException("Parent topic was not found"));
 
-            if (topicRepository.existsByNameAndParentTopicId(request.name(), parentTopic.getTopicId()))
+            if (topicRepository.existsChildByNameAndParentTopicId(request.name(), parentTopic.getTopicId()))
                 throw new RecordAlreadyExists("A sub-topic with the title '%s' already exists in topic '%s'"
                         .formatted(request.name(), parentTopic.getName()));
         }
         else {
-            if (topicRepository.existsByNameAndSpaceId(request.name(), spaceIdConverted))
+            if (topicRepository.existsRootByNameAndSpaceId(request.name(), spaceIdConverted))
                 throw new RecordAlreadyExists("A topic with the name '%s' already exists"
                         .formatted(request.name()));
         }
 
-        TopicEntity entity = request.toEntity(space, parentTopic != null ? parentTopic.getTopicId() : null);
+        TopicEntity entity = request.toEntity(space.getSpaceId(), parentTopic != null ? parentTopic.getTopicId() : null);
         topicRepository.save(entity);
 
         return entity;
@@ -65,6 +65,6 @@ public class TopicService {
 
     @Transactional(readOnly = true)
     public Optional<TopicEntity> getByIdAndSpaceId(UUID topicId, UUID spaceId) {
-        return topicRepository.getByIdAndSpaceId(topicId, spaceId);
+        return topicRepository.findByTopicIdAndSpaceId(topicId, spaceId);
     }
 }
