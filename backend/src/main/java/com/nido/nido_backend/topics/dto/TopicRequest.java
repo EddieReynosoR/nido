@@ -1,6 +1,5 @@
 package com.nido.nido_backend.topics.dto;
 
-import com.nido.nido_backend.spaces.SpaceEntity;
 import com.nido.nido_backend.topics.TopicEntity;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;

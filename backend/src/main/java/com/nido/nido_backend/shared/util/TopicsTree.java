@@ -12,12 +12,12 @@ public final class TopicsTree {
     public static List<TopicResponse> createTopicsTree(List<TopicResponse> topics) {
         // Agrupar hijos por padre
         Map<UUID, List<TopicResponse>> childrenByParent = topics.stream()
-                .filter(topic -> hasParent(topic) && topic.deletedAt() == null)
+                .filter(TopicsTree::hasParent)
                 .collect(Collectors.groupingBy(TopicResponse::parentId));
 
         // Ejecuta metodo recursivo usando solo los topics raiz (sin padre)
         return topics.stream()
-                .filter(topic -> !hasParent(topic) && topic.deletedAt() == null)
+                .filter(topic -> !hasParent(topic))
                 .map(root -> attachChildren(root, childrenByParent))
                 .toList();
     }

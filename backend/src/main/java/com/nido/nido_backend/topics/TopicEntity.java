@@ -1,6 +1,5 @@
 package com.nido.nido_backend.topics;
 
-import com.nido.nido_backend.spaces.SpaceEntity;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -20,7 +19,7 @@ public class TopicEntity {
     @Column(name = "color")
     private String color;
 
-    @Column(name = "space_id")
+    @Column(name = "space_id", nullable = false)
     private UUID spaceId;
 
     @Column(name = "parent_topic_id")
@@ -58,8 +57,8 @@ public class TopicEntity {
         return spaceId;
     }
 
-    public void setSpaceId(UUID space) {
-        this.spaceId = space;
+    public void setSpaceId(UUID spaceId) {
+        this.spaceId = spaceId;
     }
 
     public UUID getParentTopicId() { return parentTopicId; }
