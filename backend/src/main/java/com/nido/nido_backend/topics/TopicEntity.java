@@ -3,7 +3,7 @@ package com.nido.nido_backend.topics;
 import com.nido.nido_backend.spaces.SpaceEntity;
 import jakarta.persistence.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity(name = "Topic")
@@ -20,15 +20,17 @@ public class TopicEntity {
     @Column(name = "color")
     private String color;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "space_id", nullable = false)
-    private SpaceEntity space;
+    @Column(name = "space_id")
+    private UUID spaceId;
 
     @Column(name = "parent_topic_id")
     private UUID parentTopicId;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
 
     public UUID getTopicId() {
         return topicId;
@@ -50,31 +52,27 @@ public class TopicEntity {
         return color;
     }
 
-    public void setColor(String color) {
-        this.color = color;
+    public void setColor(String color) { this.color = color; }
+
+    public UUID getSpaceId() {
+        return spaceId;
     }
 
-    public SpaceEntity getSpace() {
-        return space;
+    public void setSpaceId(UUID space) {
+        this.spaceId = space;
     }
 
-    public void setSpace(SpaceEntity space) {
-        this.space = space;
-    }
+    public UUID getParentTopicId() { return parentTopicId; }
 
-    public UUID getParentTopicId() {
-        return parentTopicId;
-    }
+    public void setParentTopicId(UUID parentTopicId) { this.parentTopicId = parentTopicId; }
 
-    public void setParentTopicId(UUID parentTopicId) {
-        this.parentTopicId = parentTopicId;
-    }
-
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Instant getDeletedAt() { return deletedAt; }
+
+    public void setDeletedAt(Instant deletedAt) { this.deletedAt = deletedAt; }
 }

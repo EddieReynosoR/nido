@@ -14,12 +14,12 @@ public record TopicRequest(
         @Size(max = 6) String color,
         @NotNull @NotBlank String spaceId,
         String parentTopicId) {
-    public TopicEntity toEntity(SpaceEntity space, @Nullable UUID parentTopicId) {
+    public TopicEntity toEntity(UUID spaceId, @Nullable UUID parentTopicId) {
         TopicEntity entity = new TopicEntity();
 
         entity.setName(name);
         entity.setColor(color);
-        entity.setSpace(space);
+        entity.setSpaceId(spaceId);
         entity.setParentTopicId(parentTopicId);
 
         return entity;
