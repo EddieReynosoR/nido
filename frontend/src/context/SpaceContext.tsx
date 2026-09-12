@@ -56,7 +56,16 @@ export function SpaceProvider() {
       isError,
       refetch,
     }),
-    [activeSpace, selectSpace, data, isLoading, error, isError, refetch]
+    [
+      activeSpace,
+      selectSpace,
+      clearSelectedSpace,
+      data,
+      isLoading,
+      error,
+      isError,
+      refetch,
+    ]
   );
 
   return (
