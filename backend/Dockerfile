@@ -1,5 +1,5 @@
 # Compila el proyecto con Maven y genera el .jar
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /app
 
 # 1) Copiamos solo lo necesario para descargar dependencias primero.
@@ -15,7 +15,7 @@ RUN ./mvnw clean package -DskipTests
 
 # ---- Runtime stage ----
 # Imagen final ligera: solo el JRE + el .jar, sin Maven ni JDK.
-FROM eclipse-temurin:21-jre AS runtime
+FROM eclipse-temurin:25-jre AS runtime
 WORKDIR /app
 
 # Usuario sin privilegios
