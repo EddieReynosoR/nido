@@ -18,6 +18,8 @@ import java.util.UUID;
 @Service
 public class TopicService {
 
+    private static final int MAX_ANCESTRY_DEPTH = 256;
+
     private final TopicRepository topicRepository;
     private final SpaceService spaceService;
 
@@ -93,13 +95,39 @@ public class TopicService {
         boolean topicHasParent = request.newParentId() != null && !request.newParentId().isEmpty();
 
         if (topicHasParent) {
-            var _ = requireTopic(
+            TopicEntity newParent = requireTopic(
                     UUID.fromString(request.newParentId()),
                     spaceIdConverted,
                     "The specified parent topic was not found in the specified space");
+
+            assertNotDescendant(entity.getTopicId(), newParent.getTopicId(), spaceIdConverted);
         }
 
         entity.setParentTopicId(topicHasParent ? UUID.fromString(request.newParentId()) : null);
         topicRepository.save(entity);
+    }
+
+    /**
+     * Walks up the ancestry chain of the prospective new parent. Reaching the moved topic means the
+     * move would detach the whole subtree from the tree, since {@link TopicsTree#createTopicsTree}
+     * only descends from the root topics.
+     */
+    private void assertNotDescendant(UUID topicId, UUID newParentId, UUID spaceId) {
+        UUID ancestorId = newParentId;
+        int depth = 0;
+
+        while (ancestorId != null) {
+            if (ancestorId.equals(topicId))
+                throw new IllegalArgumentException(
+                        "A topic cannot be moved into itself or into one of its own sub-topics");
+
+            if (++depth > MAX_ANCESTRY_DEPTH)
+                throw new IllegalStateException(
+                        "The topic hierarchy is too deep or already contains a cycle");
+
+            ancestorId = topicRepository.findByTopicIdAndSpaceId(ancestorId, spaceId)
+                    .map(TopicEntity::getParentTopicId)
+                    .orElse(null);
+        }
     }
 }

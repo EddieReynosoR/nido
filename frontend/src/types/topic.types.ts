@@ -13,3 +13,14 @@ export type ReparentRequest = {
   spaceId: string;
   newParentId: string | null;
 };
+
+export type TopicDragData = {
+  topicId: string;
+  parentId: string | null;
+  name: string;
+  descendantIds: Set<string>;
+};
+
+export type TopicDropData = {
+  topicId: string;
+};
