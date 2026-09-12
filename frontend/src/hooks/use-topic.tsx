@@ -6,7 +6,7 @@ export function useTopics(
   accessToken: string | null
 ) {
   return useQuery({
-    queryKey: ['topics', spaceId, accessToken],
+    queryKey: ['topics', spaceId],
     queryFn: () => getTopics(spaceId!, accessToken!),
     enabled: !!spaceId && !!accessToken,
     staleTime: 30000,

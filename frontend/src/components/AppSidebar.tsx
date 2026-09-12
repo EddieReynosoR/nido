@@ -40,7 +40,9 @@ export default function AppSidebar() {
   const {
     data: topicsData,
     isLoading: topicsLoading,
-    isError: topicsError,
+    error: topicsError,
+    isError: topicsIsError,
+    refetch: refetchTopics
   } = useTopics(activeSpace?.spaceId, accessToken);
 
   const topics = topicsData ?? [];
@@ -58,6 +60,16 @@ export default function AppSidebar() {
       title: 'Could not load your spaces',
     });
   }, [isError, error]);
+
+  useEffect(() => {
+    if (!topicsIsError || !topicsError) return;
+
+    errorToast({
+      id: 'topics-fetch-error',
+      error: topicsError,
+      title: 'Could not load the topics of the selected space.',
+    });
+  }, [topicsIsError, topicsError]);
 
   useEffect(() => {
     const timers = timersRef.current;
@@ -151,9 +163,18 @@ export default function AppSidebar() {
                 ))}
               </SidebarMenu>
             ) : topicsError ? (
-              <p className="px-2 py-1.5 text-sm text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden select-none">
-                Couldn&apos;t load folders
-              </p>
+              <div className="mt-2 flex flex-col gap-1 px-2 py-1.5 group-data-[collapsible=icon]:hidden">
+                <p className="pl-0 px-2 py-1.5 text-sm text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden select-none">
+                  Couldn&apos;t load folders
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void refetchTopics()}
+                  className="self-start text-sm font-medium text-accent-green hover:underline"
+                >
+                  Retry
+                </button>
+              </div>             
             ) : topics.length ? (
               <SidebarMenu>
                 {topics.map((topic) => (

@@ -3,7 +3,7 @@ import { executeFetch, BASE_URL } from "./auth";
 
 export function getTopics(spaceId:string, accessToken: string) {
     return executeFetch<Topic[]>(
-        `${BASE_URL}/api/topic?spaceId=${spaceId}`,
+        `${BASE_URL}/api/topic?spaceId=${encodeURIComponent(spaceId)}`,
         {
             method: 'GET',
             headers: {
