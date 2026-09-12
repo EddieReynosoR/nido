@@ -42,7 +42,7 @@ export default function AppSidebar() {
     isLoading: topicsLoading,
     error: topicsError,
     isError: topicsIsError,
-    refetch: refetchTopics
+    refetch: refetchTopics,
   } = useTopics(activeSpace?.spaceId, accessToken);
 
   const topics = topicsData ?? [];
@@ -174,7 +174,7 @@ export default function AppSidebar() {
                 >
                   Retry
                 </button>
-              </div>             
+              </div>
             ) : topics.length ? (
               <SidebarMenu>
                 {topics.map((topic) => (

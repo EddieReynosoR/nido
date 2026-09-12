@@ -181,6 +181,8 @@
    el toaster tiene data-sonner-theme="dark". Como el theme se alterna con la clase
    .dark/.light en <html> y no con la prop `theme`, ese atributo nunca cambia.
    Lo forzamos al token del proyecto para que siga el theme como el resto del toast. */
-[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-description] {
+[data-sonner-toaster]
+  [data-sonner-toast][data-styled='true']
+  [data-description] {
   color: var(--muted-foreground);
 }

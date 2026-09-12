@@ -1,5 +1,6 @@
-import { getTopics } from '@/api/topic';
-import { useQuery } from '@tanstack/react-query';
+import { getTopics, reparent } from '@/api/topic';
+import type { ReparentRequest } from '@/types/topic.types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useTopics(
   spaceId: string | undefined,
@@ -10,5 +11,19 @@ export function useTopics(
     queryFn: () => getTopics(spaceId!, accessToken!),
     enabled: !!spaceId && !!accessToken,
     staleTime: 30000,
+  });
+}
+
+export function useReparent(
+  request: ReparentRequest,
+  accessToken: string | null
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => reparent(request, accessToken!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['topics', request.spaceId] });
+    },
   });
 }
