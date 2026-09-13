@@ -1,4 +1,4 @@
-import type { Topic } from '@/types/topic.types';
+import type { Topic, TopicDragData } from '@/types/topic.types';
 
 const byName = (a: Topic, b: Topic) => a.name.localeCompare(b.name);
 
@@ -106,4 +106,21 @@ export function moveTopicInTree(
   const { topics: result, attached } = attach(detached, newParentId, moved);
 
   return attached ? result : topics;
+}
+
+/**
+ * Whether `dragged` may be dropped on `targetId`, where `null` is the root drop zone. The single
+ * source of truth for drop legality: droppables use it in `accept` and `onDragEnd` re-runs it.
+ * Rejects a drop on the topic itself, on one of its descendants (which would detach the subtree)
+ * and on the parent it already has — including a root topic dropped back on the root.
+ */
+export function canDropTopic(
+  dragged: TopicDragData,
+  targetId: string | null
+): boolean {
+  return (
+    targetId !== dragged.parentId &&
+    targetId !== dragged.topicId &&
+    !(targetId !== null && dragged.descendantIds.has(targetId))
+  );
 }

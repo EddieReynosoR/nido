@@ -6,7 +6,8 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react';
 import { ChevronRight, Folder } from 'lucide-react';
-import { useDndContext, useDraggable, useDroppable } from '@dnd-kit/core';
+import { CollisionPriority } from '@dnd-kit/abstract';
+import { useDraggable, useDroppable } from '@dnd-kit/react';
 import {
   Collapsible,
   CollapsibleContent,
@@ -20,15 +21,18 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { collectDescendantIds } from '@/lib/topic-tree';
+import { canDropTopic, collectDescendantIds } from '@/lib/topic-tree';
 import { cn } from '@/lib/utils';
-import type { Topic, TopicDragData, TopicDropData } from '@/types/topic.types';
+import type { Topic, TopicDragData } from '@/types/topic.types';
 
 type TopicTreeItemProps = {
   topic: Topic;
   openIds: Set<string>;
   onOpenChange: (topicId: string, open: boolean) => void;
 };
+
+// How long a topic has to be hovered during a drag before it expands on its own.
+const AUTO_EXPAND_DELAY_MS = 600;
 
 const rotateChevronWhenOpen = '[&[data-state=open]>svg:last-child]:rotate-90';
 
@@ -50,26 +54,29 @@ function TopicChevron() {
 }
 
 /**
- * Wires one topic row into the surrounding `DndContext`.
+ * Wires one topic row into the surrounding `DragDropProvider`.
  *
  * The droppable and draggable node both live on a wrapper around the row button rather than on
  * the `<li>`: the `<li>` also holds the collapsible content, so its rect would enclose every
  * descendant row and make the parent unhittable. The wrapper also carries the drop ring, which
- * the button itself would clip (`sidebarMenuButtonVariants` sets `overflow-hidden`).
+ * the button itself would clip (`sidebarMenuButtonVariants` sets `overflow-hidden`). The button
+ * is only the drag handle.
  */
-function useTopicDnd(topic: Topic) {
+function useTopicDnd(
+  topic: Topic,
+  onOpenChange: TopicTreeItemProps['onOpenChange']
+) {
   const { state, isMobile } = useSidebar();
   const dragDisabled = state === 'collapsed' && !isMobile;
 
   const descendantIds = useMemo(() => collectDescendantIds(topic), [topic]);
 
   const {
-    attributes,
-    listeners,
-    setNodeRef: setDragNodeRef,
-    setActivatorNodeRef,
+    ref: dragRef,
+    handleRef,
     isDragging,
-  } = useDraggable({
+    isDragSource,
+  } = useDraggable<TopicDragData>({
     id: topic.topicId,
     disabled: dragDisabled,
     data: {
@@ -77,37 +84,45 @@ function useTopicDnd(topic: Topic) {
       parentId: topic.parentId,
       name: topic.name,
       descendantIds,
-    } satisfies TopicDragData,
+    },
   });
 
-  const { active } = useDndContext();
-  const dragged = active?.data.current as TopicDragData | undefined;
-
-  // Dropping a topic on itself, on one of its own descendants (which would detach the subtree)
-  // or back on the parent it already has. The droppable stays registered either way — disabling
-  // it would unregister it mid-drag and leave dnd-kit measuring a target that no longer exists —
-  // so the ban is expressed by withholding the drop ring and re-checked in `onDragEnd`.
-  const dropForbidden =
-    !dragged ||
-    dragged.topicId === topic.topicId ||
-    dragged.descendantIds.has(topic.topicId) ||
-    dragged.parentId === topic.topicId;
-
-  const { setNodeRef: setDropNodeRef, isOver } = useDroppable({
+  // Normal priority beats the root drop zone's lowest, so this row wins whenever the pointer is
+  // over it. `accept` keeps illegal targets from ever being hit, so `isDropTarget` alone decides
+  // whether the drop ring shows.
+  const { ref: dropRef, isDropTarget } = useDroppable({
     id: topic.topicId,
-    data: { topicId: topic.topicId } satisfies TopicDropData,
+    collisionPriority: CollisionPriority.Normal,
+    accept: (source) =>
+      canDropTopic(source.data as TopicDragData, topic.topicId),
   });
 
   const setRowRef = useCallback(
     (node: HTMLDivElement | null) => {
-      setDragNodeRef(node);
-      setDropNodeRef(node);
+      dragRef(node);
+      dropRef(node);
     },
-    [setDragNodeRef, setDropNodeRef]
+    [dragRef, dropRef]
   );
 
-  // Releasing a drag still fires a click on the row. Swallow it in the capture phase so the
-  // CollapsibleTrigger underneath does not toggle the topic on drop.
+  // Hovering a collapsed topic during a drag opens it, so its children become reachable targets.
+  // Leaving before the delay clears the timer.
+  const hasChildren = topic.topics.length > 0;
+
+  useEffect(() => {
+    if (!isDropTarget || !hasChildren) return;
+
+    const timer = setTimeout(
+      () => onOpenChange(topic.topicId, true),
+      AUTO_EXPAND_DELAY_MS
+    );
+
+    return () => clearTimeout(timer);
+  }, [isDropTarget, hasChildren, onOpenChange, topic.topicId]);
+
+  // Releasing a drag still fires a click on the row: the pointer sensor's own click suppression
+  // is unbound synchronously on pointerup, before that click arrives. Swallow it in the capture
+  // phase so the CollapsibleTrigger underneath does not toggle the topic on drop.
   const draggedRef = useRef(false);
 
   useEffect(() => {
@@ -128,11 +143,11 @@ function useTopicDnd(topic: Topic) {
       onClickCapture,
       className: cn(
         'relative rounded-md',
-        isDragging && 'opacity-40',
-        isOver && !dropForbidden && 'bg-sidebar-accent ring-2 ring-sidebar-ring'
+        isDragSource && 'opacity-40',
+        isDropTarget && 'bg-sidebar-accent ring-2 ring-sidebar-ring'
       ),
     },
-    handleProps: { ref: setActivatorNodeRef, ...listeners, ...attributes },
+    handleProps: { ref: handleRef },
   };
 }
 
@@ -141,7 +156,7 @@ function TopicSubTreeItem({
   openIds,
   onOpenChange,
 }: TopicTreeItemProps) {
-  const { rowProps, handleProps } = useTopicDnd(topic);
+  const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
 
   if (!topic.topics.length) {
     return (
@@ -202,7 +217,7 @@ export default function TopicTreeItem({
   openIds,
   onOpenChange,
 }: TopicTreeItemProps) {
-  const { rowProps, handleProps } = useTopicDnd(topic);
+  const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
 
   if (!topic.topics.length) {
     return (
