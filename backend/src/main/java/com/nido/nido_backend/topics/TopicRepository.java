@@ -39,4 +39,26 @@ public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
 
     @Query("SELECT t FROM Topic t WHERE t.spaceId = :spaceId AND t.deletedAt IS NULL ORDER BY t.name ASC")
     List<TopicEntity> getBySpaceId(@Param("spaceId") UUID spaceId);
+
+    @Query(value = """
+        WITH RECURSIVE ancestors AS (
+            SELECT topic_id, parent_topic_id, 1 AS depth
+                FROM topics
+            WHERE topic_id = :newParentId
+                AND space_id = :spaceId
+                AND deleted_at IS NULL
+            UNION ALL
+            SELECT t.topic_id, t.parent_topic_id, a.depth + 1
+                FROM topics t
+                JOIN ancestors a ON t.topic_id = a.parent_topic_id
+            WHERE t.space_id = :spaceId
+                AND t.deleted_at IS NULL
+                AND a.depth < :maxDepth
+        )
+        SELECT EXISTS (SELECT 1 FROM ancestors WHERE topic_id = :topicId)
+        """, nativeQuery = true)
+    boolean isAncestorOrSelf(@Param("topicId") UUID topicId,
+                             @Param("newParentId") UUID newParentId,
+                             @Param("spaceId") UUID spaceId,
+                             @Param("maxDepth") int maxDepth);
 }

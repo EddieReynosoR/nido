@@ -117,27 +117,9 @@ public class TopicService {
         topicRepository.save(entity);
     }
 
-    /**
-     * Walks up the ancestry chain of the prospective new parent. Reaching the moved topic means the
-     * move would detach the whole subtree from the tree, since {@link TopicsTree#createTopicsTree}
-     * only descends from the root topics.
-     */
     private void assertNotDescendant(UUID topicId, UUID newParentId, UUID spaceId) {
-        UUID ancestorId = newParentId;
-        int depth = 0;
-
-        while (ancestorId != null) {
-            if (ancestorId.equals(topicId))
-                throw new IllegalArgumentException(
-                        "A topic cannot be moved into itself or into one of its own sub-topics");
-
-            if (++depth > MAX_ANCESTRY_DEPTH)
-                throw new IllegalStateException(
-                        "The topic hierarchy is too deep or already contains a cycle");
-
-            ancestorId = topicRepository.findByTopicIdAndSpaceId(ancestorId, spaceId)
-                    .map(TopicEntity::getParentTopicId)
-                    .orElse(null);
-        }
+        if (topicRepository.isAncestorOrSelf(topicId, newParentId, spaceId, MAX_ANCESTRY_DEPTH))
+            throw new IllegalArgumentException(
+                    "A topic cannot be moved into itself or into one of its own sub-topics");
     }
 }
