@@ -5,6 +5,7 @@ import SpaceSwitcher, {
 } from '@/components/spaces/SpaceSwitcher';
 import AddSpaceForm from '@/components/spaces/AddSpaceForm';
 import TopicTree from '@/components/topics/TopicTree';
+import AddTopicDialog from '@/components/topics/AddTopicDialog';
 import {
   Sidebar,
   SidebarContent,
@@ -48,6 +49,7 @@ export default function AppSidebar() {
   const topics = topicsData ?? [];
 
   const [open, setOpen] = useState<boolean>(false);
+  const [addTopicOpen, setAddTopicOpen] = useState<boolean>(false);
 
   const timersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 
@@ -150,9 +152,12 @@ export default function AppSidebar() {
           <SidebarGroupAction
             aria-label="Add folder"
             className="text-accent-green"
+            disabled={!activeSpace}
+            onClick={() => setAddTopicOpen(true)}
           >
             <Plus />
           </SidebarGroupAction>
+          <AddTopicDialog open={addTopicOpen} onOpenChange={setAddTopicOpen} />
           <SidebarGroupContent>
             {topicsLoading ? (
               <SidebarMenu>
