@@ -2,6 +2,7 @@ package com.nido.nido_backend.topics;
 
 import com.nido.nido_backend.topics.dto.TopicRequest;
 import com.nido.nido_backend.topics.dto.TopicResponse;
+import com.nido.nido_backend.topics.dto.UpdateParentRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,5 +34,13 @@ public class TopicController {
             @AuthenticationPrincipal UserDetails userDetails) {
         var entity = topicService.createTopic(request, userDetails.getUsername());
         return ResponseEntity.ok(TopicResponse.from(entity));
+    }
+
+    @PostMapping("/reparent")
+    public ResponseEntity<?> reparent(
+            @Valid @RequestBody UpdateParentRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        topicService.updateParentTopic(request, userDetails.getUsername());
+        return ResponseEntity.noContent().build();
     }
 }

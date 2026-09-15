@@ -4,7 +4,7 @@ import SpaceSwitcher, {
   SpaceSwitcherSkeleton,
 } from '@/components/spaces/SpaceSwitcher';
 import AddSpaceForm from '@/components/spaces/AddSpaceForm';
-import TopicTreeItem from '@/components/topics/TopicTreeItem';
+import TopicTree from '@/components/topics/TopicTree';
 import {
   Sidebar,
   SidebarContent,
@@ -42,7 +42,7 @@ export default function AppSidebar() {
     isLoading: topicsLoading,
     error: topicsError,
     isError: topicsIsError,
-    refetch: refetchTopics
+    refetch: refetchTopics,
   } = useTopics(activeSpace?.spaceId, accessToken);
 
   const topics = topicsData ?? [];
@@ -174,13 +174,9 @@ export default function AppSidebar() {
                 >
                   Retry
                 </button>
-              </div>             
-            ) : topics.length ? (
-              <SidebarMenu>
-                {topics.map((topic) => (
-                  <TopicTreeItem key={topic.topicId} topic={topic} />
-                ))}
-              </SidebarMenu>
+              </div>
+            ) : topics.length && activeSpace ? (
+              <TopicTree topics={topics} spaceId={activeSpace.spaceId} />
             ) : (
               <p className="px-2 py-1.5 text-sm text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden select-none">
                 No folders
