@@ -93,6 +93,7 @@ public class TopicService {
                 "The specified topic was not found in the specified space");
 
         boolean topicHasParent = request.newParentId() != null && !request.newParentId().isEmpty();
+        String topicName = entity.getName();
 
         if (topicHasParent) {
             TopicEntity newParent = requireTopic(
@@ -100,7 +101,16 @@ public class TopicService {
                     spaceIdConverted,
                     "The specified parent topic was not found in the specified space");
 
+            if (topicRepository.existsChildByNameAndParentTopicId(topicName, newParent.getTopicId()))
+                throw new RecordAlreadyExists("A sub-topic with the title '%s' already exists in topic '%s'"
+                        .formatted(topicName, newParent.getName()));
+
             assertNotDescendant(entity.getTopicId(), newParent.getTopicId(), spaceIdConverted);
+        }
+        else {
+            if (topicRepository.existsRootByNameAndSpaceId(topicName, spaceIdConverted))
+                throw new RecordAlreadyExists("A topic with the name '%s' already exists"
+                        .formatted(topicName));
         }
 
         entity.setParentTopicId(topicHasParent ? UUID.fromString(request.newParentId()) : null);
