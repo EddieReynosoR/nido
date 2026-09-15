@@ -34,12 +34,8 @@ type TopicTreeRootProps = {
 
 const ROOT_DROPPABLE_ID = 'topic-root-dropzone';
 
-// A click never travels this far, so plain clicks keep toggling the collapsible instead of
-// starting a drag. A delay constraint would instead make every click in the sidebar feel laggy.
 const DRAG_ACTIVATION_DISTANCE = 6;
 
-// Swaps the default pointer sensor for one with the distance threshold; the keyboard sensor
-// from the defaults is kept. Module-level so the provider receives a stable reference.
 const configureSensors = (defaults: Sensors): Sensors => [
   ...defaults.filter((sensor) => sensor !== PointerSensor),
   PointerSensor.configure({
@@ -55,11 +51,8 @@ function TopicTreeRoot({ topics, openIds, onOpenChange }: TopicTreeRootProps) {
   const { source } = useDragOperation();
   const dragged = source?.data as TopicDragData | undefined;
 
-  // Only offer the strip when the move would do something: a root topic has nowhere to go here.
   const showRootStrip = !!dragged && canDropTopic(dragged, null);
 
-  // The lowest collision priority lets any topic row under the pointer win over this zone,
-  // which encloses every row.
   const { ref, isDropTarget } = useDroppable({
     id: ROOT_DROPPABLE_ID,
     collisionPriority: CollisionPriority.Lowest,
@@ -125,11 +118,8 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
     const newParentId =
       target.id === ROOT_DROPPABLE_ID ? null : String(target.id);
 
-    // `accept` already keeps illegal targets from being hit; this re-runs the same rule
-    // defensively rather than restating it.
     if (!canDropTopic(dragged, newParentId)) return;
 
-    // Without this the topic lands inside a collapsed parent and looks like it vanished.
     if (newParentId) handleOpenChange(newParentId, true);
 
     reparentTopic({ topicId: dragged.topicId, spaceId, newParentId });

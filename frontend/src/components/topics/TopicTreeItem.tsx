@@ -31,7 +31,6 @@ type TopicTreeItemProps = {
   onOpenChange: (topicId: string, open: boolean) => void;
 };
 
-// How long a topic has to be hovered during a drag before it expands on its own.
 const AUTO_EXPAND_DELAY_MS = 600;
 
 const rotateChevronWhenOpen = '[&[data-state=open]>svg:last-child]:rotate-90';
@@ -53,15 +52,6 @@ function TopicChevron() {
   );
 }
 
-/**
- * Wires one topic row into the surrounding `DragDropProvider`.
- *
- * The droppable and draggable node both live on a wrapper around the row button rather than on
- * the `<li>`: the `<li>` also holds the collapsible content, so its rect would enclose every
- * descendant row and make the parent unhittable. The wrapper also carries the drop ring, which
- * the button itself would clip (`sidebarMenuButtonVariants` sets `overflow-hidden`). The button
- * is only the drag handle.
- */
 function useTopicDnd(
   topic: Topic,
   onOpenChange: TopicTreeItemProps['onOpenChange']
@@ -87,9 +77,6 @@ function useTopicDnd(
     },
   });
 
-  // Normal priority beats the root drop zone's lowest, so this row wins whenever the pointer is
-  // over it. `accept` keeps illegal targets from ever being hit, so `isDropTarget` alone decides
-  // whether the drop ring shows.
   const { ref: dropRef, isDropTarget } = useDroppable({
     id: topic.topicId,
     collisionPriority: CollisionPriority.Normal,
@@ -105,8 +92,6 @@ function useTopicDnd(
     [dragRef, dropRef]
   );
 
-  // Hovering a collapsed topic during a drag opens it, so its children become reachable targets.
-  // Leaving before the delay clears the timer.
   const hasChildren = topic.topics.length > 0;
 
   useEffect(() => {
@@ -120,9 +105,6 @@ function useTopicDnd(
     return () => clearTimeout(timer);
   }, [isDropTarget, hasChildren, onOpenChange, topic.topicId]);
 
-  // Releasing a drag still fires a click on the row: the pointer sensor's own click suppression
-  // is unbound synchronously on pointerup, before that click arrives. Swallow it in the capture
-  // phase so the CollapsibleTrigger underneath does not toggle the topic on drop.
   const draggedRef = useRef(false);
 
   useEffect(() => {

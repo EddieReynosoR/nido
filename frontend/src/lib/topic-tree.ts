@@ -2,10 +2,6 @@ import type { Topic, TopicDragData } from '@/types/topic.types';
 
 const byName = (a: Topic, b: Topic) => a.name.localeCompare(b.name);
 
-/**
- * Ids of every topic below `topic`, excluding `topic` itself. Used to forbid dropping a topic
- * into one of its own descendants, which would detach the whole subtree from the tree.
- */
 export function collectDescendantIds(topic: Topic): Set<string> {
   const ids = new Set<string>();
 
