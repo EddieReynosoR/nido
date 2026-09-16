@@ -1,6 +1,7 @@
 import { create, getTopics, reparent } from '@/api/topic';
+import { HttpError } from '@/lib/http';
 import { errorToast, invalidSessionToast } from '@/lib/toast';
-import { moveTopicInTree } from '@/lib/topic-tree';
+import { insertTopicInTree, moveTopicInTree } from '@/lib/topic-tree';
 import type {
   CreateTopicRequest,
   ReparentRequest,
@@ -25,7 +26,7 @@ export function useCreate(accessToken: string | null) {
 
   return useMutation<
     void,
-    Error,
+    HttpError,
     CreateTopicRequest,
     { previous?: Topic[]; tempId: string }
   >({
@@ -40,8 +41,8 @@ export function useCreate(accessToken: string | null) {
       const previous = queryClient.getQueryData<Topic[]>(queryKey);
       const tempId = crypto.randomUUID();
 
-      const optimicticTopic: Topic = {
-        topicId: `${tempId}`,
+      const optimisticTopic: Topic = {
+        topicId: tempId,
         name: request.name,
         color: request.color,
         spaceId: request.spaceId,
@@ -52,7 +53,7 @@ export function useCreate(accessToken: string | null) {
 
       queryClient.setQueryData<Topic[]>(queryKey, (old) =>
         old
-          ? moveTopicInTree(old, optimicticTopic.topicId, request.parentTopicId)
+          ? insertTopicInTree(old, optimisticTopic, request.parentTopicId)
           : old
       );
 
@@ -66,9 +67,13 @@ export function useCreate(accessToken: string | null) {
       if (error.message === 'NO_SESSION') invalidSessionToast();
       else {
         errorToast({
-          id: `topics-reparent-error-${context?.tempId}`,
+          id: `topics-create-error-${context?.tempId}`,
           error,
-          title: 'Could not move the folder',
+          customMessage:
+            error.status === 409
+              ? `Topic with name ${request.name} already exists at the current level.`
+              : undefined,
+          title: 'Could not create the folder',
         });
       }
     },

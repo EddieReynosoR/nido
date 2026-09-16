@@ -13,6 +13,7 @@ import {
   useDroppable,
 } from '@dnd-kit/react';
 import { Folder } from 'lucide-react';
+import AddTopicDialog from '@/components/topics/AddTopicDialog';
 import TopicTreeItem from '@/components/topics/TopicTreeItem';
 import { SidebarMenu } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
@@ -30,6 +31,7 @@ type TopicTreeRootProps = {
   topics: Topic[];
   openIds: Set<string>;
   onOpenChange: (topicId: string, open: boolean) => void;
+  onAddChild: (topic: Topic) => void;
 };
 
 const ROOT_DROPPABLE_ID = 'topic-root-dropzone';
@@ -47,7 +49,12 @@ const configureSensors = (defaults: Sensors): Sensors => [
   }),
 ];
 
-function TopicTreeRoot({ topics, openIds, onOpenChange }: TopicTreeRootProps) {
+function TopicTreeRoot({
+  topics,
+  openIds,
+  onOpenChange,
+  onAddChild,
+}: TopicTreeRootProps) {
   const { source } = useDragOperation();
   const dragged = source?.data as TopicDragData | undefined;
 
@@ -74,6 +81,7 @@ function TopicTreeRoot({ topics, openIds, onOpenChange }: TopicTreeRootProps) {
             topic={topic}
             openIds={openIds}
             onOpenChange={onOpenChange}
+            onAddChild={onAddChild}
           />
         ))}
       </SidebarMenu>
@@ -97,6 +105,8 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
   const { mutate: reparentTopic } = useReparent(accessToken);
 
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  const [addChildOpen, setAddChildOpen] = useState<boolean>(false);
+  const [parentTopic, setParentTopic] = useState<Topic | null>(null);
 
   const handleOpenChange = useCallback((topicId: string, open: boolean) => {
     setOpenIds((previous) => {
@@ -109,6 +119,15 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
       return next;
     });
   }, []);
+
+  const handleAddChild = useCallback(
+    (topic: Topic) => {
+      setParentTopic(topic);
+      setAddChildOpen(true);
+      handleOpenChange(topic.topicId, true);
+    },
+    [handleOpenChange]
+  );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { source, target } = event.operation;
@@ -131,6 +150,13 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
         topics={topics}
         openIds={openIds}
         onOpenChange={handleOpenChange}
+        onAddChild={handleAddChild}
+      />
+
+      <AddTopicDialog
+        open={addChildOpen}
+        onOpenChange={setAddChildOpen}
+        parentTopic={parentTopic}
       />
 
       <DragOverlay dropAnimation={null}>

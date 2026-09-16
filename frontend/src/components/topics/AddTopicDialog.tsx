@@ -27,17 +27,21 @@ import {
 } from '@/lib/topic-schema';
 import { useCreate } from '@/hooks/use-topic';
 import { useAuth } from '@/context/AuthContext';
-import type { CreateTopicRequest } from '@/types/topic.types';
+import type { CreateTopicRequest, Topic } from '@/types/topic.types';
 import { useSpace } from '@/context/SpaceContext';
 import { toast } from 'sonner';
+
+type AddTopicDialogProps = {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  parentTopic?: Topic | null;
+};
 
 export default function AddTopicDialog({
   open,
   onOpenChange,
-}: {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-}) {
+  parentTopic,
+}: AddTopicDialogProps) {
   const form = useForm<AddTopicSchema>({
     resolver: zodResolver(addTopicSchema),
     defaultValues: {
@@ -61,8 +65,9 @@ export default function AddTopicDialog({
     const request: CreateTopicRequest = {
       ...data,
       spaceId: activeSpace.spaceId,
-      parentTopicId: null,
+      parentTopicId: parentTopic?.topicId ?? null,
     };
+
     createTopic(request, {
       onSuccess: () => {
         toast.success('Topic created');
@@ -78,7 +83,9 @@ export default function AddTopicDialog({
         <DialogHeader>
           <DialogTitle>New folder</DialogTitle>
           <DialogDescription>
-            Create a new top-level folder in this space.
+            {parentTopic
+              ? `Create a new folder inside "${parentTopic.name}".`
+              : 'Create a new top-level folder in this space.'}
           </DialogDescription>
         </DialogHeader>
 

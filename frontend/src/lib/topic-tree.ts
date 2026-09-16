@@ -87,6 +87,18 @@ export function moveTopicInTree(
   return attached ? result : topics;
 }
 
+export function insertTopicInTree(
+  topics: Topic[],
+  node: Topic,
+  parentId: string | null
+): Topic[] {
+  if (parentId === null) return [...topics, node].sort(byName);
+
+  const { topics: result, attached } = attach(topics, parentId, node);
+
+  return attached ? result : topics;
+}
+
 export function canDropTopic(
   dragged: TopicDragData,
   targetId: string | null
