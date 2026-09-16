@@ -1,5 +1,5 @@
 export interface ErrorToastOptions {
-  error: Error;
+  error?: Error;
   title?: string;
   customMessage?: string;
   id?: string;

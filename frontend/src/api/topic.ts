@@ -1,4 +1,8 @@
-import { type ReparentRequest, type Topic } from '@/types/topic.types';
+import type {
+  CreateTopicRequest,
+  ReparentRequest,
+  Topic,
+} from '@/types/topic.types';
 import { executeFetch, BASE_URL } from './auth';
 
 export function getTopics(spaceId: string, accessToken: string) {
@@ -11,6 +15,21 @@ export function getTopics(spaceId: string, accessToken: string) {
       },
     },
     'There was an error fetching the topics of the respective space.'
+  );
+}
+
+export function create(request: CreateTopicRequest, accessToken: string) {
+  return executeFetch<Topic>(
+    `${BASE_URL}/api/topic/create`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(request),
+    },
+    'There was an error creating the new topic.'
   );
 }
 

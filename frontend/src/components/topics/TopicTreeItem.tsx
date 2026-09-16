@@ -5,7 +5,7 @@ import {
   useRef,
   type MouseEvent as ReactMouseEvent,
 } from 'react';
-import { ChevronRight, Folder } from 'lucide-react';
+import { ChevronRight, Folder, Plus } from 'lucide-react';
 import { CollisionPriority } from '@dnd-kit/abstract';
 import { useDraggable, useDroppable } from '@dnd-kit/react';
 import {
@@ -14,6 +14,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import {
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -29,6 +30,7 @@ type TopicTreeItemProps = {
   topic: Topic;
   openIds: Set<string>;
   onOpenChange: (topicId: string, open: boolean) => void;
+  onAddChild: (topic: Topic) => void;
 };
 
 const AUTO_EXPAND_DELAY_MS = 600;
@@ -37,10 +39,19 @@ const rotateChevronWhenOpen = '[&[data-state=open]>svg:last-child]:rotate-90';
 
 const grabCursor = 'cursor-grab active:cursor-grabbing';
 
+const revealOnHover =
+  'md:opacity-0 group-hover/menu-item:opacity-100 group-has-[:focus-visible]/menu-item:opacity-100';
+
+const revealOnHoverSub =
+  'top-1 md:opacity-0 group-hover/menu-sub-item:opacity-100 group-has-[:focus-visible]/menu-sub-item:opacity-100';
+
 function TopicLabel({ topic }: { topic: Topic }) {
   return (
     <>
-      <Folder className="text-sidebar-foreground/50" />
+      <Folder
+        className={topic.color ? undefined : 'text-sidebar-foreground/50'}
+        style={topic.color ? { color: `#${topic.color}` } : undefined}
+      />
       <span className="truncate select-none">{topic.name}</span>
     </>
   );
@@ -49,6 +60,26 @@ function TopicLabel({ topic }: { topic: Topic }) {
 function TopicChevron() {
   return (
     <ChevronRight className="ml-auto text-sidebar-foreground/40 transition-transform" />
+  );
+}
+
+function TopicAddChildAction({
+  topic,
+  onAddChild,
+  className,
+}: {
+  topic: Topic;
+  onAddChild: TopicTreeItemProps['onAddChild'];
+  className?: string;
+}) {
+  return (
+    <SidebarMenuAction
+      aria-label={`Add folder inside ${topic.name}`}
+      className={cn('text-accent-green', className)}
+      onClick={() => onAddChild(topic)}
+    >
+      <Plus />
+    </SidebarMenuAction>
   );
 }
 
@@ -137,6 +168,7 @@ function TopicSubTreeItem({
   topic,
   openIds,
   onOpenChange,
+  onAddChild,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
 
@@ -146,12 +178,17 @@ function TopicSubTreeItem({
         <div {...rowProps}>
           <SidebarMenuSubButton
             asChild
-            className={`text-sidebar-foreground/80 ${grabCursor}`}
+            className={`w-full pr-8 text-sidebar-foreground/80 ${grabCursor}`}
           >
             <button type="button" {...handleProps}>
               <TopicLabel topic={topic} />
             </button>
           </SidebarMenuSubButton>
+          <TopicAddChildAction
+            topic={topic}
+            onAddChild={onAddChild}
+            className={revealOnHoverSub}
+          />
         </div>
       </SidebarMenuSubItem>
     );
@@ -168,7 +205,7 @@ function TopicSubTreeItem({
           <CollapsibleTrigger asChild>
             <SidebarMenuSubButton
               asChild
-              className={`text-sidebar-foreground/80 ${grabCursor} ${rotateChevronWhenOpen}`}
+              className={`w-full pr-8 text-sidebar-foreground/80 ${grabCursor} ${rotateChevronWhenOpen}`}
             >
               <button type="button" {...handleProps}>
                 <TopicLabel topic={topic} />
@@ -176,6 +213,11 @@ function TopicSubTreeItem({
               </button>
             </SidebarMenuSubButton>
           </CollapsibleTrigger>
+          <TopicAddChildAction
+            topic={topic}
+            onAddChild={onAddChild}
+            className={revealOnHoverSub}
+          />
         </div>
         <CollapsibleContent>
           <SidebarMenuSub className="gap-0">
@@ -185,6 +227,7 @@ function TopicSubTreeItem({
                 topic={child}
                 openIds={openIds}
                 onOpenChange={onOpenChange}
+                onAddChild={onAddChild}
               />
             ))}
           </SidebarMenuSub>
@@ -198,6 +241,7 @@ export default function TopicTreeItem({
   topic,
   openIds,
   onOpenChange,
+  onAddChild,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
 
@@ -212,6 +256,11 @@ export default function TopicTreeItem({
           >
             <TopicLabel topic={topic} />
           </SidebarMenuButton>
+          <TopicAddChildAction
+            topic={topic}
+            onAddChild={onAddChild}
+            className={revealOnHover}
+          />
         </div>
       </SidebarMenuItem>
     );
@@ -229,12 +278,17 @@ export default function TopicTreeItem({
             <SidebarMenuButton
               {...handleProps}
               tooltip={topic.name}
-              className={`text-sidebar-foreground/80 ${grabCursor} ${rotateChevronWhenOpen}`}
+              className={`pr-8 text-sidebar-foreground/80 ${grabCursor} ${rotateChevronWhenOpen}`}
             >
               <TopicLabel topic={topic} />
               <TopicChevron />
             </SidebarMenuButton>
           </CollapsibleTrigger>
+          <TopicAddChildAction
+            topic={topic}
+            onAddChild={onAddChild}
+            className={revealOnHover}
+          />
         </div>
         <CollapsibleContent>
           <SidebarMenuSub className="gap-0">
@@ -244,6 +298,7 @@ export default function TopicTreeItem({
                 topic={child}
                 openIds={openIds}
                 onOpenChange={onOpenChange}
+                onAddChild={onAddChild}
               />
             ))}
           </SidebarMenuSub>

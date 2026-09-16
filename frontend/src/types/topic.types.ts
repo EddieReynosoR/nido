@@ -14,6 +14,13 @@ export type ReparentRequest = {
   newParentId: string | null;
 };
 
+export type CreateTopicRequest = {
+  name: string;
+  color: string;
+  spaceId: string;
+  parentTopicId: string | null;
+};
+
 export type TopicDragData = {
   topicId: string;
   parentId: string | null;

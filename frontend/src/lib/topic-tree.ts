@@ -68,12 +68,6 @@ function attach(topics: Topic[], parentId: string, node: Topic): AttachResult {
   return { topics: next, attached };
 }
 
-/**
- * Moves `topicId` under `newParentId` (or to the root when it is `null`), returning a new tree.
- * The input is returned untouched when either end of the move cannot be found, so a stale cache
- * is never corrupted. Siblings are sorted by name to match the backend's `ORDER BY t.name ASC`,
- * which keeps the optimistic tree from jumping once the refetch lands.
- */
 export function moveTopicInTree(
   topics: Topic[],
   topicId: string,
@@ -93,12 +87,18 @@ export function moveTopicInTree(
   return attached ? result : topics;
 }
 
-/**
- * Whether `dragged` may be dropped on `targetId`, where `null` is the root drop zone. The single
- * source of truth for drop legality: droppables use it in `accept` and `onDragEnd` re-runs it.
- * Rejects a drop on the topic itself, on one of its descendants (which would detach the subtree)
- * and on the parent it already has — including a root topic dropped back on the root.
- */
+export function insertTopicInTree(
+  topics: Topic[],
+  node: Topic,
+  parentId: string | null
+): Topic[] {
+  if (parentId === null) return [...topics, node].sort(byName);
+
+  const { topics: result, attached } = attach(topics, parentId, node);
+
+  return attached ? result : topics;
+}
+
 export function canDropTopic(
   dragged: TopicDragData,
   targetId: string | null
