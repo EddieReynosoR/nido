@@ -38,8 +38,8 @@ export function errorToast({
 
 export function invalidSessionToast() {
   errorToast({
-    id: 'topics-reparent-error',
-    customMessage: "There's no a current valid session.",
+    id: 'invalid-session',
+    customMessage: 'There is no valid session.',
     title: 'Invalid session',
   });
 }

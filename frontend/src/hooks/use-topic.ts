@@ -31,7 +31,7 @@ export function useCreate(accessToken: string | null) {
     { previous?: Topic[]; tempId: string }
   >({
     mutationFn: async (request) => {
-      if (!accessToken) throw new Error('NO_SESSION');
+      if (!accessToken) throw new HttpError('NO_SESSION', 400);
       await create(request, accessToken);
     },
     onMutate: async (request) => {
@@ -105,17 +105,18 @@ export function useReparent(accessToken: string | null) {
       return { previous };
     },
     onError: (error, request, context) => {
-      if (error.message === 'NO_SESSION') invalidSessionToast();
-
       if (context?.previous) {
         queryClient.setQueryData(['topics', request.spaceId], context.previous);
       }
 
-      errorToast({
-        id: `topics-reparent-error-${request.topicId}`,
-        error,
-        title: 'Could not move the folder',
-      });
+      if (error.message === 'NO_SESSION') invalidSessionToast();
+      else {
+        errorToast({
+          id: `topics-reparent-error-${request.topicId}`,
+          error,
+          title: 'Could not move the folder',
+        });
+      }
     },
     onSettled: (_data, _error, request) => {
       queryClient.invalidateQueries({ queryKey: ['topics', request.spaceId] });
