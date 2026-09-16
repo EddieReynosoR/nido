@@ -1,7 +1,11 @@
-import { getTopics, reparent } from '@/api/topic';
-import { errorToast } from '@/lib/toast';
+import { create, getTopics, reparent } from '@/api/topic';
+import { errorToast, invalidSessionToast } from '@/lib/toast';
 import { moveTopicInTree } from '@/lib/topic-tree';
-import type { ReparentRequest, Topic } from '@/types/topic.types';
+import type {
+  CreateTopicRequest,
+  ReparentRequest,
+  Topic,
+} from '@/types/topic.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useTopics(
@@ -16,12 +20,71 @@ export function useTopics(
   });
 }
 
+export function useCreate(accessToken: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    void,
+    Error,
+    CreateTopicRequest,
+    { previous?: Topic[]; tempId: string }
+  >({
+    mutationFn: async (request) => {
+      if (!accessToken) throw new Error('NO_SESSION');
+      await create(request, accessToken);
+    },
+    onMutate: async (request) => {
+      const queryKey = ['topics', request.spaceId];
+      await queryClient.cancelQueries({ queryKey });
+
+      const previous = queryClient.getQueryData<Topic[]>(queryKey);
+      const tempId = crypto.randomUUID();
+
+      const optimicticTopic: Topic = {
+        topicId: `${tempId}`,
+        name: request.name,
+        color: request.color,
+        spaceId: request.spaceId,
+        parentId: request.parentTopicId,
+        deletedAt: null,
+        topics: [],
+      };
+
+      queryClient.setQueryData<Topic[]>(queryKey, (old) =>
+        old
+          ? moveTopicInTree(old, optimicticTopic.topicId, request.parentTopicId)
+          : old
+      );
+
+      return { previous, tempId };
+    },
+    onError: (error, request, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['topics', request.spaceId], context.previous);
+      }
+
+      if (error.message === 'NO_SESSION') invalidSessionToast();
+      else {
+        errorToast({
+          id: `topics-reparent-error-${context?.tempId}`,
+          error,
+          title: 'Could not move the folder',
+        });
+      }
+    },
+    onSettled: (_data, _error, request) => {
+      queryClient.invalidateQueries({ queryKey: ['topics', request.spaceId] });
+    },
+  });
+}
+
 export function useReparent(accessToken: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, ReparentRequest, { previous?: Topic[] }>({
     mutationFn: async (request) => {
-      await reparent(request, accessToken!);
+      if (!accessToken) throw new Error('NO_SESSION');
+      await reparent(request, accessToken);
     },
     onMutate: async (request) => {
       const queryKey = ['topics', request.spaceId];
@@ -37,6 +100,8 @@ export function useReparent(accessToken: string | null) {
       return { previous };
     },
     onError: (error, request, context) => {
+      if (error.message === 'NO_SESSION') invalidSessionToast();
+
       if (context?.previous) {
         queryClient.setQueryData(['topics', request.spaceId], context.previous);
       }

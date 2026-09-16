@@ -40,7 +40,10 @@ const grabCursor = 'cursor-grab active:cursor-grabbing';
 function TopicLabel({ topic }: { topic: Topic }) {
   return (
     <>
-      <Folder className="text-sidebar-foreground/50" />
+      <Folder
+        className={topic.color ? undefined : 'text-sidebar-foreground/50'}
+        style={topic.color ? { color: topic.color } : undefined}
+      />
       <span className="truncate select-none">{topic.name}</span>
     </>
   );

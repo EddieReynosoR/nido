@@ -31,7 +31,15 @@ export function errorToast({
 
   toast.error(title ?? 'Error occurred.', {
     id,
-    description: [customMessage, error.message].filter(Boolean).join('\n '),
+    description: [customMessage, error?.message].filter(Boolean).join('\n '),
     position: 'bottom-right',
+  });
+}
+
+export function invalidSessionToast() {
+  errorToast({
+    id: 'topics-reparent-error',
+    customMessage: "There's no a current valid session.",
+    title: 'Invalid session',
   });
 }
