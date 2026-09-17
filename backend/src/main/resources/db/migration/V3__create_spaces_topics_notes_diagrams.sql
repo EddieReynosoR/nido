@@ -1,4 +1,3 @@
-BEGIN;
 
 SET search_path TO nido;
 
@@ -69,4 +68,3 @@ CREATE INDEX IF NOT EXISTS idx_topics_parent_id ON topics(parent_topic_id);
 CREATE INDEX IF NOT EXISTS idx_notes_topic_id ON notes(topic_id);
 CREATE INDEX IF NOT EXISTS idx_diagrams_note_id ON diagrams(note_id);
 
-COMMIT;

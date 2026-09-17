@@ -2,7 +2,6 @@
 -- Adds a nullable deleted_at marker so user-owned records can be soft deleted
 -- instead of physically removed. NULL means the row is live.
 
-BEGIN;
 
 SET search_path TO nido;
 
@@ -28,4 +27,3 @@ ALTER TABLE notes
 ALTER TABLE diagrams
     ADD COLUMN deleted_at TIMESTAMPTZ;
 
-COMMIT;

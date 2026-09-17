@@ -1,5 +1,5 @@
 ---
-description: Create a new versioned PostgreSQL migration file in migrations/
+description: Create a new versioned Flyway migration in backend/src/main/resources/db/migration/
 argument-hint: [what the migration should do, in plain language]
 allowed-tools: Bash(ls:*), Read, Glob, Grep, Write, AskUserQuestion
 ---
@@ -8,7 +8,7 @@ allowed-tools: Bash(ls:*), Read, Glob, Grep, Write, AskUserQuestion
 
 ## Current state of the migrations folder
 
-!`ls -1 migrations/`
+!`ls -1 backend/src/main/resources/db/migration/`
 
 ## Requested change
 
@@ -20,26 +20,28 @@ and do not create any file until you have a concrete description of the change.
 
 ## Hard rule: never execute anything
 
-This command only writes a file. The user runs the SQL themselves by copying and pasting it
-into their database client.
+This command only writes a file. Flyway applies it automatically the next time the user
+starts the backend.
 
 - Never connect to a database, and never run `psql`, `docker exec`, `docker compose exec`,
   `flyway`, `mvn`, or any other command that could reach Postgres.
 - Never start the application to "check" that the migration works.
-- The only shell command allowed is the `ls` of `migrations/` shown above.
+- The only shell command allowed is the `ls` of the migrations folder shown above.
 - If you are unsure whether the SQL is correct, say so in your report — do not test it.
 
 ## Steps
 
 1. **Pick the version number.** Take the highest `V<n>` in the listing above and add 1.
    Never reuse a number, never renumber an existing file, and never edit a migration that
-   already exists — those have already been applied and their checksums are recorded.
+   already exists — Flyway stores each applied migration's checksum and the app will
+   refuse to start if one changes.
 
-2. **Read the current schema before writing SQL.** Read the existing files in `migrations/`
-   in version order so you know the real state of every table involved: exact column names,
-   types, nullability, and foreign keys. If the change touches a JPA entity, also read the
-   matching `*Entity.java` under `backend/src/main/java/` so the SQL and the entity agree.
-   Never assume a column exists — verify it in the migration history.
+2. **Read the current schema before writing SQL.** Read the existing migrations in version
+   order so you know the real state of every table involved: exact column names, types,
+   nullability, and foreign keys. If the change touches a JPA entity, also read the
+   matching `*Entity.java` under `backend/src/main/java/` so the SQL and the entity agree
+   (`ddl-auto: validate` runs right after Flyway). Never assume a column exists — verify
+   it in the migration history.
 
 3. **Write the SQL** following the rules below.
 
@@ -47,18 +49,16 @@ into their database client.
    double underscore, then a lowercase snake_case description:
    - Start with a verb: `create_`, `add_`, `remove_`, `rename_`, `update_`, `backfill_`.
    - Keep it to about five words, describing the change and the table it applies to.
-   - Examples that match the existing convention:
-     `V5__add_favorite_to_notes.sql`, `V6__create_note_tags_table.sql`,
-     `V7__rename_notes_title_to_name.sql`.
+   - Examples: `V6__create_note_tags_table.sql`, `V7__add_favorite_to_notes.sql`,
+     `V8__rename_notes_title_to_name.sql`.
 
-5. **Write the file** to `migrations/` — never anywhere else, and never overwrite an
-   existing file. If the requested change needs a name that already exists, pick a more
-   specific description.
+5. **Write the file** to `backend/src/main/resources/db/migration/` — never anywhere else,
+   and never overwrite an existing file. If the requested change needs a name that already
+   exists, pick a more specific description.
 
-6. **Report back**: print the file name, then the complete SQL in a single fenced block so
-   the user can copy it in one go. After that, state in one or two lines what still needs
-   to be done by hand — running the SQL, the matching change to the JPA entity, or a
-   warning that the change is destructive.
+6. **Report back**: print the file name, then the complete SQL in a single fenced block.
+   After that, state in one or two lines what is left: restarting the backend to apply it,
+   the matching change to the JPA entity, or a warning that the change is destructive.
 
 ## Naming rules
 
@@ -69,17 +69,20 @@ into their database client.
 ## SQL rules
 
 - Target PostgreSQL. Write plain SQL — no ORM-specific syntax, no `psql` meta-commands.
+- **No `BEGIN;` / `COMMIT;`.** Flyway already runs each migration in its own transaction,
+  so a failed statement rolls back the whole file.
+- Don't use statements that cannot run inside a transaction, such as
+  `CREATE INDEX CONCURRENTLY`. If one is truly needed, stop and tell the user instead of
+  writing it.
+- Don't prefix tables with `nido.`; Flyway sets `nido` as the default schema.
 - One logical change per migration. If the request contains two unrelated changes, ask
   whether to split it into two files rather than bundling them.
-- Wrap the entire file in an explicit transaction: `BEGIN;` on the first line after the
-  header comment, `COMMIT;` on the last line. The SQL is pasted by hand into a client, so
-  the transaction has to be in the file itself — without it, a multi-statement migration
-  can fail halfway and leave the schema in a broken state.
-- Indent nothing because of the transaction block; keep the statements at column zero.
 - Do not use `IF NOT EXISTS` / `IF EXISTS` to make a migration re-runnable. A migration
   runs exactly once; those clauses only hide the fact that the schema is not what you think.
 - Types: `TIMESTAMPTZ` for timestamps (never `TIMESTAMP`), `JSONB` (never `JSON`),
   `BIGSERIAL` for surrogate keys, `TEXT` or `VARCHAR(n)` with a deliberate limit.
+- New domain tables follow the soft-delete convention: a nullable `deleted_at TIMESTAMPTZ`,
+  and uniqueness enforced with partial unique indexes `WHERE deleted_at IS NULL`.
 - Foreign keys always declare the delete behaviour explicitly (`ON DELETE CASCADE`,
   `ON DELETE SET NULL`, or `ON DELETE RESTRICT`) — pick the one that matches the ownership
   of the data and say why in a comment if it is not obvious.
@@ -94,20 +97,16 @@ into their database client.
   the new shape.
 - Start the file with a one-line comment stating what the migration does and why.
 - Flag destructive statements (`DROP TABLE`, `DROP COLUMN`, `TRUNCATE`, a type change that
-  can truncate values) in your final report so the user can confirm before running it.
+  can truncate values) in your final report so the user can confirm before restarting the app.
 
 ## Example output shape
 
 ```sql
--- V5__add_favorite_to_notes.sql
+-- V7__add_favorite_to_notes.sql
 -- Lets a user mark a note as favorite so it can be pinned in the sidebar.
-
-BEGIN;
 
 ALTER TABLE notes
     ADD COLUMN is_favorite BOOLEAN NOT NULL DEFAULT false;
 
 CREATE INDEX idx_notes_favorite ON notes(topic_id) WHERE is_favorite;
-
-COMMIT;
 ```
