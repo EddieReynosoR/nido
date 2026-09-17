@@ -10,6 +10,12 @@ spring:
     web:
       pageable:
         max-page-size: 50
+  flyway:
+    schemas:
+      - nido
+    default-schema: nido
+    baseline-on-migrate: true
+    baseline-version: 5
 
   jpa:
     hibernate:

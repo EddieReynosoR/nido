@@ -1,4 +1,3 @@
-BEGIN;
 
 SET search_path TO nido;
 
@@ -14,4 +13,3 @@ ALTER TABLE refresh_tokens
     ALTER COLUMN created_at TYPE TIMESTAMPTZ
         USING created_at AT TIME ZONE 'UTC';
 
-COMMIT;
