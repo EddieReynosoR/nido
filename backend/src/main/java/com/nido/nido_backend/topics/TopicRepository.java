@@ -1,9 +1,11 @@
 package com.nido.nido_backend.topics;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,4 +63,14 @@ public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
                              @Param("newParentId") UUID newParentId,
                              @Param("spaceId") UUID spaceId,
                              @Param("maxDepth") int maxDepth);
+
+    @Query("""
+    SELECT t FROM Topic t
+        JOIN Space s ON t.spaceId = s.spaceId
+    WHERE t.topicId = :topicId
+        AND s.userId = :userId
+        AND t.deletedAt IS NULL
+        AND s.deletedAt IS NULL
+    """)
+    Optional<TopicEntity> getByTopicIdAndUserId(@Param("topicId") UUID topicId, @Param("userId") UUID userId);
 }

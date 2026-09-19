@@ -4,6 +4,7 @@ import com.nido.nido_backend.topics.dto.TopicRequest;
 import com.nido.nido_backend.topics.dto.TopicResponse;
 import com.nido.nido_backend.topics.dto.UpdateParentRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -42,5 +43,13 @@ public class TopicController {
             @AuthenticationPrincipal UserDetails userDetails) {
         topicService.updateParentTopic(request, userDetails.getUsername());
         return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/delete/{topicId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(
+            @PathVariable("topicId") UUID topicId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        topicService.softDelete(topicId, userDetails.getUsername());
     }
 }

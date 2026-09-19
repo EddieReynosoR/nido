@@ -10,10 +10,8 @@ import com.nido.nido_backend.topics.dto.UpdateParentRequest;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.UUID;
+import java.time.Instant;
+import java.util.*;
 
 @Service
 public class TopicService {
@@ -115,6 +113,16 @@ public class TopicService {
 
         entity.setParentTopicId(topicHasParent ? UUID.fromString(request.newParentId()) : null);
         topicRepository.save(entity);
+    }
+
+    @Transactional
+    public void softDelete(UUID topicId, String userId) {
+        TopicEntity topicEntity = topicRepository.getByTopicIdAndUserId(topicId, UUID.fromString(userId))
+                .orElseThrow(() -> new NoSuchElementException("The specified topic was not found with the specified user"));
+
+        topicEntity.setDeletedAt(Instant.now());
+
+        topicRepository.save(topicEntity);
     }
 
     private void assertNotDescendant(UUID topicId, UUID newParentId, UUID spaceId) {
