@@ -120,7 +120,7 @@ public class TopicService {
 
     @Transactional
     public void softDelete(UUID topicId, String userId) {
-        TopicEntity topicEntity = topicRepository.getByTopicIdAndUserId(topicId, UUID.fromString(userId))
+        topicRepository.getByTopicIdAndUserId(topicId, UUID.fromString(userId))
                 .orElseThrow(() -> new NoSuchElementException("The specified topic was not found with the specified user"));
 
         int deleted = topicRepository.softDeleteSubtree(topicId);

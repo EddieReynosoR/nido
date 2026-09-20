@@ -76,6 +76,7 @@ public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
     @Query(value = """
         WITH RECURSIVE subtree AS (
             SELECT topic_id FROM topics WHERE topic_id = :topicId
+                  AND deleted_at IS NULL
             UNION ALL
             SELECT t.topic_id FROM topics t
             JOIN subtree s ON t.parent_topic_id = s.topic_id
