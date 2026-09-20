@@ -1,6 +1,5 @@
 package com.nido.nido_backend.topics;
 
-import com.nido.nido_backend.shared.exception.NoRowsAffectedException;
 import com.nido.nido_backend.shared.exception.RecordAlreadyExists;
 import com.nido.nido_backend.shared.util.TopicsTree;
 import com.nido.nido_backend.spaces.SpaceEntity;
@@ -120,13 +119,11 @@ public class TopicService {
 
     @Transactional
     public void softDelete(UUID topicId, String userId) {
-        topicRepository.getByTopicIdAndUserId(topicId, UUID.fromString(userId))
-                .orElseThrow(() -> new NoSuchElementException("The specified topic was not found with the specified user"));
+        if (!topicRepository.existsRootByIdAndUserId(topicId, UUID.fromString(userId))) {
+            throw new NoSuchElementException("The specified topic was not found with the specified user");
+        }
 
-        int deleted = topicRepository.softDeleteSubtree(topicId);
-
-        if (deleted == 0)
-            throw new NoRowsAffectedException("No topics were deleted");
+        topicRepository.softDeleteSubtree(topicId);
     }
 
     private void assertNotDescendant(UUID topicId, UUID newParentId, UUID spaceId) {

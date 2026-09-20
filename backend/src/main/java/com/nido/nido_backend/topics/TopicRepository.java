@@ -62,16 +62,6 @@ public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
                              @Param("spaceId") UUID spaceId,
                              @Param("maxDepth") int maxDepth);
 
-    @Query("""
-    SELECT t FROM Topic t
-        JOIN Space s ON t.spaceId = s.spaceId
-    WHERE t.topicId = :topicId
-        AND s.userId = :userId
-        AND t.deletedAt IS NULL
-        AND s.deletedAt IS NULL
-    """)
-    Optional<TopicEntity> getByTopicIdAndUserId(@Param("topicId") UUID topicId, @Param("userId") UUID userId);
-
     @Modifying
     @Query(value = """
         WITH RECURSIVE subtree AS (
@@ -86,5 +76,15 @@ public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
         SET deleted_at = now()
         WHERE topic_id IN (SELECT topic_id FROM subtree)
     """, nativeQuery = true)
-    int softDeleteSubtree(@Param("topicId") UUID topicId);
+    void softDeleteSubtree(@Param("topicId") UUID topicId);
+
+    @Query("""
+    SELECT COUNT(t) > 0 FROM Topic t
+        JOIN Space s ON t.spaceId = s.spaceId
+    WHERE t.topicId = :topicId
+        AND s.userId = :userId
+        AND t.deletedAt IS NULL
+        AND s.deletedAt IS NULL
+    """)
+    boolean existsRootByIdAndUserId(@Param("topicId") UUID topicId, @Param("userId") UUID userId);
 }
