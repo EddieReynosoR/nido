@@ -1,5 +1,6 @@
 package com.nido.nido_backend.topics;
 
+import com.nido.nido_backend.shared.exception.NoRowsAffectedException;
 import com.nido.nido_backend.shared.exception.RecordAlreadyExists;
 import com.nido.nido_backend.shared.util.TopicsTree;
 import com.nido.nido_backend.spaces.SpaceEntity;
@@ -10,8 +11,10 @@ import com.nido.nido_backend.topics.dto.UpdateParentRequest;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.util.*;
+import java.util.UUID;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
 @Service
 public class TopicService {
@@ -120,9 +123,10 @@ public class TopicService {
         TopicEntity topicEntity = topicRepository.getByTopicIdAndUserId(topicId, UUID.fromString(userId))
                 .orElseThrow(() -> new NoSuchElementException("The specified topic was not found with the specified user"));
 
-        topicEntity.setDeletedAt(Instant.now());
+        int deleted = topicRepository.softDeleteSubtree(topicId);
 
-        topicRepository.save(topicEntity);
+        if (deleted == 0)
+            throw new NoRowsAffectedException("No topics were deleted");
     }
 
     private void assertNotDescendant(UUID topicId, UUID newParentId, UUID spaceId) {

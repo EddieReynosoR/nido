@@ -4,8 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -73,4 +71,19 @@ public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
         AND s.deletedAt IS NULL
     """)
     Optional<TopicEntity> getByTopicIdAndUserId(@Param("topicId") UUID topicId, @Param("userId") UUID userId);
+
+    @Modifying
+    @Query(value = """
+        WITH RECURSIVE subtree AS (
+            SELECT topic_id FROM topics WHERE topic_id = :topicId
+            UNION ALL
+            SELECT t.topic_id FROM topics t
+            JOIN subtree s ON t.parent_topic_id = s.topic_id
+            WHERE t.deleted_at IS NULL
+        )
+        UPDATE topics
+        SET deleted_at = now()
+        WHERE topic_id IN (SELECT topic_id FROM subtree)
+    """, nativeQuery = true)
+    int softDeleteSubtree(@Param("topicId") UUID topicId);
 }
