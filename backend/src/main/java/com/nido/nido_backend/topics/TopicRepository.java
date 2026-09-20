@@ -1,9 +1,9 @@
 package com.nido.nido_backend.topics;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,4 +61,30 @@ public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
                              @Param("newParentId") UUID newParentId,
                              @Param("spaceId") UUID spaceId,
                              @Param("maxDepth") int maxDepth);
+
+    @Modifying
+    @Query(value = """
+        WITH RECURSIVE subtree AS (
+            SELECT topic_id FROM topics WHERE topic_id = :topicId
+                  AND deleted_at IS NULL
+            UNION ALL
+            SELECT t.topic_id FROM topics t
+            JOIN subtree s ON t.parent_topic_id = s.topic_id
+            WHERE t.deleted_at IS NULL
+        )
+        UPDATE topics
+        SET deleted_at = now()
+        WHERE topic_id IN (SELECT topic_id FROM subtree)
+    """, nativeQuery = true)
+    void softDeleteSubtree(@Param("topicId") UUID topicId);
+
+    @Query("""
+    SELECT COUNT(t) > 0 FROM Topic t
+        JOIN Space s ON t.spaceId = s.spaceId
+    WHERE t.topicId = :topicId
+        AND s.userId = :userId
+        AND t.deletedAt IS NULL
+        AND s.deletedAt IS NULL
+    """)
+    boolean existsRootByIdAndUserId(@Param("topicId") UUID topicId, @Param("userId") UUID userId);
 }
