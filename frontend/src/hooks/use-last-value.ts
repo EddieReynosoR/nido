@@ -5,7 +5,7 @@ import { useState } from 'react';
  * non-null value once it becomes `null`.
  *
  * Useful for keeping content on screen during exit animations.
-**/
+ **/
 export function useLastValue<T>(value: T | null): T | null {
   const [lastValue, setLastValue] = useState(value);
 

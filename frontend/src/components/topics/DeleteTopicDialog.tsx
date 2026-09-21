@@ -7,7 +7,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../ui/alert-dialog';
+} from '@/components/ui/alert-dialog';
 import type { Topic } from '@/types/topic.types';
 import { useLastValue } from '@/hooks/use-last-value';
 
