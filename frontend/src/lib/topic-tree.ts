@@ -87,6 +87,12 @@ export function moveTopicInTree(
   return attached ? result : topics;
 }
 
+export function removeTopicFromTree(topics: Topic[], topicId: string): Topic[] {
+  const { topics: next, removed } = detach(topics, topicId);
+
+  return removed ? next : topics;
+}
+
 export function insertTopicInTree(
   topics: Topic[],
   node: Topic,

@@ -1,9 +1,14 @@
-import { create, getTopics, reparent } from '@/api/topic';
+import { create, deleteTopic, getTopics, reparent } from '@/api/topic';
 import { HttpError } from '@/lib/http';
 import { errorToast, invalidSessionToast } from '@/lib/toast';
-import { insertTopicInTree, moveTopicInTree } from '@/lib/topic-tree';
+import {
+  insertTopicInTree,
+  moveTopicInTree,
+  removeTopicFromTree,
+} from '@/lib/topic-tree';
 import type {
   CreateTopicRequest,
+  DeleteTopicRequest,
   ReparentRequest,
   Topic,
 } from '@/types/topic.types';
@@ -115,6 +120,51 @@ export function useReparent(accessToken: string | null) {
           id: `topics-reparent-error-${request.topicId}`,
           error,
           title: 'Could not move the folder',
+        });
+      }
+    },
+    onSettled: (_data, _error, request) => {
+      queryClient.invalidateQueries({ queryKey: ['topics', request.spaceId] });
+    },
+  });
+}
+
+export function useDeleteTopic(accessToken: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    void,
+    HttpError,
+    DeleteTopicRequest,
+    { previous?: Topic[] }
+  >({
+    mutationFn: async (request) => {
+      if (!accessToken) throw new HttpError('NO_SESSION', 400);
+      await deleteTopic(request.topicId, accessToken);
+    },
+    onMutate: async (request) => {
+      const queryKey = ['topics', request.spaceId];
+      await queryClient.cancelQueries({ queryKey });
+
+      const previous = queryClient.getQueryData<Topic[]>(queryKey);
+
+      queryClient.setQueryData<Topic[]>(queryKey, (old) =>
+        old ? removeTopicFromTree(old, request.topicId) : old
+      );
+
+      return { previous };
+    },
+    onError: (error, request, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['topics', request.spaceId], context.previous);
+      }
+
+      if (error.message === 'NO_SESSION') invalidSessionToast();
+      else {
+        errorToast({
+          id: `topics-delete-error-${request.topicId}`,
+          error,
+          title: 'Could not delete the folder',
         });
       }
     },
