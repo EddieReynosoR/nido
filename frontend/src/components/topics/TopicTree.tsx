@@ -145,10 +145,14 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
 
     deleteTopic(
       { topicId: topicToDelete.topicId, spaceId },
-      { onSuccess: () => toast.success('Topic deleted') }
+      {
+        onSuccess: () => {
+          toast.success('Topic deleted');
+          handleOpenChange(topicToDelete.topicId, false);
+        },
+      }
     );
 
-    handleOpenChange(topicToDelete.topicId, false);
     setTopicToDelete(null);
   };
 
