@@ -13,11 +13,13 @@ import {
   useDroppable,
 } from '@dnd-kit/react';
 import { Folder } from 'lucide-react';
+import { toast } from 'sonner';
 import AddTopicDialog from '@/components/topics/AddTopicDialog';
+import DeleteTopicDialog from '@/components/topics/DeleteTopicDialog';
 import TopicTreeItem from '@/components/topics/TopicTreeItem';
 import { SidebarMenu } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
-import { useReparent } from '@/hooks/use-topic';
+import { useDeleteTopic, useReparent } from '@/hooks/use-topic';
 import { canDropTopic } from '@/lib/topic-tree';
 import { cn } from '@/lib/utils';
 import type { Topic, TopicDragData } from '@/types/topic.types';
@@ -32,6 +34,7 @@ type TopicTreeRootProps = {
   openIds: Set<string>;
   onOpenChange: (topicId: string, open: boolean) => void;
   onAddChild: (topic: Topic) => void;
+  onDelete: (topic: Topic) => void;
 };
 
 const ROOT_DROPPABLE_ID = 'topic-root-dropzone';
@@ -54,6 +57,7 @@ function TopicTreeRoot({
   openIds,
   onOpenChange,
   onAddChild,
+  onDelete,
 }: TopicTreeRootProps) {
   const { source } = useDragOperation();
   const dragged = source?.data as TopicDragData | undefined;
@@ -82,6 +86,7 @@ function TopicTreeRoot({
             openIds={openIds}
             onOpenChange={onOpenChange}
             onAddChild={onAddChild}
+            onDelete={onDelete}
           />
         ))}
       </SidebarMenu>
@@ -103,10 +108,12 @@ function TopicTreeRoot({
 export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
   const { accessToken } = useAuth();
   const { mutate: reparentTopic } = useReparent(accessToken);
+  const { mutate: deleteTopic } = useDeleteTopic(accessToken);
 
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [addChildOpen, setAddChildOpen] = useState<boolean>(false);
   const [parentTopic, setParentTopic] = useState<Topic | null>(null);
+  const [topicToDelete, setTopicToDelete] = useState<Topic | null>(null);
 
   const handleOpenChange = useCallback((topicId: string, open: boolean) => {
     setOpenIds((previous) => {
@@ -128,6 +135,22 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
     },
     [handleOpenChange]
   );
+
+  const handleDelete = useCallback((topic: Topic) => {
+    setTopicToDelete(topic);
+  }, []);
+
+  const confirmDelete = () => {
+    if (!topicToDelete) return;
+
+    deleteTopic(
+      { topicId: topicToDelete.topicId, spaceId },
+      { onSuccess: () => toast.success('Topic deleted') }
+    );
+
+    handleOpenChange(topicToDelete.topicId, false);
+    setTopicToDelete(null);
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { source, target } = event.operation;
@@ -151,12 +174,22 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
         openIds={openIds}
         onOpenChange={handleOpenChange}
         onAddChild={handleAddChild}
+        onDelete={handleDelete}
       />
 
       <AddTopicDialog
         open={addChildOpen}
         onOpenChange={setAddChildOpen}
         parentTopic={parentTopic}
+      />
+
+      <DeleteTopicDialog
+        topic={topicToDelete}
+        open={topicToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setTopicToDelete(null);
+        }}
+        onConfirm={confirmDelete}
       />
 
       <DragOverlay dropAnimation={null}>

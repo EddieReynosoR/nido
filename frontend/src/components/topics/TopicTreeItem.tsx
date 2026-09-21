@@ -5,9 +5,21 @@ import {
   useRef,
   type MouseEvent as ReactMouseEvent,
 } from 'react';
-import { ChevronRight, Folder, Plus } from 'lucide-react';
+import {
+  ChevronRight,
+  Folder,
+  MoreHorizontal,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { CollisionPriority } from '@dnd-kit/abstract';
 import { useDraggable, useDroppable } from '@dnd-kit/react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Collapsible,
   CollapsibleContent,
@@ -31,6 +43,7 @@ type TopicTreeItemProps = {
   openIds: Set<string>;
   onOpenChange: (topicId: string, open: boolean) => void;
   onAddChild: (topic: Topic) => void;
+  onDelete: (topic: Topic) => void;
 };
 
 const AUTO_EXPAND_DELAY_MS = 600;
@@ -40,10 +53,10 @@ const rotateChevronWhenOpen = '[&[data-state=open]>svg:last-child]:rotate-90';
 const grabCursor = 'cursor-grab active:cursor-grabbing';
 
 const revealOnHover =
-  'md:opacity-0 group-hover/menu-item:opacity-100 group-has-[:focus-visible]/menu-item:opacity-100';
+  'md:opacity-0 group-hover/menu-item:opacity-100 group-has-[:focus-visible]/menu-item:opacity-100 aria-expanded:opacity-100';
 
 const revealOnHoverSub =
-  'top-1 md:opacity-0 group-hover/menu-sub-item:opacity-100 group-has-[:focus-visible]/menu-sub-item:opacity-100';
+  'top-1 md:opacity-0 group-hover/menu-sub-item:opacity-100 group-has-[:focus-visible]/menu-sub-item:opacity-100 aria-expanded:opacity-100';
 
 function TopicLabel({ topic }: { topic: Topic }) {
   return (
@@ -63,23 +76,51 @@ function TopicChevron() {
   );
 }
 
-function TopicAddChildAction({
+function TopicActions({
   topic,
   onAddChild,
+  onDelete,
   className,
 }: {
   topic: Topic;
   onAddChild: TopicTreeItemProps['onAddChild'];
+  onDelete: TopicTreeItemProps['onDelete'];
   className?: string;
 }) {
+  const { isMobile } = useSidebar();
+
   return (
-    <SidebarMenuAction
-      aria-label={`Add folder inside ${topic.name}`}
-      className={cn('text-accent-green', className)}
-      onClick={() => onAddChild(topic)}
-    >
-      <Plus />
-    </SidebarMenuAction>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <SidebarMenuAction
+          aria-label={`Folder options for ${topic.name}`}
+          className={cn('text-sidebar-foreground/60', className)}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <MoreHorizontal />
+        </SidebarMenuAction>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent
+        className="w-44 rounded-lg"
+        align="start"
+        side={isMobile ? 'bottom' : 'right'}
+        sideOffset={4}
+      >
+        <DropdownMenuItem onSelect={() => onAddChild(topic)}>
+          <Plus className="text-accent-green" />
+          Add topic
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          variant="destructive"
+          onSelect={() => onDelete(topic)}
+        >
+          <Trash2 />
+          Delete topic
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -169,6 +210,7 @@ function TopicSubTreeItem({
   openIds,
   onOpenChange,
   onAddChild,
+  onDelete,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
 
@@ -184,9 +226,10 @@ function TopicSubTreeItem({
               <TopicLabel topic={topic} />
             </button>
           </SidebarMenuSubButton>
-          <TopicAddChildAction
+          <TopicActions
             topic={topic}
             onAddChild={onAddChild}
+            onDelete={onDelete}
             className={revealOnHoverSub}
           />
         </div>
@@ -213,14 +256,15 @@ function TopicSubTreeItem({
               </button>
             </SidebarMenuSubButton>
           </CollapsibleTrigger>
-          <TopicAddChildAction
+          <TopicActions
             topic={topic}
             onAddChild={onAddChild}
+            onDelete={onDelete}
             className={revealOnHoverSub}
           />
         </div>
         <CollapsibleContent>
-          <SidebarMenuSub className="gap-0">
+          <SidebarMenuSub className="mr-0 gap-0 pr-0">
             {topic.topics.map((child) => (
               <TopicSubTreeItem
                 key={child.topicId}
@@ -228,6 +272,7 @@ function TopicSubTreeItem({
                 openIds={openIds}
                 onOpenChange={onOpenChange}
                 onAddChild={onAddChild}
+                onDelete={onDelete}
               />
             ))}
           </SidebarMenuSub>
@@ -242,6 +287,7 @@ export default function TopicTreeItem({
   openIds,
   onOpenChange,
   onAddChild,
+  onDelete,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
 
@@ -256,9 +302,10 @@ export default function TopicTreeItem({
           >
             <TopicLabel topic={topic} />
           </SidebarMenuButton>
-          <TopicAddChildAction
+          <TopicActions
             topic={topic}
             onAddChild={onAddChild}
+            onDelete={onDelete}
             className={revealOnHover}
           />
         </div>
@@ -284,14 +331,15 @@ export default function TopicTreeItem({
               <TopicChevron />
             </SidebarMenuButton>
           </CollapsibleTrigger>
-          <TopicAddChildAction
+          <TopicActions
             topic={topic}
             onAddChild={onAddChild}
+            onDelete={onDelete}
             className={revealOnHover}
           />
         </div>
         <CollapsibleContent>
-          <SidebarMenuSub className="gap-0">
+          <SidebarMenuSub className="mr-0 gap-0 pr-0">
             {topic.topics.map((child) => (
               <TopicSubTreeItem
                 key={child.topicId}
@@ -299,6 +347,7 @@ export default function TopicTreeItem({
                 openIds={openIds}
                 onOpenChange={onOpenChange}
                 onAddChild={onAddChild}
+                onDelete={onDelete}
               />
             ))}
           </SidebarMenuSub>

@@ -27,3 +27,8 @@ export type TopicDragData = {
   name: string;
   descendantIds: Set<string>;
 };
+
+export type DeleteTopicRequest = {
+  topicId: string;
+  spaceId: string;
+};
