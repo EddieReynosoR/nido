@@ -7,6 +7,7 @@ import com.nido.nido_backend.spaces.SpaceService;
 import com.nido.nido_backend.topics.dto.TopicRequest;
 import com.nido.nido_backend.topics.dto.TopicResponse;
 import com.nido.nido_backend.topics.dto.UpdateParentRequest;
+import com.nido.nido_backend.topics.dto.UpdateTopicRequest;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -46,21 +47,26 @@ public class TopicService {
 
         TopicEntity parentTopic = null;
 
+        boolean nameTaken;
+        String conflictMessage;
+
         if (request.parentTopicId() != null) {
             parentTopic = getTopic(
                     UUID.fromString(request.parentTopicId()),
                     space.getSpaceId(),
                     "Parent topic was not found");
 
-            if (topicRepository.existsChildByNameAndParentTopicId(request.name(), parentTopic.getTopicId()))
-                throw new RecordAlreadyExists("A sub-topic with the title '%s' already exists in topic '%s'"
-                        .formatted(request.name(), parentTopic.getName()));
+            nameTaken = topicRepository.existsChildByNameAndParentTopicId(request.name(), parentTopic.getTopicId());
+            conflictMessage = "A sub-topic with the name '%s' already exists in topic '%s'"
+                        .formatted(request.name(), parentTopic.getName());
         }
         else {
-            if (topicRepository.existsRootByNameAndSpaceId(request.name(), spaceIdConverted))
-                throw new RecordAlreadyExists("A topic with the name '%s' already exists"
-                        .formatted(request.name()));
+            nameTaken = topicRepository.existsRootByNameAndSpaceId(request.name(), spaceIdConverted);
+            conflictMessage = "A topic with the name '%s' already exists"
+                        .formatted(request.name());
         }
+
+        if (nameTaken) throw new RecordAlreadyExists(conflictMessage);
 
         TopicEntity entity = request.toEntity(space.getSpaceId(), parentTopic != null ? parentTopic.getTopicId() : null);
         topicRepository.save(entity);
@@ -95,23 +101,27 @@ public class TopicService {
         boolean topicHasParent = request.newParentId() != null && !request.newParentId().isEmpty();
         String topicName = entity.getName();
 
+        boolean nameTaken;
+        String conflictMessage;
+
         if (topicHasParent) {
             TopicEntity newParent = requireTopic(
                     UUID.fromString(request.newParentId()),
                     spaceIdConverted,
                     "The specified parent topic was not found in the specified space");
 
-            if (topicRepository.existsChildByNameAndParentTopicId(topicName, newParent.getTopicId()))
-                throw new RecordAlreadyExists("A sub-topic with the title '%s' already exists in topic '%s'"
-                        .formatted(topicName, newParent.getName()));
+            nameTaken = topicRepository.existsChildByNameAndParentTopicId(topicName, newParent.getTopicId());
+            conflictMessage = "A sub-topic with the name '%s' already exists in topic '%s'"
+                        .formatted(topicName, newParent.getName());
 
             assertNotDescendant(entity.getTopicId(), newParent.getTopicId(), spaceIdConverted);
         }
         else {
-            if (topicRepository.existsRootByNameAndSpaceId(topicName, spaceIdConverted))
-                throw new RecordAlreadyExists("A topic with the name '%s' already exists"
-                        .formatted(topicName));
+            nameTaken = topicRepository.existsRootByNameAndSpaceId(topicName, spaceIdConverted);
+            conflictMessage = "A topic with the name '%s' already exists".formatted(topicName);
         }
+
+        if (nameTaken) throw new RecordAlreadyExists(conflictMessage);
 
         entity.setParentTopicId(topicHasParent ? UUID.fromString(request.newParentId()) : null);
         topicRepository.save(entity);
@@ -119,9 +129,8 @@ public class TopicService {
 
     @Transactional
     public void softDelete(UUID topicId, String userId) {
-        if (!topicRepository.existsRootByIdAndUserId(topicId, UUID.fromString(userId))) {
+        if (topicRepository.getByIdAndUserId(topicId, UUID.fromString(userId)).isEmpty())
             throw new NoSuchElementException("The specified topic was not found with the specified user");
-        }
 
         topicRepository.softDeleteSubtree(topicId);
     }
@@ -130,5 +139,40 @@ public class TopicService {
         if (topicRepository.isAncestorOrSelf(topicId, newParentId, spaceId, MAX_ANCESTRY_DEPTH))
             throw new IllegalArgumentException(
                     "A topic cannot be moved into itself or into one of its own sub-topics");
+    }
+
+    @Transactional
+    public TopicResponse updateTopic(UpdateTopicRequest request, String userId) {
+        TopicEntity topicEntity = topicRepository.getByIdAndUserId(request.topicId(), UUID.fromString(userId))
+                .orElseThrow(() -> new NoSuchElementException("The specified topic was not found with the specified user"));
+
+        boolean topicHasParent = topicEntity.getParentTopicId() != null;
+        String topicName = request.name();
+
+        if (!topicName.equalsIgnoreCase(topicEntity.getName())) {
+            boolean nameTaken;
+            String conflictMessage;
+
+            if (topicHasParent) {
+                TopicEntity parent = requireTopic(
+                        topicEntity.getParentTopicId(),
+                        topicEntity.getSpaceId(),
+                        "The specified parent topic was not found in the specified space");
+
+                nameTaken = topicRepository.existsChildByNameAndParentTopicId(topicName, parent.getTopicId());
+                conflictMessage = "A topic with the name '%s' already exists in topic '%s'"
+                        .formatted(topicName, parent.getName());
+            } else {
+                nameTaken = topicRepository.existsRootByNameAndSpaceId(topicName, topicEntity.getSpaceId());
+                conflictMessage = "A topic with the name '%s' already exists".formatted(topicName);
+            }
+
+            if (nameTaken) throw new RecordAlreadyExists(conflictMessage);
+        }
+
+        topicEntity.setName(request.name());
+        topicEntity.setColor(request.color());
+
+        return TopicResponse.from(topicEntity);
     }
 }

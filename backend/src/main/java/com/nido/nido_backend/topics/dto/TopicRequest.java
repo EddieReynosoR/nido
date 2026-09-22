@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public record TopicRequest(
         @NotBlank @Size(max = 50) String name,
-        @Size(max = 6) String color,
+        @NotNull @NotBlank @Size(max = 6) String color,
         @NotNull @NotBlank String spaceId,
         String parentTopicId) {
     public TopicEntity toEntity(UUID spaceId, @Nullable UUID parentTopicId) {

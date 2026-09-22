@@ -16,7 +16,7 @@ public class TopicEntity {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "color")
+    @Column(name = "color", nullable = false)
     private String color;
 
     @Column(name = "space_id", nullable = false)
