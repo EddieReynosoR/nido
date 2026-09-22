@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 import java.util.UUID;
 
 public record UpdateTopicRequest(
-        @NotNull @NotBlank @Size(max = 50) String name,
-        @NotNull @NotBlank @Size(max = 6) String color,
+        @NotBlank @Size(max = 50) String name,
+        @NotBlank @Size(max = 6) String color,
         @NotNull UUID topicId) {
 }
