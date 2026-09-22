@@ -120,7 +120,7 @@ public class TopicService {
 
     @Transactional
     public void softDelete(UUID topicId, String userId) {
-        if (!topicRepository.existsRootByIdAndUserId(topicId, UUID.fromString(userId)))
+        if (topicRepository.getByIdAndUserId(topicId, UUID.fromString(userId)).isEmpty())
             throw new NoSuchElementException("The specified topic was not found with the specified user");
 
         topicRepository.softDeleteSubtree(topicId);
@@ -136,6 +136,25 @@ public class TopicService {
     public TopicResponse updateTopic(UpdateTopicRequest request, String userId) {
         TopicEntity topicEntity = topicRepository.getByIdAndUserId(request.topicId(), UUID.fromString(userId))
                 .orElseThrow(() -> new NoSuchElementException("The specified topic was not found with the specified user"));
+
+        boolean topicHasParent = topicEntity.getParentTopicId() != null;
+        String topicName = request.name();
+
+        if (topicHasParent) {
+            TopicEntity parent = requireTopic(
+                    topicEntity.getParentTopicId(),
+                    topicEntity.getSpaceId(),
+                    "The specified parent topic was not found in the specified space");
+
+            if (topicRepository.existsChildByNameAndParentTopicId(topicName, parent.getTopicId()))
+                throw new RecordAlreadyExists("A sub-topic with the title '%s' already exists in topic '%s'"
+                        .formatted(topicName, parent.getName()));
+        }
+        else {
+            if (topicRepository.existsRootByNameAndSpaceId(topicName, topicEntity.getSpaceId()))
+                throw new RecordAlreadyExists("A topic with the name '%s' already exists"
+                        .formatted(topicName));
+        }
 
         topicEntity.setName(request.name());
         topicEntity.setColor(request.color());
