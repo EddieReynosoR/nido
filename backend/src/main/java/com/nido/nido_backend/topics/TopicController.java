@@ -3,6 +3,7 @@ package com.nido.nido_backend.topics;
 import com.nido.nido_backend.topics.dto.TopicRequest;
 import com.nido.nido_backend.topics.dto.TopicResponse;
 import com.nido.nido_backend.topics.dto.UpdateParentRequest;
+import com.nido.nido_backend.topics.dto.UpdateTopicRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -51,5 +52,13 @@ public class TopicController {
             @PathVariable("topicId") UUID topicId,
             @AuthenticationPrincipal UserDetails userDetails) {
         topicService.softDelete(topicId, userDetails.getUsername());
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<TopicResponse> update(
+            @Valid @RequestBody UpdateTopicRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var response = topicService.updateTopic(request, userDetails.getUsername());
+        return ResponseEntity.ok(response);
     }
 }

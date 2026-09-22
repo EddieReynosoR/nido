@@ -7,6 +7,7 @@ import com.nido.nido_backend.spaces.SpaceService;
 import com.nido.nido_backend.topics.dto.TopicRequest;
 import com.nido.nido_backend.topics.dto.TopicResponse;
 import com.nido.nido_backend.topics.dto.UpdateParentRequest;
+import com.nido.nido_backend.topics.dto.UpdateTopicRequest;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -119,9 +120,8 @@ public class TopicService {
 
     @Transactional
     public void softDelete(UUID topicId, String userId) {
-        if (!topicRepository.existsRootByIdAndUserId(topicId, UUID.fromString(userId))) {
+        if (!topicRepository.existsRootByIdAndUserId(topicId, UUID.fromString(userId)))
             throw new NoSuchElementException("The specified topic was not found with the specified user");
-        }
 
         topicRepository.softDeleteSubtree(topicId);
     }
@@ -130,5 +130,16 @@ public class TopicService {
         if (topicRepository.isAncestorOrSelf(topicId, newParentId, spaceId, MAX_ANCESTRY_DEPTH))
             throw new IllegalArgumentException(
                     "A topic cannot be moved into itself or into one of its own sub-topics");
+    }
+
+    @Transactional
+    public TopicResponse updateTopic(UpdateTopicRequest request, String userId) {
+        TopicEntity topicEntity = topicRepository.getByIdAndUserId(request.topicId(), UUID.fromString(userId))
+                .orElseThrow(() -> new NoSuchElementException("The specified topic was not found with the specified user"));
+
+        topicEntity.setName(request.name());
+        topicEntity.setColor(request.color());
+
+        return TopicResponse.from(topicEntity);
     }
 }

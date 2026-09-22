@@ -87,4 +87,14 @@ public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
         AND s.deletedAt IS NULL
     """)
     boolean existsRootByIdAndUserId(@Param("topicId") UUID topicId, @Param("userId") UUID userId);
+
+    @Query("""
+    SELECT t FROM Topic t
+        JOIN Space s ON t.spaceId = s.spaceId
+    WHERE t.topicId = :topicId
+        AND s.userId = :userId
+        AND t.deletedAt IS NULL
+        AND s.deletedAt IS NULL
+    """)
+    Optional<TopicEntity> getByIdAndUserId(@Param("topicId") UUID topicId, @Param("userId") UUID userId);
 }
