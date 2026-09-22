@@ -2,8 +2,10 @@ package com.nido.nido_backend.shared.exception;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ProblemDetail;
@@ -111,6 +113,23 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "Invalid argument: " + ex.getMessage());
     }
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        String constraint = constraintNameOf(ex);
+
+        String description = switch (constraint == null ? "" : constraint) {
+            case "uq_topic_root_name_per_space_live", "uq_topic_name_per_parent_live" ->
+                    "A topic with that name already exists at this level";
+            case "uq_space_name_per_user_live" -> "A space with that name already exists";
+            case "uq_users_email_live" -> "An account with that email already exists";
+            default -> "The operation conflicts with an existing record";
+        };
+
+        log.warn("Constraint violation [{}]: {}", constraint, ex.getMostSpecificCause().getMessage());
+
+        return build(HttpStatus.CONFLICT, "Record already exists", "already_exists", description);
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnknown(Exception ex) {
         log.error("Unhandled exception", ex);
@@ -134,6 +153,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(detail);
+    }
+
+    private String constraintNameOf(DataIntegrityViolationException ex) {
+        return ex.getCause() instanceof ConstraintViolationException cause
+                ? cause.getConstraintName()
+                : null;
     }
 
     private ProblemDetail build(HttpStatus status, String title, String errorCode, String description) {
