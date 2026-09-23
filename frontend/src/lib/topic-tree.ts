@@ -113,11 +113,13 @@ function applyUpdate(
   changes: Pick<Topic, 'name' | 'color'>
 ): UpdateResult {
   let updated = false;
+  let needsSort = false;
   const next: Topic[] = [];
 
   for (const topic of topics) {
     if (topic.topicId === topicId) {
       updated = true;
+      needsSort = topic.name !== changes.name;
       next.push({ ...topic, ...changes });
       continue;
     }
@@ -132,7 +134,9 @@ function applyUpdate(
     }
   }
 
-  return { topics: updated ? next.sort(byName) : next, updated };
+  // Only the level holding the renamed topic can change order, so ancestor
+  // levels are left untouched.
+  return { topics: needsSort ? next.sort(byName) : next, updated };
 }
 
 export function updateTopicInTree(
