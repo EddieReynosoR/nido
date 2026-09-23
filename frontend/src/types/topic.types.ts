@@ -32,3 +32,10 @@ export type DeleteTopicRequest = {
   topicId: string;
   spaceId: string;
 };
+
+export type UpdateTopicRequest = {
+  topicId: string;
+  spaceId: string;
+  name: string;
+  color: string;
+};

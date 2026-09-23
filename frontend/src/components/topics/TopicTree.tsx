@@ -16,6 +16,7 @@ import { Folder } from 'lucide-react';
 import { toast } from 'sonner';
 import AddTopicDialog from '@/components/topics/AddTopicDialog';
 import DeleteTopicDialog from '@/components/topics/DeleteTopicDialog';
+import EditTopicDialog from '@/components/topics/EditTopicDialog';
 import TopicTreeItem from '@/components/topics/TopicTreeItem';
 import { SidebarMenu } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
@@ -34,6 +35,7 @@ type TopicTreeRootProps = {
   openIds: Set<string>;
   onOpenChange: (topicId: string, open: boolean) => void;
   onAddChild: (topic: Topic) => void;
+  onEdit: (topic: Topic) => void;
   onDelete: (topic: Topic) => void;
 };
 
@@ -57,6 +59,7 @@ function TopicTreeRoot({
   openIds,
   onOpenChange,
   onAddChild,
+  onEdit,
   onDelete,
 }: TopicTreeRootProps) {
   const { source } = useDragOperation();
@@ -86,6 +89,7 @@ function TopicTreeRoot({
             openIds={openIds}
             onOpenChange={onOpenChange}
             onAddChild={onAddChild}
+            onEdit={onEdit}
             onDelete={onDelete}
           />
         ))}
@@ -108,12 +112,14 @@ function TopicTreeRoot({
 export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
   const { accessToken } = useAuth();
   const { mutate: reparentTopic } = useReparent(accessToken);
-  const { mutate: deleteTopic } = useDeleteTopic(accessToken);
+  const { mutate: deleteTopic, isPending: isDeleting } =
+    useDeleteTopic(accessToken);
 
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [addChildOpen, setAddChildOpen] = useState<boolean>(false);
   const [parentTopic, setParentTopic] = useState<Topic | null>(null);
   const [topicToDelete, setTopicToDelete] = useState<Topic | null>(null);
+  const [topicToEdit, setTopicToEdit] = useState<Topic | null>(null);
 
   const handleOpenChange = useCallback((topicId: string, open: boolean) => {
     setOpenIds((previous) => {
@@ -136,6 +142,10 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
     [handleOpenChange]
   );
 
+  const handleEdit = useCallback((topic: Topic) => {
+    setTopicToEdit(topic);
+  }, []);
+
   const handleDelete = useCallback((topic: Topic) => {
     setTopicToDelete(topic);
   }, []);
@@ -149,11 +159,10 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
         onSuccess: () => {
           toast.success('Topic deleted');
           handleOpenChange(topicToDelete.topicId, false);
+          setTopicToDelete(null);
         },
       }
     );
-
-    setTopicToDelete(null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -178,6 +187,7 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
         openIds={openIds}
         onOpenChange={handleOpenChange}
         onAddChild={handleAddChild}
+        onEdit={handleEdit}
         onDelete={handleDelete}
       />
 
@@ -187,13 +197,23 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
         parentTopic={parentTopic}
       />
 
+      <EditTopicDialog
+        topic={topicToEdit}
+        spaceId={spaceId}
+        open={topicToEdit !== null}
+        onOpenChange={(open) => {
+          if (!open) setTopicToEdit(null);
+        }}
+      />
+
       <DeleteTopicDialog
         topic={topicToDelete}
         open={topicToDelete !== null}
         onOpenChange={(open) => {
-          if (!open) setTopicToDelete(null);
+          if (!open && !isDeleting) setTopicToDelete(null);
         }}
         onConfirm={confirmDelete}
+        isPending={isDeleting}
       />
 
       <DragOverlay dropAnimation={null}>

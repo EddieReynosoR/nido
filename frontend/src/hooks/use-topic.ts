@@ -1,16 +1,24 @@
-import { create, deleteTopic, getTopics, reparent } from '@/api/topic';
+import {
+  create,
+  deleteTopic,
+  getTopics,
+  reparent,
+  updateTopic,
+} from '@/api/topic';
 import { HttpError } from '@/lib/http';
 import { errorToast, invalidSessionToast } from '@/lib/toast';
 import {
   insertTopicInTree,
   moveTopicInTree,
   removeTopicFromTree,
+  updateTopicInTree,
 } from '@/lib/topic-tree';
 import type {
   CreateTopicRequest,
   DeleteTopicRequest,
   ReparentRequest,
   Topic,
+  UpdateTopicRequest,
 } from '@/types/topic.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -165,6 +173,60 @@ export function useDeleteTopic(accessToken: string | null) {
           id: `topics-delete-error-${request.topicId}`,
           error,
           title: 'Could not delete the folder',
+        });
+      }
+    },
+    onSettled: (_data, _error, request) => {
+      queryClient.invalidateQueries({ queryKey: ['topics', request.spaceId] });
+    },
+  });
+}
+
+export function useUpdateTopic(accessToken: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    void,
+    HttpError,
+    UpdateTopicRequest,
+    { previous?: Topic[] }
+  >({
+    mutationFn: async (request) => {
+      if (!accessToken) throw new HttpError('NO_SESSION', 400);
+      await updateTopic(request, accessToken);
+    },
+    onMutate: async (request) => {
+      const queryKey = ['topics', request.spaceId];
+      await queryClient.cancelQueries({ queryKey });
+
+      const previous = queryClient.getQueryData<Topic[]>(queryKey);
+
+      queryClient.setQueryData<Topic[]>(queryKey, (old) =>
+        old
+          ? updateTopicInTree(old, request.topicId, {
+              name: request.name,
+              color: request.color,
+            })
+          : old
+      );
+
+      return { previous };
+    },
+    onError: (error, request, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['topics', request.spaceId], context.previous);
+      }
+
+      if (error.message === 'NO_SESSION') invalidSessionToast();
+      else {
+        errorToast({
+          id: `topics-update-error-${request.topicId}`,
+          error,
+          customMessage:
+            error.status === 409
+              ? `Topic with name ${request.name} already exists at the current level.`
+              : undefined,
+          title: 'Could not update the folder',
         });
       }
     },
