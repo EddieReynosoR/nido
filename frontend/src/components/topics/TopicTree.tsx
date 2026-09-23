@@ -112,7 +112,8 @@ function TopicTreeRoot({
 export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
   const { accessToken } = useAuth();
   const { mutate: reparentTopic } = useReparent(accessToken);
-  const { mutate: deleteTopic } = useDeleteTopic(accessToken);
+  const { mutate: deleteTopic, isPending: isDeleting } =
+    useDeleteTopic(accessToken);
 
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [addChildOpen, setAddChildOpen] = useState<boolean>(false);
@@ -158,11 +159,10 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
         onSuccess: () => {
           toast.success('Topic deleted');
           handleOpenChange(topicToDelete.topicId, false);
+          setTopicToDelete(null);
         },
       }
     );
-
-    setTopicToDelete(null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -210,9 +210,10 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
         topic={topicToDelete}
         open={topicToDelete !== null}
         onOpenChange={(open) => {
-          if (!open) setTopicToDelete(null);
+          if (!open && !isDeleting) setTopicToDelete(null);
         }}
         onConfirm={confirmDelete}
+        isPending={isDeleting}
       />
 
       <DragOverlay dropAnimation={null}>

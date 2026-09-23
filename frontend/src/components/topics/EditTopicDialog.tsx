@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -48,7 +49,7 @@ export default function EditTopicDialog({
   const displayedTopic = useLastValue(topic);
 
   const { accessToken } = useAuth();
-  const { mutate: updateTopic } = useUpdateTopic(accessToken);
+  const { mutate: updateTopic, isPending } = useUpdateTopic(accessToken);
 
   const form = useForm<AddTopicSchema>({
     resolver: zodResolver(addTopicSchema),
@@ -69,6 +70,11 @@ export default function EditTopicDialog({
   const isUnchanged =
     name.trim() === displayedTopic?.name && color === displayedTopic?.color;
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && isPending) return;
+    onOpenChange?.(nextOpen);
+  };
+
   const onSubmit = (data: AddTopicSchema) => {
     if (!topic) return;
 
@@ -82,15 +88,14 @@ export default function EditTopicDialog({
       {
         onSuccess: () => {
           toast.success('Topic updated');
+          onOpenChange?.(false);
         },
       }
     );
-
-    onOpenChange?.(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit folder</DialogTitle>
@@ -188,12 +193,13 @@ export default function EditTopicDialog({
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">
+              <Button type="button" variant="outline" disabled={isPending}>
                 Cancel
               </Button>
             </DialogClose>
-            <Button disabled={isUnchanged} type="submit">
-              Save changes
+            <Button disabled={isPending || isUnchanged} type="submit">
+              {isPending && <Loader2 className="size-4 animate-spin" />}
+              {isPending ? 'Saving...' : 'Save changes'}
             </Button>
           </DialogFooter>
         </form>

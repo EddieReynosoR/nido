@@ -1,5 +1,6 @@
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
 
 import {
   Dialog,
@@ -50,14 +51,20 @@ export default function AddTopicDialog({
     },
   });
 
+  const { accessToken } = useAuth();
+  const { activeSpace } = useSpace();
+  const { mutate: createTopic, isPending } = useCreate(accessToken);
+
+  const closeDialog = () => {
+    form.reset();
+    onOpenChange?.(false);
+  };
+
   const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && isPending) return;
     if (!nextOpen) form.reset();
     onOpenChange?.(nextOpen);
   };
-
-  const { accessToken } = useAuth();
-  const { activeSpace } = useSpace();
-  const { mutate: createTopic } = useCreate(accessToken);
 
   const onSubmit = (data: { name: string; color: string }) => {
     if (!activeSpace) return;
@@ -71,10 +78,9 @@ export default function AddTopicDialog({
     createTopic(request, {
       onSuccess: () => {
         toast.success('Topic created');
+        closeDialog();
       },
     });
-
-    handleOpenChange(false);
   };
 
   return (
@@ -177,11 +183,14 @@ export default function AddTopicDialog({
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">
+              <Button type="button" variant="outline" disabled={isPending}>
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit">Create folder</Button>
+            <Button disabled={isPending} type="submit">
+              {isPending && <Loader2 className="size-4 animate-spin" />}
+              {isPending ? 'Creating...' : 'Create folder'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

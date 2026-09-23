@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Loader2 } from 'lucide-react';
 import type { Topic } from '@/types/topic.types';
 import { useLastValue } from '@/hooks/use-last-value';
 
@@ -16,11 +17,13 @@ export default function DeleteTopicDialog({
   open,
   onOpenChange,
   onConfirm,
+  isPending,
 }: {
   topic: Topic | null;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onConfirm?: () => void;
+  isPending?: boolean;
 }) {
   const displayedTopic = useLastValue(topic);
 
@@ -36,12 +39,13 @@ export default function DeleteTopicDialog({
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             onClick={() => onConfirm?.()}
           >
-            Delete
+            {isPending && <Loader2 className="size-4 animate-spin" />}
+            {isPending ? 'Deleting...' : 'Delete'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
