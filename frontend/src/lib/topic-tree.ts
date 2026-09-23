@@ -105,6 +105,46 @@ export function insertTopicInTree(
   return attached ? result : topics;
 }
 
+type UpdateResult = { topics: Topic[]; updated: boolean };
+
+function applyUpdate(
+  topics: Topic[],
+  topicId: string,
+  changes: Pick<Topic, 'name' | 'color'>
+): UpdateResult {
+  let updated = false;
+  const next: Topic[] = [];
+
+  for (const topic of topics) {
+    if (topic.topicId === topicId) {
+      updated = true;
+      next.push({ ...topic, ...changes });
+      continue;
+    }
+
+    const result = applyUpdate(topic.topics, topicId, changes);
+
+    if (result.updated) {
+      updated = true;
+      next.push({ ...topic, topics: result.topics });
+    } else {
+      next.push(topic);
+    }
+  }
+
+  return { topics: updated ? next.sort(byName) : next, updated };
+}
+
+export function updateTopicInTree(
+  topics: Topic[],
+  topicId: string,
+  changes: Pick<Topic, 'name' | 'color'>
+): Topic[] {
+  const { topics: result, updated } = applyUpdate(topics, topicId, changes);
+
+  return updated ? result : topics;
+}
+
 export function canDropTopic(
   dragged: TopicDragData,
   targetId: string | null

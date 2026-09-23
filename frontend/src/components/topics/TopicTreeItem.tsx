@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Folder,
   MoreHorizontal,
+  Pencil,
   Plus,
   Trash2,
 } from 'lucide-react';
@@ -43,6 +44,7 @@ type TopicTreeItemProps = {
   openIds: Set<string>;
   onOpenChange: (topicId: string, open: boolean) => void;
   onAddChild: (topic: Topic) => void;
+  onEdit: (topic: Topic) => void;
   onDelete: (topic: Topic) => void;
 };
 
@@ -79,11 +81,13 @@ function TopicChevron() {
 function TopicActions({
   topic,
   onAddChild,
+  onEdit,
   onDelete,
   className,
 }: {
   topic: Topic;
   onAddChild: TopicTreeItemProps['onAddChild'];
+  onEdit: TopicTreeItemProps['onEdit'];
   onDelete: TopicTreeItemProps['onDelete'];
   className?: string;
 }) {
@@ -110,6 +114,11 @@ function TopicActions({
         <DropdownMenuItem onSelect={() => onAddChild(topic)}>
           <Plus className="text-accent-green" />
           Add topic
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onSelect={() => onEdit(topic)}>
+          <Pencil />
+          Edit topic
         </DropdownMenuItem>
 
         <DropdownMenuItem
@@ -210,6 +219,7 @@ function TopicSubTreeItem({
   openIds,
   onOpenChange,
   onAddChild,
+  onEdit,
   onDelete,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
@@ -229,6 +239,7 @@ function TopicSubTreeItem({
           <TopicActions
             topic={topic}
             onAddChild={onAddChild}
+            onEdit={onEdit}
             onDelete={onDelete}
             className={revealOnHoverSub}
           />
@@ -259,6 +270,7 @@ function TopicSubTreeItem({
           <TopicActions
             topic={topic}
             onAddChild={onAddChild}
+            onEdit={onEdit}
             onDelete={onDelete}
             className={revealOnHoverSub}
           />
@@ -272,6 +284,7 @@ function TopicSubTreeItem({
                 openIds={openIds}
                 onOpenChange={onOpenChange}
                 onAddChild={onAddChild}
+                onEdit={onEdit}
                 onDelete={onDelete}
               />
             ))}
@@ -287,6 +300,7 @@ export default function TopicTreeItem({
   openIds,
   onOpenChange,
   onAddChild,
+  onEdit,
   onDelete,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
@@ -305,6 +319,7 @@ export default function TopicTreeItem({
           <TopicActions
             topic={topic}
             onAddChild={onAddChild}
+            onEdit={onEdit}
             onDelete={onDelete}
             className={revealOnHover}
           />
@@ -334,6 +349,7 @@ export default function TopicTreeItem({
           <TopicActions
             topic={topic}
             onAddChild={onAddChild}
+            onEdit={onEdit}
             onDelete={onDelete}
             className={revealOnHover}
           />
@@ -347,6 +363,7 @@ export default function TopicTreeItem({
                 openIds={openIds}
                 onOpenChange={onOpenChange}
                 onAddChild={onAddChild}
+                onEdit={onEdit}
                 onDelete={onDelete}
               />
             ))}

@@ -2,6 +2,7 @@ import type {
   CreateTopicRequest,
   ReparentRequest,
   Topic,
+  UpdateTopicRequest,
 } from '@/types/topic.types';
 import { executeFetch, BASE_URL } from './auth';
 
@@ -58,5 +59,23 @@ export function deleteTopic(topicId: string, accessToken: string) {
       },
     },
     'There was an error deleting the topic.'
+  );
+}
+
+export function updateTopic(
+  { topicId, name, color }: UpdateTopicRequest,
+  accessToken: string
+) {
+  return executeFetch<Topic>(
+    `${BASE_URL}/api/topic/update`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ topicId, name, color }),
+    },
+    'There was an error updating the topic.'
   );
 }
