@@ -134,8 +134,6 @@ function applyUpdate(
     }
   }
 
-  // Only the level holding the renamed topic can change order, so ancestor
-  // levels are left untouched.
   return { topics: needsSort ? next.sort(byName) : next, updated };
 }
 
