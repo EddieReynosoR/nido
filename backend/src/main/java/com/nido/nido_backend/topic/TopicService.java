@@ -1,13 +1,13 @@
-package com.nido.nido_backend.topics;
+package com.nido.nido_backend.topic;
 
 import com.nido.nido_backend.shared.exception.RecordAlreadyExists;
 import com.nido.nido_backend.shared.util.TopicsTree;
 import com.nido.nido_backend.spaces.SpaceEntity;
 import com.nido.nido_backend.spaces.SpaceService;
-import com.nido.nido_backend.topics.dto.TopicRequest;
-import com.nido.nido_backend.topics.dto.TopicResponse;
-import com.nido.nido_backend.topics.dto.UpdateParentRequest;
-import com.nido.nido_backend.topics.dto.UpdateTopicRequest;
+import com.nido.nido_backend.topic.dto.TopicRequest;
+import com.nido.nido_backend.topic.dto.TopicResponse;
+import com.nido.nido_backend.topic.dto.UpdateParentRequest;
+import com.nido.nido_backend.topic.dto.UpdateTopicRequest;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 

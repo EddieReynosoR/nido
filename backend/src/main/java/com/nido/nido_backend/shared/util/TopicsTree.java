@@ -1,6 +1,6 @@
 package com.nido.nido_backend.shared.util;
 
-import com.nido.nido_backend.topics.dto.TopicResponse;
+import com.nido.nido_backend.topic.dto.TopicResponse;
 
 import java.util.List;
 import java.util.Map;

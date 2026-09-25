@@ -1,6 +1,6 @@
-package com.nido.nido_backend.topics.dto;
+package com.nido.nido_backend.topic.dto;
 
-import com.nido.nido_backend.topics.TopicEntity;
+import com.nido.nido_backend.topic.TopicEntity;
 
 import java.time.Instant;
 import java.util.ArrayList;

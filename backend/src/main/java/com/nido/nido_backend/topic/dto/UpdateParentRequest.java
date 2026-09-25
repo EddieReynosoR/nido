@@ -1,4 +1,4 @@
-package com.nido.nido_backend.topics.dto;
+package com.nido.nido_backend.topic.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
