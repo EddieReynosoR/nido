@@ -1,5 +1,6 @@
 package com.nido.nido_backend.topic;
 
+import com.nido.nido_backend.note.NoteService;
 import com.nido.nido_backend.shared.exception.RecordAlreadyExists;
 import com.nido.nido_backend.shared.util.TopicsTree;
 import com.nido.nido_backend.spaces.SpaceEntity;
@@ -23,19 +24,30 @@ public class TopicService {
 
     private final TopicRepository topicRepository;
     private final SpaceService spaceService;
+    private final NoteService noteService;
 
-    public TopicService(TopicRepository topicRepository, SpaceService spaceService) {
+    public TopicService(TopicRepository topicRepository, SpaceService spaceService, NoteService noteService) {
         this.topicRepository = topicRepository;
         this.spaceService = spaceService;
+        this.noteService = noteService;
     }
 
     @Transactional(readOnly = true)
     public List<TopicResponse> get(UUID spaceId, String userId) {
         SpaceEntity spaceEntity = spaceService.getOwnedBy(spaceId, UUID.fromString(userId));
-
         List<TopicEntity> topics = topicRepository.getBySpaceId(spaceEntity.getSpaceId());
 
-        return TopicsTree.createTopicsTree(TopicResponse.toList(topics));
+        List<TopicResponse> responseList = TopicResponse.toList(topics);
+        List<UUID> topicIds = topics.stream()
+                .map(TopicEntity::getTopicId)
+                .toList();
+
+        var introNotes = noteService.getIntroNoteIdsByTopicIds(topicIds);
+        var result = responseList.stream()
+                .map(t -> t.withNote(introNotes.getOrDefault(t.topicId(), null)))
+                .toList();
+
+        return TopicsTree.createTopicsTree(result);
     }
 
     @Transactional
