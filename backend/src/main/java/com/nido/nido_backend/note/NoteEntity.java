@@ -24,7 +24,7 @@ public class NoteEntity {
     @Column(name = "content", columnDefinition = "jsonb", nullable = false)
     private String content;
 
-    @Column(name = "topic_id")
+    @Column(name = "topic_id", nullable = false)
     private UUID topicId;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)

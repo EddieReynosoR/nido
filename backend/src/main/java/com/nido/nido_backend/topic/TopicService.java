@@ -12,10 +12,7 @@ import com.nido.nido_backend.topic.dto.UpdateTopicRequest;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 public class TopicService {
@@ -36,6 +33,8 @@ public class TopicService {
     public List<TopicResponse> get(UUID spaceId, String userId) {
         SpaceEntity spaceEntity = spaceService.getOwnedBy(spaceId, UUID.fromString(userId));
         List<TopicEntity> topics = topicRepository.getBySpaceId(spaceEntity.getSpaceId());
+
+        if (topics.isEmpty()) return new ArrayList<>();
 
         List<TopicResponse> responseList = TopicResponse.toList(topics);
         List<UUID> topicIds = topics.stream()

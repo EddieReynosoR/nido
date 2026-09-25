@@ -1,8 +1,8 @@
 package com.nido.nido_backend.note;
 
+import com.nido.nido_backend.note.dto.TopicNoteIdDto;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -19,6 +19,6 @@ public class NoteService {
 
     public Map<UUID, UUID> getIntroNoteIdsByTopicIds(List<UUID> topicIds) {
         return noteRepository.findIntroNotesByTopicIds(topicIds).stream()
-                .collect(Collectors.toMap(NoteEntity::getTopicId, NoteEntity::getNoteId));
+                .collect(Collectors.toMap(TopicNoteIdDto::topicId, TopicNoteIdDto::noteId));
     }
 }

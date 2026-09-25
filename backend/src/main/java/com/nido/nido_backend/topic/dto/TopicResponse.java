@@ -26,10 +26,14 @@ public record TopicResponse(UUID topicId, String name, String color, UUID parent
     }
 
     public TopicResponse withTopics(List<TopicResponse> topics) {
-        return new TopicResponse(topicId, name, color, parentId, spaceId, deletedAt, topics, noteId);
+        return copy(topics, noteId);
     }
 
     public TopicResponse withNote(UUID noteId) {
+        return copy(topics, noteId);
+    }
+
+    private TopicResponse copy(List<TopicResponse> topics, UUID noteId) {
         return new TopicResponse(topicId, name, color, parentId, spaceId, deletedAt, topics, noteId);
     }
 }
