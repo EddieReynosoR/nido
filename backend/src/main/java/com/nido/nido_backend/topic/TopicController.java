@@ -1,9 +1,9 @@
-package com.nido.nido_backend.topics;
+package com.nido.nido_backend.topic;
 
-import com.nido.nido_backend.topics.dto.TopicRequest;
-import com.nido.nido_backend.topics.dto.TopicResponse;
-import com.nido.nido_backend.topics.dto.UpdateParentRequest;
-import com.nido.nido_backend.topics.dto.UpdateTopicRequest;
+import com.nido.nido_backend.topic.dto.TopicRequest;
+import com.nido.nido_backend.topic.dto.TopicResponse;
+import com.nido.nido_backend.topic.dto.UpdateParentRequest;
+import com.nido.nido_backend.topic.dto.UpdateTopicRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package com.nido.nido_backend.topics;
+package com.nido.nido_backend.topic;
 
 import jakarta.persistence.*;
 
