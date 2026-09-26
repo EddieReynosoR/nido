@@ -83,7 +83,6 @@ jobs:
             comment saying the review passed with no issues.
           claude_args: |
             --model claude-sonnet-5
-            --max-turns 30
             --allowedTools "mcp__github_inline_comment__create_inline_comment","Bash(gh pr view:*)","Bash(gh pr diff:*)","Bash(gh pr comment:*)"
           
           # Optional: Supply CLI flags for models, max turns, system prompts, tool access, etc.
