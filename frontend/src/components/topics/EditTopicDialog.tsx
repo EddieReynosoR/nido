@@ -100,8 +100,8 @@ export default function EditTopicDialog({
         <DialogHeader>
           <DialogTitle>Edit folder</DialogTitle>
           <DialogDescription>
-            Rename “{displayedTopic?.name}” or pick a different color. Everything
-            inside it stays where it is.
+            Rename “{displayedTopic?.name}” or pick a different color.
+            Everything inside it stays where it is.
           </DialogDescription>
         </DialogHeader>
 
