@@ -1,5 +1,5 @@
+import { Outlet } from 'react-router';
 import AppSidebar from '@/components/AppSidebar';
-import NoteEditor from '@/components/notes/NoteEditor';
 import {
   SidebarInset,
   SidebarProvider,
@@ -17,8 +17,8 @@ export default function HomePage() {
             nido
           </span>
         </header>
-        <main className="flex-1 overflow-auto py-10 px-2 md:px-8">
-          <NoteEditor />
+        <main className="flex flex-1 flex-col overflow-auto py-10 px-2 md:px-8">
+          <Outlet />
         </main>
       </SidebarInset>
     </SidebarProvider>

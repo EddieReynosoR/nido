@@ -17,6 +17,20 @@ export function collectDescendantIds(topic: Topic): Set<string> {
   return ids;
 }
 
+export function findTopicInTree(
+  topics: Topic[],
+  topicId: string
+): Topic | null {
+  for (const topic of topics) {
+    if (topic.topicId === topicId) return topic;
+
+    const found = findTopicInTree(topic.topics, topicId);
+    if (found) return found;
+  }
+
+  return null;
+}
+
 type DetachResult = { topics: Topic[]; removed: Topic | null };
 
 function detach(topics: Topic[], topicId: string): DetachResult {

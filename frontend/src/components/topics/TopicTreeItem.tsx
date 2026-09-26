@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { CollisionPriority } from '@dnd-kit/abstract';
 import { useDraggable, useDroppable } from '@dnd-kit/react';
+import { useNavigate, useParams } from 'react-router';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -214,6 +215,16 @@ function useTopicDnd(
   };
 }
 
+function useTopicSelection(topic: Topic) {
+  const navigate = useNavigate();
+  const { topicId } = useParams();
+
+  return {
+    isActive: topicId === topic.topicId,
+    onSelect: () => navigate(`/topics/${topic.topicId}`),
+  };
+}
+
 function TopicSubTreeItem({
   topic,
   openIds,
@@ -223,6 +234,7 @@ function TopicSubTreeItem({
   onDelete,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
+  const { isActive, onSelect } = useTopicSelection(topic);
 
   if (!topic.topics.length) {
     return (
@@ -230,9 +242,10 @@ function TopicSubTreeItem({
         <div {...rowProps}>
           <SidebarMenuSubButton
             asChild
+            isActive={isActive}
             className={`w-full pr-8 text-sidebar-foreground/80 ${grabCursor}`}
           >
-            <button type="button" {...handleProps}>
+            <button type="button" {...handleProps} onClick={onSelect}>
               <TopicLabel topic={topic} />
             </button>
           </SidebarMenuSubButton>
@@ -259,9 +272,10 @@ function TopicSubTreeItem({
           <CollapsibleTrigger asChild>
             <SidebarMenuSubButton
               asChild
+              isActive={isActive}
               className={`w-full pr-8 text-sidebar-foreground/80 ${grabCursor} ${rotateChevronWhenOpen}`}
             >
-              <button type="button" {...handleProps}>
+              <button type="button" {...handleProps} onClick={onSelect}>
                 <TopicLabel topic={topic} />
                 <TopicChevron />
               </button>
@@ -304,6 +318,7 @@ export default function TopicTreeItem({
   onDelete,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
+  const { isActive, onSelect } = useTopicSelection(topic);
 
   if (!topic.topics.length) {
     return (
@@ -312,6 +327,8 @@ export default function TopicTreeItem({
           <SidebarMenuButton
             {...handleProps}
             tooltip={topic.name}
+            isActive={isActive}
+            onClick={onSelect}
             className={`text-sidebar-foreground/80 ${grabCursor}`}
           >
             <TopicLabel topic={topic} />
@@ -340,6 +357,8 @@ export default function TopicTreeItem({
             <SidebarMenuButton
               {...handleProps}
               tooltip={topic.name}
+              isActive={isActive}
+              onClick={onSelect}
               className={`pr-8 text-sidebar-foreground/80 ${grabCursor} ${rotateChevronWhenOpen}`}
             >
               <TopicLabel topic={topic} />

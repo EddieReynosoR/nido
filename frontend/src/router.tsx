@@ -8,6 +8,8 @@ import { AuthProvider } from './context/AuthContext';
 import { SpaceProvider } from './context/SpaceContext';
 import RequireAuth from './components/RequireAuth';
 import LandingPage from './pages/LandingPage';
+import EmptyState from './pages/EmptyState';
+import TopicNotePage from './pages/TopicNotePage';
 
 export const router = createBrowserRouter([
   {
@@ -22,7 +24,15 @@ export const router = createBrowserRouter([
               {
                 Component: App,
                 path: '/',
-                children: [{ index: true, Component: HomePage }],
+                children: [
+                  {
+                    Component: HomePage,
+                    children: [
+                      { index: true, Component: EmptyState },
+                      { path: 'topics/:topicId', Component: TopicNotePage },
+                    ],
+                  },
+                ],
               },
             ],
           },
