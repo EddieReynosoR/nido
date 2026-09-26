@@ -6,6 +6,7 @@ export type Topic = {
   spaceId: string;
   deletedAt: string | null;
   topics: Topic[];
+  noteId: string | null;
 };
 
 export type ReparentRequest = {
