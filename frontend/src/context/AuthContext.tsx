@@ -169,10 +169,6 @@ export function AuthProvider() {
   return (
     <AuthContext value={{ accessToken, status, login, logout, isLogin }}>
       <Outlet />
-      {/* Sonner asume tema claro si no se le dice nada, así que en modo oscuro
-          la tarjeta salía blanca. Le pasamos los tokens del proyecto: al ser
-          CSS heredan de <html> y siguen solos las clases .dark/.light que
-          alterna ThemeToogle, sin necesidad de estado JS. */}
       <Toaster
         style={
           {

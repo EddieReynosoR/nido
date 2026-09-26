@@ -28,7 +28,7 @@ import {
   HEX_COLOR_REGEX,
   type AddTopicSchema,
 } from '@/lib/topic-schema';
-import { useUpdateTopic } from '@/hooks/use-topic';
+import { useUpdateTopic } from '@/hooks/topics/use-topic';
 import { useLastValue } from '@/hooks/use-last-value';
 import { useAuth } from '@/context/AuthContext';
 import type { Topic } from '@/types/topic.types';
@@ -100,8 +100,8 @@ export default function EditTopicDialog({
         <DialogHeader>
           <DialogTitle>Edit folder</DialogTitle>
           <DialogDescription>
-            Rename “{displayedTopic?.name}” or pick a different color. Everything
-            inside it stays where it is.
+            Rename “{displayedTopic?.name}” or pick a different color.
+            Everything inside it stays where it is.
           </DialogDescription>
         </DialogHeader>
 

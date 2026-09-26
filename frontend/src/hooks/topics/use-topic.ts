@@ -62,6 +62,7 @@ export function useCreate(accessToken: string | null) {
         parentId: request.parentTopicId,
         deletedAt: null,
         topics: [],
+        noteId: null,
       };
 
       queryClient.setQueryData<Topic[]>(queryKey, (old) =>

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { CollisionPriority } from '@dnd-kit/abstract';
 import {
   PointerActivationConstraints,
@@ -20,10 +20,11 @@ import EditTopicDialog from '@/components/topics/EditTopicDialog';
 import TopicTreeItem from '@/components/topics/TopicTreeItem';
 import { SidebarMenu } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
-import { useDeleteTopic, useReparent } from '@/hooks/use-topic';
-import { canDropTopic } from '@/lib/topic-tree';
+import { useDeleteTopic, useReparent } from '@/hooks/topics/use-topic';
+import { canDropTopic, findTopicPath } from '@/lib/topic-tree';
 import { cn } from '@/lib/utils';
 import type { Topic, TopicDragData } from '@/types/topic.types';
+import { useParams } from 'react-router';
 
 type TopicTreeProps = {
   topics: Topic[];
@@ -73,6 +74,12 @@ function TopicTreeRoot({
     accept: (candidate) => canDropTopic(candidate.data as TopicDragData, null),
   });
 
+  const { topicId } = useParams();
+  const activePath = useMemo(
+    () => (topicId ? findTopicPath(topics, topicId) : null),
+    [topics, topicId]
+  );
+
   return (
     <div
       ref={ref}
@@ -87,6 +94,7 @@ function TopicTreeRoot({
             key={topic.topicId}
             topic={topic}
             openIds={openIds}
+            activePath={activePath?.[0] === topic.topicId ? activePath : null}
             onOpenChange={onOpenChange}
             onAddChild={onAddChild}
             onEdit={onEdit}

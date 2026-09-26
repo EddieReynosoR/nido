@@ -2,17 +2,7 @@ import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { type Theme } from '@/types/utils.types';
-
-const DARK_QUERY = '(prefers-color-scheme: dark)';
-
-function getEffectiveTheme(): Theme {
-  const root = document.documentElement;
-
-  if (root.classList.contains('dark')) return 'dark';
-  if (root.classList.contains('light')) return 'light';
-
-  return window.matchMedia(DARK_QUERY).matches ? 'dark' : 'light';
-}
+import { DARK_QUERY, getEffectiveTheme, toggleTheme } from '@/lib/theme';
 
 export default function ThemeToogle() {
   const [theme, setTheme] = useState<Theme | null>(null);
@@ -35,12 +25,7 @@ export default function ThemeToogle() {
   }, []);
 
   const toggle = () => {
-    const next = getEffectiveTheme() === 'dark' ? 'light' : 'dark';
-    const root = document.documentElement;
-
-    root.classList.remove('dark', 'light');
-    root.classList.add(next);
-    setTheme(next);
+    setTheme(toggleTheme());
   };
 
   return (

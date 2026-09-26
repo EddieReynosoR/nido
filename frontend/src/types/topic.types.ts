@@ -6,6 +6,7 @@ export type Topic = {
   spaceId: string;
   deletedAt: string | null;
   topics: Topic[];
+  noteId: string | null;
 };
 
 export type ReparentRequest = {
@@ -38,4 +39,14 @@ export type UpdateTopicRequest = {
   spaceId: string;
   name: string;
   color: string;
+};
+
+export type TopicTreeItemProps = {
+  topic: Topic;
+  openIds: Set<string>;
+  activePath: string[] | null;
+  onOpenChange: (topicId: string, open: boolean) => void;
+  onAddChild: (topic: Topic) => void;
+  onEdit: (topic: Topic) => void;
+  onDelete: (topic: Topic) => void;
 };
