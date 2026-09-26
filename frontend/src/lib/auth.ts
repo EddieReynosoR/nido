@@ -39,3 +39,19 @@ export function hasProp<K extends string>(
 ): obj is Record<K, unknown> {
   return typeof obj === 'object' && obj !== null && key in obj;
 }
+
+export function getEmailFromToken(token: string | null): string | null {
+  const payload = token?.split('.')[1];
+  if (!payload) return null;
+
+  try {
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    const data: unknown = JSON.parse(json);
+
+    return hasProp(data, 'email') && typeof data.email === 'string'
+      ? data.email
+      : null;
+  } catch {
+    return null;
+  }
+}

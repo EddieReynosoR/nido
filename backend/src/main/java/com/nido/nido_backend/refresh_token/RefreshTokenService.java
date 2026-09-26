@@ -5,6 +5,7 @@ import com.nido.nido_backend.refresh_token.dto.RefreshTokenDto;
 import com.nido.nido_backend.shared.exception.NoRowsAffectedException;
 import com.nido.nido_backend.shared.exception.RefreshTokenExpiredException;
 import com.nido.nido_backend.shared.exception.RefreshTokenInvalidException;
+import com.nido.nido_backend.user.UserService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -23,10 +24,12 @@ public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtService jwtService;
+    private final UserService userService;
 
-    public RefreshTokenService(RefreshTokenRepository refreshTokenRepository, JwtService jwtService) {
+    public RefreshTokenService(RefreshTokenRepository refreshTokenRepository, JwtService jwtService, UserService userService) {
         this.refreshTokenRepository = refreshTokenRepository;
         this.jwtService = jwtService;
+        this.userService = userService;
     }
 
     public String createRefreshToken(UUID userId) {
@@ -91,8 +94,10 @@ public class RefreshTokenService {
             throw new NoRowsAffectedException("No refresh token was deleted.");
 
         UUID userId = entity.getUserId();
+        String email = userService.getUserEmail(userId)
+                .orElseThrow(RefreshTokenInvalidException::new);
 
-        String accessToken = jwtService.generateToken(userId);
+        String accessToken = jwtService.generateToken(userId, email);
 
         RefreshTokenDto dto = new RefreshTokenDto();
         dto.setAccessToken(accessToken);

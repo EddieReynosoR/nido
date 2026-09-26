@@ -1,11 +1,19 @@
 import { useEffect, useState, useRef } from 'react';
-import { Plus, CircleUser, ChevronRight } from 'lucide-react';
+import { Plus, CircleUser, ChevronRight, LogOut } from 'lucide-react';
 import SpaceSwitcher, {
   SpaceSwitcherSkeleton,
 } from '@/components/spaces/SpaceSwitcher';
 import AddSpaceForm from '@/components/spaces/AddSpaceForm';
 import TopicTree from '@/components/topics/TopicTree';
 import AddTopicDialog from '@/components/topics/AddTopicDialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Sidebar,
   SidebarContent,
@@ -21,15 +29,19 @@ import {
   SidebarMenuSkeleton,
   SidebarRail,
   SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { errorToast } from '@/lib/toast';
+import { getEmailFromToken } from '@/lib/auth';
 import { useSpace } from '@/context/SpaceContext';
 import { useAuth } from '@/context/AuthContext';
 import { useTopics } from '@/hooks/use-topic';
 import { toast } from 'sonner';
 
 export default function AppSidebar() {
-  const { accessToken } = useAuth();
+  const { accessToken, logout } = useAuth();
+  const { isMobile } = useSidebar();
+  const email = getEmailFromToken(accessToken);
   const {
     data: spaces,
     activeSpace,
@@ -194,11 +206,34 @@ export default function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Eugen Esanu">
-              <CircleUser className="text-sidebar-foreground/60" />
-              <span className="flex-1 text-left">Eugen Esanu</span>
-              <ChevronRight className="ml-auto text-sidebar-foreground/30" />
-            </SidebarMenuButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  tooltip={email ?? undefined}
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                >
+                  <CircleUser className="text-sidebar-foreground/60" />
+                  <span className="flex-1 truncate text-left">{email}</span>
+                  <ChevronRight className="ml-auto text-sidebar-foreground/30" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent
+                className="w-56 rounded-lg"
+                align="end"
+                side={isMobile ? 'top' : 'right'}
+                sideOffset={4}
+              >
+                <DropdownMenuLabel className="truncate text-xs text-muted-foreground">
+                  {email}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={logout} className="gap-2 p-2">
+                  <LogOut />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

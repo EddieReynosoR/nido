@@ -1,15 +1,11 @@
 import AppSidebar from '@/components/AppSidebar';
-import { Button } from '@/components/ui/button';
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { useAuth } from '@/context/AuthContext';
 
 export default function HomePage() {
-  const { logout } = useAuth();
-
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -20,9 +16,6 @@ export default function HomePage() {
             nido
           </span>
         </header>
-        <div className="p-4">
-          <Button onClick={logout}>Logout</Button>
-        </div>
       </SidebarInset>
     </SidebarProvider>
   );
