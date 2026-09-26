@@ -40,6 +40,9 @@ public class UserEntity implements UserDetails {
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @CreationTimestamp
     @Column(name = "updated_at", nullable = false, insertable = false)
     private LocalDateTime updatedAt;
@@ -126,4 +129,8 @@ public class UserEntity implements UserDetails {
     public String getUsername() {
         return userId.toString();
     }
+
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }
