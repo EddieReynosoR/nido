@@ -1,5 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
-import { Plus, CircleUser, ChevronRight, LogOut } from 'lucide-react';
+import {
+  Plus,
+  CircleUser,
+  ChevronRight,
+  LogOut,
+  Moon,
+  Sun,
+} from 'lucide-react';
 import SpaceSwitcher, {
   SpaceSwitcherSkeleton,
 } from '@/components/spaces/SpaceSwitcher';
@@ -33,6 +40,8 @@ import {
 } from '@/components/ui/sidebar';
 import { errorToast } from '@/lib/toast';
 import { getEmailFromToken } from '@/lib/auth';
+import { toggleTheme } from '@/lib/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { useSpace } from '@/context/SpaceContext';
 import { useAuth } from '@/context/AuthContext';
 import { useTopics } from '@/hooks/use-topic';
@@ -42,6 +51,7 @@ export default function AppSidebar() {
   const { accessToken, logout } = useAuth();
   const { isMobile } = useSidebar();
   const email = getEmailFromToken(accessToken);
+  const theme = useTheme();
   const {
     data: spaces,
     activeSpace,
@@ -228,6 +238,16 @@ export default function AppSidebar() {
                   {email}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    toggleTheme();
+                  }}
+                  className="gap-2 p-2"
+                >
+                  {theme === 'dark' ? <Sun /> : <Moon />}
+                  {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                </DropdownMenuItem>
                 <DropdownMenuItem onSelect={logout} className="gap-2 p-2">
                   <LogOut />
                   Log out
