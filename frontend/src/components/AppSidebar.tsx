@@ -44,7 +44,7 @@ import { toggleTheme } from '@/lib/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useSpace } from '@/context/SpaceContext';
 import { useAuth } from '@/context/AuthContext';
-import { useTopics } from '@/hooks/use-topic';
+import { useTopics } from '@/hooks/topics/use-topic';
 import { toast } from 'sonner';
 
 export default function AppSidebar() {

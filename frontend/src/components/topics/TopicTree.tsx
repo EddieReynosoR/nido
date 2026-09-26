@@ -20,7 +20,7 @@ import EditTopicDialog from '@/components/topics/EditTopicDialog';
 import TopicTreeItem from '@/components/topics/TopicTreeItem';
 import { SidebarMenu } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
-import { useDeleteTopic, useReparent } from '@/hooks/use-topic';
+import { useDeleteTopic, useReparent } from '@/hooks/topics/use-topic';
 import { canDropTopic } from '@/lib/topic-tree';
 import { cn } from '@/lib/utils';
 import type { Topic, TopicDragData } from '@/types/topic.types';

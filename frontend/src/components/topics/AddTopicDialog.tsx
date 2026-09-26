@@ -26,7 +26,7 @@ import {
   HEX_COLOR_REGEX,
   type AddTopicSchema,
 } from '@/lib/topic-schema';
-import { useCreate } from '@/hooks/use-topic';
+import { useCreate } from '@/hooks/topics/use-topic';
 import { useAuth } from '@/context/AuthContext';
 import type { CreateTopicRequest, Topic } from '@/types/topic.types';
 import { useSpace } from '@/context/SpaceContext';

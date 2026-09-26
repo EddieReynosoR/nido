@@ -3,7 +3,7 @@ import NoteEditor from '@/components/notes/NoteEditor';
 import NoteMessage from '@/components/notes/NoteMessage';
 import { useAuth } from '@/context/AuthContext';
 import { useSpace } from '@/context/SpaceContext';
-import { useTopics } from '@/hooks/use-topic';
+import { useTopics } from '@/hooks/topics/use-topic';
 import { findTopicInTree } from '@/lib/topic-tree';
 
 export default function TopicNotePage() {

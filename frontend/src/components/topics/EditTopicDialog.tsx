@@ -28,7 +28,7 @@ import {
   HEX_COLOR_REGEX,
   type AddTopicSchema,
 } from '@/lib/topic-schema';
-import { useUpdateTopic } from '@/hooks/use-topic';
+import { useUpdateTopic } from '@/hooks/topics/use-topic';
 import { useLastValue } from '@/hooks/use-last-value';
 import { useAuth } from '@/context/AuthContext';
 import type { Topic } from '@/types/topic.types';

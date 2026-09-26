@@ -40,3 +40,12 @@ export type UpdateTopicRequest = {
   name: string;
   color: string;
 };
+
+export type TopicTreeItemProps = {
+  topic: Topic;
+  openIds: Set<string>;
+  onOpenChange: (topicId: string, open: boolean) => void;
+  onAddChild: (topic: Topic) => void;
+  onEdit: (topic: Topic) => void;
+  onDelete: (topic: Topic) => void;
+};
