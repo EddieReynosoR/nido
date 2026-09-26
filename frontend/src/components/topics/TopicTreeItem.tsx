@@ -1,7 +1,5 @@
-import {
-  ChevronRight,
-  Folder
-} from 'lucide-react';
+import { memo } from 'react';
+import { ChevronRight, Folder } from 'lucide-react';
 import {
   Collapsible,
   CollapsibleContent,
@@ -12,16 +10,18 @@ import {
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
-  SidebarMenuSubItem
+  SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import type { Topic, TopicTreeItemProps } from '@/types/topic.types';
-
 import { TopicActions } from './TopicActions';
-
 import { useTopicDnd } from '@/hooks/topics/use-topic-dnd';
 import { useTopicSelection } from '@/hooks/topics/use-topic-selection';
-
-import { grabCursor, revealOnHover, revealOnHoverSub, rotateChevronWhenOpen } from '@/constants/const';
+import {
+  grabCursor,
+  revealOnHover,
+  revealOnHoverSub,
+  rotateChevronWhenOpen,
+} from '@/constants/const';
 
 function TopicLabel({ topic }: { topic: Topic }) {
   return (
@@ -41,16 +41,18 @@ function TopicChevron() {
   );
 }
 
-function TopicSubTreeItem({
+const TopicSubTreeItem = memo(function TopicSubTreeItem({
   topic,
   openIds,
+  activePath,
   onOpenChange,
   onAddChild,
   onEdit,
   onDelete,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
-  const { isActive, onSelect } = useTopicSelection(topic);
+  const { onSelect } = useTopicSelection(topic);
+  const isActive = activePath?.at(-1) === topic.topicId;
 
   if (!topic.topics.length) {
     return (
@@ -112,6 +114,9 @@ function TopicSubTreeItem({
                 key={child.topicId}
                 topic={child}
                 openIds={openIds}
+                activePath={
+                  activePath?.includes(child.topicId) ? activePath : null
+                }
                 onOpenChange={onOpenChange}
                 onAddChild={onAddChild}
                 onEdit={onEdit}
@@ -123,18 +128,20 @@ function TopicSubTreeItem({
       </SidebarMenuSubItem>
     </Collapsible>
   );
-}
+});
 
-export default function TopicTreeItem({
+const TopicTreeItem = memo(function TopicTreeItem({
   topic,
   openIds,
+  activePath,
   onOpenChange,
   onAddChild,
   onEdit,
   onDelete,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
-  const { isActive, onSelect } = useTopicSelection(topic);
+  const { onSelect } = useTopicSelection(topic);
+  const isActive = activePath?.at(-1) === topic.topicId;
 
   if (!topic.topics.length) {
     return (
@@ -196,6 +203,9 @@ export default function TopicTreeItem({
                 key={child.topicId}
                 topic={child}
                 openIds={openIds}
+                activePath={
+                  activePath?.includes(child.topicId) ? activePath : null
+                }
                 onOpenChange={onOpenChange}
                 onAddChild={onAddChild}
                 onEdit={onEdit}
@@ -207,4 +217,6 @@ export default function TopicTreeItem({
       </SidebarMenuItem>
     </Collapsible>
   );
-}
+});
+
+export default TopicTreeItem;

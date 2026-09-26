@@ -44,6 +44,7 @@ export type UpdateTopicRequest = {
 export type TopicTreeItemProps = {
   topic: Topic;
   openIds: Set<string>;
+  activePath: string[] | null;
   onOpenChange: (topicId: string, open: boolean) => void;
   onAddChild: (topic: Topic) => void;
   onEdit: (topic: Topic) => void;

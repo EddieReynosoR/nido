@@ -31,6 +31,20 @@ export function findTopicInTree(
   return null;
 }
 
+export function findTopicPath(
+  topics: Topic[],
+  topicId: string
+): string[] | null {
+  for (const topic of topics) {
+    if (topic.topicId === topicId) return [topic.topicId];
+
+    const path = findTopicPath(topic.topics, topicId);
+    if (path) return [topic.topicId, ...path];
+  }
+
+  return null;
+}
+
 type DetachResult = { topics: Topic[]; removed: Topic | null };
 
 function detach(topics: Topic[], topicId: string): DetachResult {
