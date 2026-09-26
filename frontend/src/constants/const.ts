@@ -1,6 +1,7 @@
 export const AUTO_EXPAND_DELAY_MS = 600;
 
-export const rotateChevronWhenOpen = '[&[data-state=open]>svg:last-child]:rotate-90';
+export const rotateChevronWhenOpen =
+  '[&[data-state=open]>svg:last-child]:rotate-90';
 
 export const grabCursor = 'cursor-grab active:cursor-grabbing';
 

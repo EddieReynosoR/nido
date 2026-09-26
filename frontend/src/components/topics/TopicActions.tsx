@@ -4,17 +4,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  MoreHorizontal,
-  Pencil,
-  Plus,
-  Trash2,
-} from 'lucide-react';
-import type { Topic, TopicTreeItemProps } from "@/types/topic.types";
-import {
-  SidebarMenuAction,
-  useSidebar,
-} from '@/components/ui/sidebar';
+import { MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
+import type { Topic, TopicTreeItemProps } from '@/types/topic.types';
+import { SidebarMenuAction, useSidebar } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
 export function TopicActions({

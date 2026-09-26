@@ -1,12 +1,22 @@
-import { useDraggable, useDroppable } from "@dnd-kit/react";
+import { useDraggable, useDroppable } from '@dnd-kit/react';
 import { CollisionPriority } from '@dnd-kit/abstract';
-import { useMemo, useCallback, useEffect, useRef, type MouseEvent as ReactMouseEvent } from "react";
-import { cn } from "@/lib/utils";
+import {
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
+import { cn } from '@/lib/utils';
 
 import { canDropTopic, collectDescendantIds } from '@/lib/topic-tree';
-import { useSidebar } from "@/components/ui/sidebar";
-import type { Topic, TopicTreeItemProps, TopicDragData } from "@/types/topic.types";
-import { AUTO_EXPAND_DELAY_MS } from "@/constants/const";
+import { useSidebar } from '@/components/ui/sidebar';
+import type {
+  Topic,
+  TopicTreeItemProps,
+  TopicDragData,
+} from '@/types/topic.types';
+import { AUTO_EXPAND_DELAY_MS } from '@/constants/const';
 
 export function useTopicDnd(
   topic: Topic,
