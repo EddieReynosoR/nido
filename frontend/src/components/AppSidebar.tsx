@@ -223,7 +223,9 @@ export default function AppSidebar() {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <CircleUser className="text-sidebar-foreground/60" />
-                  <span className="flex-1 truncate text-left">{email}</span>
+                  <span className="flex-1 truncate text-left">
+                    {email ?? 'Account'}
+                  </span>
                   <ChevronRight className="ml-auto text-sidebar-foreground/30" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
