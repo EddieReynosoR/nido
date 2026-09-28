@@ -16,4 +16,16 @@ public interface NoteRepository extends JpaRepository<NoteEntity, UUID> {
             AND n.deletedAt IS NULL
     """)
     List<TopicNoteIdDto> findIntroNotesByTopicIds(@Param("topicIds") List<UUID> topicIds);
+
+    @Query("""
+        SELECT COUNT (n) > 0 FROM Note n
+        JOIN Topic t ON t.topicId = n.topicId
+        JOIN Space s ON s.spaceId = t.spaceId
+        WHERE n.topicId = :topicId
+            AND s.userId = :userId
+            AND s.deletedAt IS NULL
+            AND t.deletedAt IS NULL
+    """)
+    boolean existsActiveNoteOwnedByUser(@Param("topicId") UUID topicId,
+                                        @Param("userId") UUID userId);
 }
