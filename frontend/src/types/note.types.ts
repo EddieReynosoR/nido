@@ -1,8 +1,8 @@
-import type { Block } from '@blocknote/core';
+import type { PartialBlock } from '@blocknote/core';
 
 export type CreateNoteRequest = {
   topicId: string;
   title: string;
-  content: Block[];
+  content: PartialBlock[];
   isIntro: boolean;
 };
