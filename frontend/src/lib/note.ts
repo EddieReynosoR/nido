@@ -6,9 +6,9 @@ export function buildIntroNoteRequest(topic: Topic): CreateNoteRequest {
     topicId: topic.topicId,
     title: topic.name,
     content: [
-        { type: 'heading', props: { level: 1 }, content: topic.name },
-        { type: 'paragraph', content: 'Start writing your note here...' },
-      ],
+      { type: 'heading', props: { level: 1 }, content: topic.name },
+      { type: 'paragraph', content: 'Start writing your note here...' },
+    ],
     isIntro: true,
   };
 }
