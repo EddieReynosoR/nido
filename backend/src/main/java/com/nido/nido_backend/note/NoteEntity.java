@@ -1,9 +1,6 @@
 package com.nido.nido_backend.note;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -15,6 +12,7 @@ import java.util.UUID;
 public class NoteEntity {
     @Id
     @Column(name = "note_id", nullable = false, insertable = false, updatable = false)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID noteId;
 
     @Column(name = "title", nullable = false)
