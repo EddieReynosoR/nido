@@ -18,11 +18,4 @@ public class NoteContentMapper {
 
         return objectMapper.writeValueAsString(content);
     }
-
-    public JsonNode toJsonNode(String content) {
-        if (content == null)
-            throw new IllegalStateException("The note doesn't have content");
-
-        return objectMapper.readTree(content);
-    }
 }

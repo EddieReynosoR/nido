@@ -4,6 +4,7 @@ import com.nido.nido_backend.note.dto.CreateNoteRequest;
 import com.nido.nido_backend.note.dto.NoteResponse;
 import com.nido.nido_backend.note.dto.TopicNoteIdDto;
 import com.nido.nido_backend.shared.util.NoteContentMapper;
+import com.nido.nido_backend.topic.TopicRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,10 +18,12 @@ public class NoteService {
 
     private final NoteRepository noteRepository;
     private final NoteContentMapper noteContentMapper;
+    private final TopicRepository topicRepository;
 
-    public NoteService(NoteRepository noteRepository, NoteContentMapper noteContentMapper) {
+    public NoteService(NoteRepository noteRepository, NoteContentMapper noteContentMapper, TopicRepository topicRepository) {
         this.noteRepository = noteRepository;
         this.noteContentMapper = noteContentMapper;
+        this.topicRepository = topicRepository;
     }
 
     public Map<UUID, UUID> getIntroNoteIdsByTopicIds(List<UUID> topicIds) {
@@ -29,8 +32,8 @@ public class NoteService {
     }
 
     public NoteResponse createNote(CreateNoteRequest request, String userId) {
-        if (!noteRepository.existsActiveNoteOwnedByUser(request.topicId(), UUID.fromString(userId)))
-            throw new NoSuchElementException("Topic not found");
+        topicRepository.getByIdAndUserId(request.topicId(), UUID.fromString(userId))
+                .orElseThrow(() -> new NoSuchElementException("Topic not found"));
 
         NoteEntity entity = new NoteEntity();
         entity.setTitle(request.title());
@@ -39,6 +42,6 @@ public class NoteService {
         entity.setIntro(request.isIntro());
 
         noteRepository.save(entity);
-        return NoteResponse.from(entity, noteContentMapper.toJsonNode(entity.getContent()));
+        return NoteResponse.from(entity, request.content());
     }
 }
