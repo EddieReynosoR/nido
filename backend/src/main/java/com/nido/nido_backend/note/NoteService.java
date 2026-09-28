@@ -6,6 +6,7 @@ import com.nido.nido_backend.note.dto.TopicNoteIdDto;
 import com.nido.nido_backend.shared.util.NoteContentMapper;
 import com.nido.nido_backend.topic.TopicRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ public class NoteService {
                 .collect(Collectors.toMap(TopicNoteIdDto::topicId, TopicNoteIdDto::noteId));
     }
 
+    @Transactional
     public NoteResponse createNote(CreateNoteRequest request, String userId) {
         topicRepository.getByIdAndUserId(request.topicId(), UUID.fromString(userId))
                 .orElseThrow(() -> new NoSuchElementException("Topic not found"));
