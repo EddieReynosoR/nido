@@ -6,10 +6,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("api/note")
@@ -17,6 +16,15 @@ public class NoteController {
     private final NoteService noteService;
 
     public NoteController(NoteService noteService) { this.noteService = noteService; }
+
+    @GetMapping("/{noteId}/topic/{topicId}")
+    public ResponseEntity<NoteResponse> get(
+            @PathVariable UUID noteId,
+            @PathVariable UUID topicId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var response = noteService.getNoteByTopicId(noteId, topicId, userDetails.getUsername());
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/create")
     public ResponseEntity<NoteResponse> create(

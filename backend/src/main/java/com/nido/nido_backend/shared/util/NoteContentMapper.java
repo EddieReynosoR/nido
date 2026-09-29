@@ -18,4 +18,12 @@ public class NoteContentMapper {
 
         return objectMapper.writeValueAsString(content);
     }
+
+    public JsonNode toJsonNode(String content) {
+        try {
+            return objectMapper.readTree(content);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid note content", e);
+        }
+    }
 }
