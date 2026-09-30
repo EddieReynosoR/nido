@@ -1,6 +1,7 @@
 package com.nido.nido_backend.shared.util;
 
 import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -22,7 +23,7 @@ public class NoteContentMapper {
     public JsonNode toJsonNode(String content) {
         try {
             return objectMapper.readTree(content);
-        } catch (Exception e) {
+        } catch (JacksonException e) {
             throw new IllegalArgumentException("Invalid note content", e);
         }
     }
