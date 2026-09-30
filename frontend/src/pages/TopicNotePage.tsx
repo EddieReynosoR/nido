@@ -5,6 +5,7 @@ import NoteMessage from '@/components/notes/NoteMessage';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { useSpace } from '@/context/SpaceContext';
+import { useCreateNote } from '@/hooks/notes/use-note';
 import { useTopics } from '@/hooks/topics/use-topic';
 import { buildIntroNoteRequest } from '@/lib/note';
 import { findTopicInTree } from '@/lib/topic-tree';
@@ -18,6 +19,7 @@ export default function TopicNotePage() {
     activeSpace?.spaceId,
     accessToken
   );
+  const createNote = useCreateNote(accessToken, activeSpace?.spaceId);
   const [draft, setDraft] = useState<CreateNoteRequest | null>(null);
 
   if (spacesLoading || topicsLoading) return null;
@@ -26,21 +28,22 @@ export default function TopicNotePage() {
 
   if (!topic) return <Navigate to="/" replace />;
 
-  if (topic.noteId) return <NoteEditor key={topic.noteId} />;
-
   if (draft?.topicId === topic.topicId) {
     return <NoteEditor key={draft.topicId} initialContent={draft.content} />;
   }
+
+  if (topic.noteId) return <NoteEditor key={topic.noteId} />;
 
   return (
     <NoteMessage>
       <div className="flex flex-col items-center gap-3">
         <p>There&apos;s no intro note for this topic yet. Create a new one.</p>
         <Button
+          disabled={createNote.isPending}
           onClick={() => {
             const request = buildIntroNoteRequest(topic);
             setDraft(request);
-            // TODO: send request
+            createNote.mutate(request, { onError: () => setDraft(null) });
           }}
         >
           Create note
