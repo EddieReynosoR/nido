@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface NoteRepository extends JpaRepository<NoteEntity, UUID> {
@@ -16,4 +17,16 @@ public interface NoteRepository extends JpaRepository<NoteEntity, UUID> {
             AND n.deletedAt IS NULL
     """)
     List<TopicNoteIdDto> findIntroNotesByTopicIds(@Param("topicIds") List<UUID> topicIds);
+
+    @Query("""
+        SELECT n FROM Note n
+        JOIN Topic t ON t.topicId = n.topicId
+        JOIN Space s ON s.spaceId = t.spaceId
+        WHERE n.noteId = :noteId
+            AND s.userId = :userId
+            AND s.deletedAt IS NULL
+            AND t.deletedAt IS NULL
+            AND n.deletedAt IS NULL
+    """)
+    Optional<NoteEntity> getByIdAndUserId(@Param("noteId") UUID noteId, @Param("userId") UUID userId);
 }

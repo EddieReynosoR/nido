@@ -46,4 +46,12 @@ public class NoteService {
         noteRepository.save(entity);
         return NoteResponse.from(entity, request.content());
     }
+
+    @Transactional(readOnly = true)
+    public NoteResponse getNoteByTopicId(UUID noteId, String userId) {
+        var entity = noteRepository.getByIdAndUserId(noteId, UUID.fromString(userId))
+                .orElseThrow(() -> new NoSuchElementException("Note not found"));
+
+        return NoteResponse.from(entity, noteContentMapper.toJsonNode(entity.getContent()));
+    }
 }

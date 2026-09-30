@@ -1,6 +1,7 @@
 package com.nido.nido_backend.shared.util;
 
 import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -17,5 +18,13 @@ public class NoteContentMapper {
             throw new IllegalArgumentException("The content of the note must be a list of blocks");
 
         return objectMapper.writeValueAsString(content);
+    }
+
+    public JsonNode toJsonNode(String content) {
+        try {
+            return objectMapper.readTree(content);
+        } catch (JacksonException e) {
+            throw new IllegalArgumentException("Invalid note content", e);
+        }
     }
 }
