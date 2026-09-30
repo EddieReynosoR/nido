@@ -15,3 +15,16 @@ export function createNote(request: CreateNoteRequest, accessToken: string) {
     'There was an error creating the note.'
   );
 }
+
+export function getNote(noteId: string, accessToken: string) {
+  return executeFetch<Note>(
+    `${BASE_URL}/api/note/${encodeURIComponent(noteId)}`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+    'There was an error fetching the note.'
+  );
+}

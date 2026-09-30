@@ -175,6 +175,18 @@ export function updateTopicInTree(
   return updated ? result : topics;
 }
 
+export function setTopicNoteId(
+  topics: Topic[],
+  topicId: string,
+  noteId: string
+): Topic[] {
+  return topics.map((topic) =>
+    topic.topicId === topicId
+      ? { ...topic, noteId }
+      : { ...topic, topics: setTopicNoteId(topic.topics, topicId, noteId) }
+  );
+}
+
 export function canDropTopic(
   dragged: TopicDragData,
   targetId: string | null
