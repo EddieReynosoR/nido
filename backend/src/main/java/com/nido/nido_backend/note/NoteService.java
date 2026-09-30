@@ -48,11 +48,8 @@ public class NoteService {
     }
 
     @Transactional(readOnly = true)
-    public NoteResponse getNoteByTopicId(UUID noteId, UUID topicId, String userId) {
-        topicRepository.getByIdAndUserId(topicId, UUID.fromString(userId))
-                .orElseThrow(() -> new NoSuchElementException("Topic not found"));
-
-        var entity = noteRepository.getByIdAndTopicId(noteId, topicId)
+    public NoteResponse getNoteByTopicId(UUID noteId, String userId) {
+        var entity = noteRepository.getByIdAndUserId(noteId, UUID.fromString(userId))
                 .orElseThrow(() -> new NoSuchElementException("Note not found"));
 
         return NoteResponse.from(entity, noteContentMapper.toJsonNode(entity.getContent()));

@@ -17,12 +17,11 @@ public class NoteController {
 
     public NoteController(NoteService noteService) { this.noteService = noteService; }
 
-    @GetMapping("/{noteId}/topic/{topicId}")
+    @GetMapping("/{noteId}")
     public ResponseEntity<NoteResponse> get(
             @PathVariable UUID noteId,
-            @PathVariable UUID topicId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        var response = noteService.getNoteByTopicId(noteId, topicId, userDetails.getUsername());
+        var response = noteService.getNoteByTopicId(noteId, userDetails.getUsername());
         return ResponseEntity.ok(response);
     }
 
