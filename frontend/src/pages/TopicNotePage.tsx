@@ -5,6 +5,7 @@ import NoteMessage from '@/components/notes/NoteMessage';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { useSpace } from '@/context/SpaceContext';
+import { useCreateNote, useNote } from '@/hooks/notes/use-note';
 import { useTopics } from '@/hooks/topics/use-topic';
 import { buildIntroNoteRequest } from '@/lib/note';
 import { findTopicInTree } from '@/lib/topic-tree';
@@ -18,18 +19,36 @@ export default function TopicNotePage() {
     activeSpace?.spaceId,
     accessToken
   );
+  const topic = topics && topicId ? findTopicInTree(topics, topicId) : null;
+  const {
+    data: note,
+    isLoading: noteLoading,
+    isError: noteError,
+  } = useNote(topic?.noteId, accessToken);
+  const { mutate: createNote, isPending } = useCreateNote(accessToken, activeSpace?.spaceId);
   const [draft, setDraft] = useState<CreateNoteRequest | null>(null);
 
   if (spacesLoading || topicsLoading) return null;
 
-  const topic = topics && topicId ? findTopicInTree(topics, topicId) : null;
-
   if (!topic) return <Navigate to="/" replace />;
 
-  if (topic.noteId) return <NoteEditor key={topic.noteId} />;
-
   if (draft?.topicId === topic.topicId) {
-    return <NoteEditor key={draft.topicId} initialContent={draft.content} />;
+    return <NoteEditor key={topic.topicId} initialContent={draft.content} />;
+  }
+
+  if (topic.noteId) {
+    if (noteLoading) return null;
+
+    if (noteError || !note) {
+      return <NoteMessage>Could not load this note.</NoteMessage>;
+    }
+
+    return (
+      <NoteEditor
+        key={topic.topicId}
+        initialContent={note.content.length ? note.content : undefined}
+      />
+    );
   }
 
   return (
@@ -37,10 +56,11 @@ export default function TopicNotePage() {
       <div className="flex flex-col items-center gap-3">
         <p>There&apos;s no intro note for this topic yet. Create a new one.</p>
         <Button
+          disabled={isPending}
           onClick={() => {
             const request = buildIntroNoteRequest(topic);
             setDraft(request);
-            // TODO: send request
+            createNote(request, { onSettled: () => setDraft(null) });
           }}
         >
           Create note

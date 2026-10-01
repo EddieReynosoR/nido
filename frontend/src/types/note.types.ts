@@ -6,3 +6,11 @@ export type CreateNoteRequest = {
   content: PartialBlock[];
   isIntro: boolean;
 };
+
+export type Note = {
+  noteId: string;
+  title: string;
+  content: PartialBlock[];
+  topicId: string;
+  isIntro: boolean;
+};
