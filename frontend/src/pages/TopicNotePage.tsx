@@ -25,7 +25,7 @@ export default function TopicNotePage() {
     isLoading: noteLoading,
     isError: noteError,
   } = useNote(topic?.noteId, accessToken);
-  const createNote = useCreateNote(accessToken, activeSpace?.spaceId);
+  const { mutate: createNote, isPending } = useCreateNote(accessToken, activeSpace?.spaceId);
   const [draft, setDraft] = useState<CreateNoteRequest | null>(null);
 
   if (spacesLoading || topicsLoading) return null;
@@ -56,11 +56,11 @@ export default function TopicNotePage() {
       <div className="flex flex-col items-center gap-3">
         <p>There&apos;s no intro note for this topic yet. Create a new one.</p>
         <Button
-          disabled={createNote.isPending}
+          disabled={isPending}
           onClick={() => {
             const request = buildIntroNoteRequest(topic);
             setDraft(request);
-            createNote.mutate(request, { onSettled: () => setDraft(null) });
+            createNote(request, { onSettled: () => setDraft(null) });
           }}
         >
           Create note

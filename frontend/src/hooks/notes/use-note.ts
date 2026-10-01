@@ -23,14 +23,18 @@ export function useCreateNote(
 ) {
   const queryClient = useQueryClient();
 
-  return useMutation<Note | null, HttpError, CreateNoteRequest>({
+  return useMutation<Note, HttpError, CreateNoteRequest>({
     mutationFn: async (request) => {
       if (!accessToken) throw new HttpError('NO_SESSION', 400);
-      return createNote(request, accessToken);
+
+      const note = await createNote(request, accessToken);
+      if (!note) {
+        throw new HttpError('The server did not return the created note.', 500);
+      }
+
+      return note;
     },
     onSuccess: (note) => {
-      if (!note) return;
-
       queryClient.setQueryData(['note', note.noteId], note);
       queryClient.setQueryData<Topic[]>(['topics', spaceId], (old) =>
         old ? setTopicNoteId(old, note.topicId, note.noteId) : old
@@ -39,15 +43,13 @@ export function useCreateNote(
     onError: (error, request) => {
       if (error.message === 'NO_SESSION') invalidSessionToast();
       else {
+        queryClient.invalidateQueries({ queryKey: ['topics', spaceId] });
         errorToast({
           id: `note-create-error-${request.topicId}`,
           error,
           title: 'Could not create the note',
         });
       }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['topics', spaceId] });
     },
   });
 }

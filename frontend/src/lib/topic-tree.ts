@@ -175,16 +175,42 @@ export function updateTopicInTree(
   return updated ? result : topics;
 }
 
+function applyNoteId(
+  topics: Topic[],
+  topicId: string,
+  noteId: string
+): UpdateResult {
+  let updated = false;
+  const next: Topic[] = [];
+
+  for (const topic of topics) {
+    if (topic.topicId === topicId) {
+      updated = true;
+      next.push({ ...topic, noteId });
+      continue;
+    }
+
+    const result = applyNoteId(topic.topics, topicId, noteId);
+
+    if (result.updated) {
+      updated = true;
+      next.push({ ...topic, topics: result.topics });
+    } else {
+      next.push(topic);
+    }
+  }
+
+  return { topics: next, updated };
+}
+
 export function setTopicNoteId(
   topics: Topic[],
   topicId: string,
   noteId: string
 ): Topic[] {
-  return topics.map((topic) =>
-    topic.topicId === topicId
-      ? { ...topic, noteId }
-      : { ...topic, topics: setTopicNoteId(topic.topics, topicId, noteId) }
-  );
+  const { topics: result, updated } = applyNoteId(topics, topicId, noteId);
+
+  return updated ? result : topics;
 }
 
 export function canDropTopic(
