@@ -13,4 +13,6 @@ export type Note = {
   content: PartialBlock[];
   topicId: string;
   isIntro: boolean;
+  version: number;
+  updatedAt: string;
 };

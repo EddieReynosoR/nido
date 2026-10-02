@@ -1,4 +1,4 @@
-package com.nido.nido_backend.shared.exception;
+package com.nido.nido_backend.refresh_token.exception;
 
 public class RefreshTokenExpiredException extends TokenException {
     public RefreshTokenExpiredException() {

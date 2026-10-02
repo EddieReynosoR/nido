@@ -1,5 +1,8 @@
 package com.nido.nido_backend.shared.exception;
 
+import com.nido.nido_backend.note.exception.NoteVersionConflictException;
+import com.nido.nido_backend.refresh_token.exception.RefreshTokenExpiredException;
+import com.nido.nido_backend.refresh_token.exception.RefreshTokenInvalidException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import org.hibernate.exception.ConstraintViolationException;
@@ -135,6 +138,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.error("Unhandled exception", ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error",
                 "internal_error", "An unexpected error occurred. Please try again later.");
+    }
+
+    @ExceptionHandler(NoteVersionConflictException.class)
+    public ProblemDetail handleVersionConflict(NoteVersionConflictException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, "The note was modified elsewhere");
+        problem.setTitle("Version conflict");
+        problem.setProperty("currentVersion", ex.getCurrentVersion());
+        problem.setProperty("updatedAt", ex.getUpdatedAt());
+        return problem;
     }
 
     @Override
