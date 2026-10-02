@@ -1,8 +1,7 @@
 package com.nido.nido_backend.note;
 
-import com.nido.nido_backend.note.dto.CreateNoteRequest;
-import com.nido.nido_backend.note.dto.NoteResponse;
-import com.nido.nido_backend.note.dto.TopicNoteIdDto;
+import com.nido.nido_backend.note.dto.*;
+import com.nido.nido_backend.note.exception.NoteVersionConflictException;
 import com.nido.nido_backend.shared.util.NoteContentMapper;
 import com.nido.nido_backend.topic.TopicRepository;
 import org.springframework.stereotype.Service;
@@ -53,5 +52,19 @@ public class NoteService {
                 .orElseThrow(() -> new NoSuchElementException("Note not found"));
 
         return NoteResponse.from(entity, noteContentMapper.toJsonNode(entity.getContent()));
+    }
+
+    @Transactional
+    public NoteContentResponse updateContent(UUID noteId, NoteContentRequest request, String userId) {
+        var note = noteRepository.getByIdAndUserId(noteId, UUID.fromString(userId))
+                .orElseThrow(() -> new NoSuchElementException("Note not found"));
+
+        if (!note.getVersion().equals(request.version()))
+            throw new NoteVersionConflictException(note.getVersion(), note.getUpdatedAt());
+
+        note.setContent(noteContentMapper.toJsonString(request.content()));
+
+        noteRepository.saveAndFlush(note);
+        return NoteContentResponse.from(note);
     }
 }

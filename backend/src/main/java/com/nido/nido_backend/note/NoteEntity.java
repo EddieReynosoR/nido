@@ -2,6 +2,7 @@ package com.nido.nido_backend.note;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
@@ -28,6 +29,14 @@ public class NoteEntity {
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
@@ -53,6 +62,14 @@ public class NoteEntity {
     public Instant getCreatedAt() { return createdAt; }
 
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Long getVersion() { return version; }
+
+    public void setVersion(Long version) { this.version = version; }
+
+    public Instant getUpdatedAt() { return updatedAt; }
+
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 
     public Instant getDeletedAt() { return deletedAt; }
 

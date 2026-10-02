@@ -1,4 +1,4 @@
-package com.nido.nido_backend.shared.exception;
+package com.nido.nido_backend.refresh_token.exception;
 
 public class TokenException extends RuntimeException {
   private final String errorCode;

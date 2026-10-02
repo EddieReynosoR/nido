@@ -1,11 +1,15 @@
 package com.nido.nido_backend.shared.exception;
 
+import com.nido.nido_backend.note.exception.NoteVersionConflictException;
+import com.nido.nido_backend.refresh_token.exception.RefreshTokenExpiredException;
+import com.nido.nido_backend.refresh_token.exception.RefreshTokenInvalidException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ProblemDetail;
@@ -135,6 +139,24 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.error("Unhandled exception", ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error",
                 "internal_error", "An unexpected error occurred. Please try again later.");
+    }
+
+    @ExceptionHandler(NoteVersionConflictException.class)
+    public ProblemDetail handleVersionConflict(NoteVersionConflictException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, "The note was modified elsewhere");
+        problem.setTitle("Version conflict");
+        problem.setProperty("currentVersion", ex.getCurrentVersion());
+        problem.setProperty("updatedAt", ex.getUpdatedAt());
+        return problem;
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ProblemDetail handleConcurrentUpdate(OptimisticLockingFailureException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, "The note was modified concurrently");
+        problem.setTitle("Version conflict");
+        return problem;
     }
 
     @Override

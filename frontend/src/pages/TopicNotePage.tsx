@@ -25,7 +25,10 @@ export default function TopicNotePage() {
     isLoading: noteLoading,
     isError: noteError,
   } = useNote(topic?.noteId, accessToken);
-  const { mutate: createNote, isPending } = useCreateNote(accessToken, activeSpace?.spaceId);
+  const { mutate: createNote, isPending } = useCreateNote(
+    accessToken,
+    activeSpace?.spaceId
+  );
   const [draft, setDraft] = useState<CreateNoteRequest | null>(null);
 
   if (spacesLoading || topicsLoading) return null;

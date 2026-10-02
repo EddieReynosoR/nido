@@ -3,6 +3,7 @@ package com.nido.nido_backend.note.dto;
 import com.nido.nido_backend.note.NoteEntity;
 import tools.jackson.databind.JsonNode;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public record NoteResponse(
@@ -10,7 +11,9 @@ public record NoteResponse(
         String title,
         JsonNode content,
         UUID topicId,
-        boolean isIntro) {
+        boolean isIntro,
+        long version,
+        Instant updatedAt) {
 
     public static NoteResponse from(NoteEntity entity, JsonNode content) {
         return new NoteResponse(
@@ -18,7 +21,9 @@ public record NoteResponse(
                 entity.getTitle(),
                 content,
                 entity.getTopicId(),
-                entity.isIntro()
+                entity.isIntro(),
+                entity.getVersion(),
+                entity.getUpdatedAt()
         );
     }
 }
