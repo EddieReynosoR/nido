@@ -1,14 +1,10 @@
 ---
-description: Create a new versioned Flyway migration in backend/src/main/resources/db/migration/
+description: Create a new versioned Flyway migration in the project's db/migration folder
 argument-hint: [what the migration should do, in plain language]
-allowed-tools: Bash(ls:*), Read, Glob, Grep, Write, AskUserQuestion
+allowed-tools: Read, Glob, Grep, Write, AskUserQuestion
 ---
 
 # New database migration
-
-## Current state of the migrations folder
-
-!`ls -1 backend/src/main/resources/db/migration/`
 
 ## Requested change
 
@@ -31,10 +27,12 @@ starts the backend.
 
 ## Steps
 
-1. **Pick the version number.** Take the highest `V<n>` in the listing above and add 1.
-   Never reuse a number, never renumber an existing file, and never edit a migration that
-   already exists — Flyway stores each applied migration's checksum and the app will
-   refuse to start if one changes.
+1. **Pick the version number.** Use Glob with the pattern
+   `**/src/main/resources/db/migration/V*.sql` (ignore `target/` and `node_modules/`).
+   If nothing matches, stop and tell the user; do not create the folder or invent a
+   number. Otherwise take the highest `V<n>` and add 1. Never reuse a number, never
+   renumber an existing file, and never edit a migration that already exists. Flyway
+   stores each applied migration's checksum and the app will refuse to start if one changes.
 
 2. **Read the current schema before writing SQL.** Read the existing migrations in version
    order so you know the real state of every table involved: exact column names, types,
