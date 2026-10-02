@@ -31,7 +31,7 @@ public class NoteEntity {
 
     @Version
     @Column(name = "version", nullable = false)
-    private long version;
+    private Long version;
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)

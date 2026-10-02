@@ -5,7 +5,7 @@ import com.nido.nido_backend.note.NoteEntity;
 import java.time.Instant;
 
 public record NoteContentResponse(
-        long version,
+        Long version,
         Instant updatedAt
 ) {
     public static NoteContentResponse from(NoteEntity entity) {

@@ -5,5 +5,5 @@ import tools.jackson.databind.JsonNode;
 
 public record NoteContentRequest(
         @NotNull JsonNode content,
-        @NotNull long version) {
+        @NotNull Long version) {
 }

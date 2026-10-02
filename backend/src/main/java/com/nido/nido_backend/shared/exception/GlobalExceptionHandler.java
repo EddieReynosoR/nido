@@ -9,6 +9,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ProblemDetail;
@@ -147,6 +148,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setTitle("Version conflict");
         problem.setProperty("currentVersion", ex.getCurrentVersion());
         problem.setProperty("updatedAt", ex.getUpdatedAt());
+        return problem;
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ProblemDetail handleConcurrentUpdate(OptimisticLockingFailureException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, "The note was modified concurrently");
+        problem.setTitle("Version conflict");
         return problem;
     }
 
