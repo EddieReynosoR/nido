@@ -36,7 +36,7 @@ export default function TopicNotePage() {
   if (!topic) return <Navigate to="/" replace />;
 
   if (draft?.topicId === topic.topicId) {
-    return <NoteEditor key={topic.topicId} initialContent={draft.content} />;
+    return <NoteEditor key={topic.topicId} initialContent={draft.content} version={0} noteId={null} />;
   }
 
   if (topic.noteId) {
@@ -50,6 +50,9 @@ export default function TopicNotePage() {
       <NoteEditor
         key={topic.topicId}
         initialContent={note.content.length ? note.content : undefined}
+        version={note.version}
+        noteId={note.noteId}
+        updatedAt={note.updatedAt}
       />
     );
   }

@@ -16,3 +16,13 @@ export type Note = {
   version: number;
   updatedAt: string;
 };
+
+export type UpdateNoteContentRequest = {
+  content: PartialBlock[];
+  version: number;
+};
+
+export type NoteContentResponse = {
+  version: number;
+  updatedAt: string;
+};
