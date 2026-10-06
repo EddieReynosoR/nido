@@ -1,4 +1,9 @@
-import type { CreateNoteRequest, Note } from '@/types/note.types';
+import type {
+  CreateNoteRequest,
+  Note,
+  NoteContentResponse,
+  UpdateNoteContentRequest,
+} from '@/types/note.types';
 import { executeFetch, BASE_URL } from './auth';
 
 export function createNote(request: CreateNoteRequest, accessToken: string) {
@@ -26,5 +31,24 @@ export function getNote(noteId: string, accessToken: string) {
       },
     },
     'There was an error fetching the note.'
+  );
+}
+
+export function updateNoteContent(
+  noteId: string,
+  request: UpdateNoteContentRequest,
+  accessToken: string
+) {
+  return executeFetch<NoteContentResponse>(
+    `${BASE_URL}/api/note/${encodeURIComponent(noteId)}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(request),
+    },
+    'There was an error saving the note.'
   );
 }
