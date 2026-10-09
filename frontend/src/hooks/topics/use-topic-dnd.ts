@@ -77,6 +77,10 @@ export function useTopicDnd(
     if (isDragging) draggedRef.current = true;
   }, [isDragging]);
 
+  const onPointerDownCapture = useCallback(() => {
+    draggedRef.current = false;
+  }, []);
+
   const onClickCapture = useCallback((event: ReactMouseEvent) => {
     if (!draggedRef.current) return;
 
@@ -88,6 +92,7 @@ export function useTopicDnd(
   return {
     rowProps: {
       ref: setRowRef,
+      onPointerDownCapture,
       onClickCapture,
       className: cn(
         'relative rounded-md',
