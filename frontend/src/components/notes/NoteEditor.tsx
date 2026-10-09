@@ -4,10 +4,10 @@ import { BlockNoteView } from '@blocknote/shadcn';
 import '@blocknote/shadcn/style.css';
 import { useTheme } from '@/hooks/use-theme';
 import { useEffect, useRef, useState } from 'react';
-import { useUpdateNoteContent } from '@/hooks/notes/use-note';
+import { useSaveNoteContent } from '@/hooks/notes/use-note';
 import { useAuth } from '@/context/AuthContext';
-import type { UpdateNoteContentRequest } from '@/types/note.types';
 import { cn } from '@/lib/utils';
+import NoteTabs from '@/components/notes/NoteTabs';
 
 function formatSavedAt(date: string) {
   return new Date(date).toLocaleString(undefined, {
@@ -19,71 +19,53 @@ function formatSavedAt(date: string) {
 export default function NoteEditor({
   initialContent,
   noteId,
-  version,
   updatedAt,
 }: {
   initialContent?: PartialBlock[];
   noteId: string | null;
-  version: number;
   updatedAt?: string;
 }) {
   const editor = useCreateBlockNote({ initialContent });
   const theme = useTheme();
 
   const { accessToken } = useAuth();
-  const {
-    mutate: update,
-    isPending,
-    isError,
-  } = useUpdateNoteContent(accessToken);
+  const { save, isPending, isError } = useSaveNoteContent(accessToken);
 
   const [lastSavedAt, setLastSavedAt] = useState(updatedAt);
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
 
   const timeoutRef = useRef<number | null>(null);
-  const updated = useRef(false);
-  const versionRef = useRef(version);
-
-  useEffect(() => {
-    versionRef.current = version;
-  }, [version]);
+  const dirtyRef = useRef(false);
 
   useEffect(() => {
     if (!noteId) return;
 
-    editor.onChange(() => {
-      if (updated.current) return;
-
+    const flush = () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+
+      if (!dirtyRef.current) return;
+      dirtyRef.current = false;
+      setHasPendingChanges(false);
+
+      save(noteId, editor.document)
+        .then((response) => setLastSavedAt(response.updatedAt))
+        .catch(() => {});
+    };
+
+    const unsubscribe = editor.onChange(() => {
+      dirtyRef.current = true;
       setHasPendingChanges(true);
 
-      timeoutRef.current = setTimeout(() => {
-        const request: UpdateNoteContentRequest = {
-          content: editor.document,
-          version: versionRef.current,
-        };
-
-        updated.current = true;
-        setHasPendingChanges(false);
-
-        update(
-          { noteId, ...request },
-          {
-            onSuccess: (response) => {
-              setLastSavedAt(response.updatedAt);
-            },
-            onSettled: () => {
-              updated.current = false;
-            },
-          }
-        );
-      }, 2000);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(flush, 2000);
     });
 
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      unsubscribe();
+      flush();
     };
-  }, []);
+  }, [editor, noteId, save]);
 
   let statusText = '';
   if (!noteId) statusText = 'Creating note…';
@@ -92,15 +74,18 @@ export default function NoteEditor({
   else if (isError) statusText = "Couldn't save";
   else if (lastSavedAt) statusText = `Saved on ${formatSavedAt(lastSavedAt)}`;
 
-  const showError =
-    !!noteId && !isPending && !hasPendingChanges && isError;
+  const showError = !!noteId && !isPending && !hasPendingChanges && isError;
 
   return (
     <div className="flex flex-col">
-      <div className="sticky top-0 z-10 -mt-10 mb-4 flex h-10 items-center justify-end border-b border-border bg-background/95 px-4 text-xs text-muted-foreground backdrop-blur">
+      <div className="sticky top-0 z-10 -mt-10 mb-4 flex h-10 items-center justify-between gap-2 border-b border-border bg-background/95 pr-4 text-xs text-muted-foreground backdrop-blur">
+        <NoteTabs />
         <span
           aria-live="polite"
-          className={cn(showError && 'text-destructive')}
+          className={cn(
+            'shrink-0 whitespace-nowrap',
+            showError && 'text-destructive'
+          )}
         >
           {statusText}
         </span>
@@ -108,7 +93,7 @@ export default function NoteEditor({
       <BlockNoteView
         editor={editor}
         theme={theme}
-        className="mx-auto w-full wrap-anywhere"
+        className="mx-auto w-full wrap-anywhere py-10 px-2"
       />
     </div>
   );

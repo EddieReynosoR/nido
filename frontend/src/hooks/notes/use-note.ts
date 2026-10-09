@@ -1,5 +1,8 @@
+import { useCallback } from 'react';
+import type { PartialBlock } from '@blocknote/core';
 import { createNote, getNote, updateNoteContent } from '@/api/note';
 import { HttpError } from '@/lib/http';
+import { enqueueNoteSave } from '@/lib/note-save-queue';
 import { errorToast, invalidSessionToast } from '@/lib/toast';
 import { setTopicNoteId } from '@/lib/topic-tree';
 import type {
@@ -92,4 +95,27 @@ export function useUpdateNoteContent(accessToken: string | null) {
         });
     },
   });
+}
+
+export function useSaveNoteContent(accessToken: string | null) {
+  const queryClient = useQueryClient();
+  const { mutateAsync, isPending, isError } = useUpdateNoteContent(accessToken);
+
+  const save = useCallback(
+    (noteId: string, content: PartialBlock[]) => {
+      queryClient.setQueryData<Note>(['note', noteId], (old) =>
+        old ? { ...old, content } : old
+      );
+
+      return enqueueNoteSave(noteId, () => {
+        const version =
+          queryClient.getQueryData<Note>(['note', noteId])?.version ?? 0;
+
+        return mutateAsync({ noteId, content, version });
+      });
+    },
+    [queryClient, mutateAsync]
+  );
+
+  return { save, isPending, isError };
 }
