@@ -80,12 +80,13 @@ export function useUpdateNoteContent(accessToken: string | null) {
 
       return response;
     },
-    onSuccess: (response, { noteId, content }) => {
+    onSuccess: (response, { noteId }) => {
       queryClient.setQueryData<Note>(['note', noteId], (old) =>
-        old ? { ...old, content, ...response } : old
+        old ? { ...old, ...response } : old
       );
     },
     onError: (error, { noteId }) => {
+      queryClient.invalidateQueries({ queryKey: ['note', noteId]});
       if (error.message === 'NO_SESSION') invalidSessionToast();
       else
         errorToast({
