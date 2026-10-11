@@ -75,6 +75,5 @@ public class NoteService {
                 .orElseThrow(() -> new NoSuchElementException("Note not found"));
 
         note.setDeletedAt(Instant.now());
-        noteRepository.save(note);
     }
 }
