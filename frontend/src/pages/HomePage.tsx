@@ -17,7 +17,7 @@ export default function HomePage() {
             nido
           </span>
         </header>
-        <main className="flex flex-1 flex-col overflow-auto py-10 px-2 md:px-8">
+        <main className="flex flex-1 flex-col overflow-auto p-0! md:px-8">
           <Outlet />
         </main>
       </SidebarInset>

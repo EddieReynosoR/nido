@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, type MouseEvent } from 'react';
 import { ChevronRight, Folder } from 'lucide-react';
 import {
   Collapsible,
@@ -41,6 +41,21 @@ function TopicChevron() {
   );
 }
 
+function topicRowHandlers(
+  topic: Topic,
+  open: boolean,
+  onOpenChange: TopicTreeItemProps['onOpenChange'],
+  onSelect: () => void
+) {
+  return {
+    onClick: (event: MouseEvent) => {
+      if (event.detail > 0) event.preventDefault();
+      if (event.detail <= 1) onSelect();
+    },
+    onDoubleClick: () => onOpenChange(topic.topicId, !open),
+  };
+}
+
 const TopicSubTreeItem = memo(function TopicSubTreeItem({
   topic,
   openIds,
@@ -53,6 +68,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
   const { onSelect } = useTopicSelection(topic);
   const isActive = activePath?.at(-1) === topic.topicId;
+  const open = openIds.has(topic.topicId);
 
   if (!topic.topics.length) {
     return (
@@ -82,7 +98,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
   return (
     <Collapsible
       asChild
-      open={openIds.has(topic.topicId)}
+      open={open}
       onOpenChange={(open) => onOpenChange(topic.topicId, open)}
     >
       <SidebarMenuSubItem>
@@ -93,7 +109,11 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
               isActive={isActive}
               className={`w-full pr-8 text-sidebar-foreground/80 ${grabCursor} ${rotateChevronWhenOpen}`}
             >
-              <button type="button" {...handleProps} onClick={onSelect}>
+              <button
+                type="button"
+                {...handleProps}
+                {...topicRowHandlers(topic, open, onOpenChange, onSelect)}
+              >
                 <TopicLabel topic={topic} />
                 <TopicChevron />
               </button>
@@ -142,6 +162,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
   const { onSelect } = useTopicSelection(topic);
   const isActive = activePath?.at(-1) === topic.topicId;
+  const open = openIds.has(topic.topicId);
 
   if (!topic.topics.length) {
     return (
@@ -171,7 +192,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
   return (
     <Collapsible
       asChild
-      open={openIds.has(topic.topicId)}
+      open={open}
       onOpenChange={(open) => onOpenChange(topic.topicId, open)}
     >
       <SidebarMenuItem>
@@ -181,7 +202,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
               {...handleProps}
               tooltip={topic.name}
               isActive={isActive}
-              onClick={onSelect}
+              {...topicRowHandlers(topic, open, onOpenChange, onSelect)}
               className={`pr-8 text-sidebar-foreground/80 ${grabCursor} ${rotateChevronWhenOpen}`}
             >
               <TopicLabel topic={topic} />
