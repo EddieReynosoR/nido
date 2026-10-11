@@ -7,6 +7,7 @@ import com.nido.nido_backend.topic.TopicRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -66,5 +67,14 @@ public class NoteService {
 
         noteRepository.saveAndFlush(note);
         return NoteContentResponse.from(note);
+    }
+
+    @Transactional
+    public void delete(UUID noteId, String userId) {
+        var note = noteRepository.getByIdAndUserId(noteId, UUID.fromString(userId))
+                .orElseThrow(() -> new NoSuchElementException("Note not found"));
+
+        note.setDeletedAt(Instant.now());
+        noteRepository.save(note);
     }
 }

@@ -43,4 +43,12 @@ public class NoteController {
         var response = noteService.updateContent(noteId, request, userDetails.getUsername());
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{noteId}")
+    public ResponseEntity<?> delete(
+            @PathVariable UUID noteId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        noteService.delete(noteId, userDetails.getUsername());
+        return ResponseEntity.noContent().build();
+    }
 }
