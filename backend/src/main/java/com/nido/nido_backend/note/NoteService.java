@@ -8,11 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class NoteService {
@@ -25,11 +22,6 @@ public class NoteService {
         this.noteRepository = noteRepository;
         this.noteContentMapper = noteContentMapper;
         this.topicRepository = topicRepository;
-    }
-
-    public Map<UUID, UUID> getIntroNoteIdsByTopicIds(List<UUID> topicIds) {
-        return noteRepository.findIntroNotesByTopicIds(topicIds).stream()
-                .collect(Collectors.toMap(TopicNoteIdDto::topicId, TopicNoteIdDto::noteId));
     }
 
     @Transactional
@@ -70,7 +62,7 @@ public class NoteService {
     }
 
     @Transactional
-    public void delete(UUID noteId, String userId) {
+    public void softDelete(UUID noteId, String userId) {
         var note = noteRepository.getByIdAndUserId(noteId, UUID.fromString(userId))
                 .orElseThrow(() -> new NoSuchElementException("Note not found"));
 
