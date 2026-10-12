@@ -1,6 +1,8 @@
 package com.nido.nido_backend.topic;
 
+import com.nido.nido_backend.note.NoteRepository;
 import com.nido.nido_backend.note.NoteService;
+import com.nido.nido_backend.note.dto.TopicNoteIdDto;
 import com.nido.nido_backend.shared.exception.RecordAlreadyExists;
 import com.nido.nido_backend.shared.util.TopicsTree;
 import com.nido.nido_backend.spaces.SpaceEntity;
@@ -12,7 +14,9 @@ import com.nido.nido_backend.topic.dto.UpdateTopicRequest;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class TopicService {
@@ -21,12 +25,12 @@ public class TopicService {
 
     private final TopicRepository topicRepository;
     private final SpaceService spaceService;
-    private final NoteService noteService;
+    private final NoteRepository noteRepository;
 
-    public TopicService(TopicRepository topicRepository, SpaceService spaceService, NoteService noteService) {
+    public TopicService(TopicRepository topicRepository, SpaceService spaceService, NoteRepository noteRepository) {
         this.topicRepository = topicRepository;
         this.spaceService = spaceService;
-        this.noteService = noteService;
+        this.noteRepository = noteRepository;
     }
 
     @Transactional(readOnly = true)
@@ -41,9 +45,11 @@ public class TopicService {
                 .map(TopicEntity::getTopicId)
                 .toList();
 
-        var introNotes = noteService.getIntroNoteIdsByTopicIds(topicIds);
+        var introNotes = noteRepository.findIntroNotesByTopicIds(topicIds).stream()
+                .collect(Collectors.toMap(TopicNoteIdDto::topicId, TopicNoteIdDto::noteId));
+
         var result = responseList.stream()
-                .map(t -> t.withNote(introNotes.getOrDefault(t.topicId(), null)))
+                .map(t -> t.withNote(introNotes.get(t.topicId())))
                 .toList();
 
         return TopicsTree.createTopicsTree(result);
@@ -143,7 +149,11 @@ public class TopicService {
         if (topicRepository.getByIdAndUserId(topicId, UUID.fromString(userId)).isEmpty())
             throw new NoSuchElementException("The specified topic was not found with the specified user");
 
-        topicRepository.softDeleteSubtree(topicId);
+        List<UUID> topicIds = topicRepository.findActiveSubtreeIds(topicId);
+
+        Instant deletedAt = Instant.now();
+        topicRepository.softDeleteByIds(topicIds, deletedAt);
+        noteRepository.softDeleteByTopicIds(topicIds, deletedAt);
     }
 
     private void assertNotDescendant(UUID topicId, UUID newParentId, UUID spaceId) {

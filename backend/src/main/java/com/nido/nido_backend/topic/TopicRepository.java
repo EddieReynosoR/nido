@@ -4,6 +4,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,21 +64,31 @@ public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
                              @Param("spaceId") UUID spaceId,
                              @Param("maxDepth") int maxDepth);
 
-    @Modifying
     @Query(value = """
-        WITH RECURSIVE subtree AS (
-            SELECT topic_id FROM topics WHERE topic_id = :topicId
-                  AND deleted_at IS NULL
-            UNION ALL
-            SELECT t.topic_id FROM topics t
-            JOIN subtree s ON t.parent_topic_id = s.topic_id
-            WHERE t.deleted_at IS NULL
-        )
-        UPDATE topics
-        SET deleted_at = now()
-        WHERE topic_id IN (SELECT topic_id FROM subtree)
+    WITH RECURSIVE subtree AS (
+        SELECT topic_id
+        FROM topics
+        WHERE topic_id = :topicId
+          AND deleted_at IS NULL
+        UNION
+        SELECT t.topic_id
+        FROM topics t
+        JOIN subtree s ON t.parent_topic_id = s.topic_id
+        WHERE t.deleted_at IS NULL
+    )
+    SELECT topic_id FROM subtree
     """, nativeQuery = true)
-    void softDeleteSubtree(@Param("topicId") UUID topicId);
+    List<UUID> findActiveSubtreeIds(@Param("topicId") UUID topicId);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+        UPDATE Topic t
+        SET t.deletedAt = :deletedAt
+        WHERE t.topicId IN :ids
+            AND t.deletedAt IS NULL
+    """)
+    int softDeleteByIds(@Param("ids") List<UUID> ids,
+                        @Param("deletedAt") Instant deletedAt);
 
     @Query("""
     SELECT t FROM Topic t

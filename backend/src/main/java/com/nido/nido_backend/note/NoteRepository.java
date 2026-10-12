@@ -2,9 +2,11 @@ package com.nido.nido_backend.note;
 
 import com.nido.nido_backend.note.dto.TopicNoteIdDto;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,4 +31,14 @@ public interface NoteRepository extends JpaRepository<NoteEntity, UUID> {
             AND n.deletedAt IS NULL
     """)
     Optional<NoteEntity> getByIdAndUserId(@Param("noteId") UUID noteId, @Param("userId") UUID userId);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+        UPDATE Note n
+        SET n.deletedAt = :deletedAt
+        WHERE n.topicId IN :topicIds
+            AND n.deletedAt IS NULL
+    """)
+    void softDeleteByTopicIds(@Param("topicIds") List<UUID> topicIds,
+                             @Param("deletedAt") Instant deletedAt);
 }

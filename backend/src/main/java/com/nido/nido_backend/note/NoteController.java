@@ -48,7 +48,7 @@ public class NoteController {
     public ResponseEntity<?> delete(
             @PathVariable UUID noteId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        noteService.delete(noteId, userDetails.getUsername());
+        noteService.softDelete(noteId, userDetails.getUsername());
         return ResponseEntity.noContent().build();
     }
 }

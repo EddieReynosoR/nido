@@ -27,11 +27,6 @@ public class NoteService {
         this.topicRepository = topicRepository;
     }
 
-    public Map<UUID, UUID> getIntroNoteIdsByTopicIds(List<UUID> topicIds) {
-        return noteRepository.findIntroNotesByTopicIds(topicIds).stream()
-                .collect(Collectors.toMap(TopicNoteIdDto::topicId, TopicNoteIdDto::noteId));
-    }
-
     @Transactional
     public NoteResponse createNote(CreateNoteRequest request, String userId) {
         topicRepository.getByIdAndUserId(request.topicId(), UUID.fromString(userId))
@@ -70,7 +65,7 @@ public class NoteService {
     }
 
     @Transactional
-    public void delete(UUID noteId, String userId) {
+    public void softDelete(UUID noteId, String userId) {
         var note = noteRepository.getByIdAndUserId(noteId, UUID.fromString(userId))
                 .orElseThrow(() -> new NoSuchElementException("Note not found"));
 
