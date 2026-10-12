@@ -64,6 +64,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
   onAddChild,
   onEdit,
   onDelete,
+  onDeleteNote,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
   const { onSelect } = useTopicSelection(topic);
@@ -88,6 +89,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
             onAddChild={onAddChild}
             onEdit={onEdit}
             onDelete={onDelete}
+            onDeleteNote={onDeleteNote}
             className={revealOnHoverSub}
           />
         </div>
@@ -124,6 +126,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
             onAddChild={onAddChild}
             onEdit={onEdit}
             onDelete={onDelete}
+            onDeleteNote={onDeleteNote}
             className={revealOnHoverSub}
           />
         </div>
@@ -141,6 +144,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
                 onAddChild={onAddChild}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onDeleteNote={onDeleteNote}
               />
             ))}
           </SidebarMenuSub>
@@ -158,6 +162,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
   onAddChild,
   onEdit,
   onDelete,
+  onDeleteNote,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
   const { onSelect } = useTopicSelection(topic);
@@ -182,6 +187,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
             onAddChild={onAddChild}
             onEdit={onEdit}
             onDelete={onDelete}
+            onDeleteNote={onDeleteNote}
             className={revealOnHover}
           />
         </div>
@@ -214,6 +220,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
             onAddChild={onAddChild}
             onEdit={onEdit}
             onDelete={onDelete}
+            onDeleteNote={onDeleteNote}
             className={revealOnHover}
           />
         </div>
@@ -231,6 +238,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
                 onAddChild={onAddChild}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onDeleteNote={onDeleteNote}
               />
             ))}
           </SidebarMenuSub>

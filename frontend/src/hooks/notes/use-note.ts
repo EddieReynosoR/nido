@@ -1,6 +1,11 @@
 import { useCallback } from 'react';
 import type { PartialBlock } from '@blocknote/core';
-import { createNote, getNote, updateNoteContent } from '@/api/note';
+import {
+  createNote,
+  deleteNote,
+  getNote,
+  updateNoteContent,
+} from '@/api/note';
 import { HttpError } from '@/lib/http';
 import { enqueueNoteSave } from '@/lib/note-save-queue';
 import { errorToast, invalidSessionToast } from '@/lib/toast';
@@ -62,6 +67,56 @@ export function useCreateNote(
   });
 }
 
+export function useDeleteNote(
+  accessToken: string | null,
+  spaceId: string | undefined
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    void,
+    HttpError,
+    { noteId: string; topicId: string },
+    { previous?: Topic[] }
+  >({
+    mutationFn: async ({ noteId }) => {
+      if (!accessToken) throw new HttpError('NO_SESSION', 400);
+      await deleteNote(noteId, accessToken);
+    },
+    onMutate: async ({ topicId }) => {
+      const queryKey = ['topics', spaceId];
+      await queryClient.cancelQueries({ queryKey });
+
+      const previous = queryClient.getQueryData<Topic[]>(queryKey);
+
+      queryClient.setQueryData<Topic[]>(queryKey, (old) =>
+        old ? setTopicNoteId(old, topicId, null) : old
+      );
+
+      return { previous };
+    },
+    onSuccess: (_data, { noteId }) => {
+      queryClient.removeQueries({ queryKey: ['note', noteId] });
+    },
+    onError: (error, { noteId }, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['topics', spaceId], context.previous);
+      }
+
+      if (error.message === 'NO_SESSION') invalidSessionToast();
+      else
+        errorToast({
+          id: `note-delete-error-${noteId}`,
+          error,
+          title: 'Could not delete the note',
+        });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['topics', spaceId] });
+    },
+  });
+}
+
 export function useUpdateNoteContent(accessToken: string | null) {
   const queryClient = useQueryClient();
 
@@ -86,7 +141,7 @@ export function useUpdateNoteContent(accessToken: string | null) {
       );
     },
     onError: (error, { noteId }) => {
-      queryClient.invalidateQueries({ queryKey: ['note', noteId]});
+      queryClient.invalidateQueries({ queryKey: ['note', noteId] });
       if (error.message === 'NO_SESSION') invalidSessionToast();
       else
         errorToast({

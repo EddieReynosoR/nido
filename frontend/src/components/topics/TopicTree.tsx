@@ -15,16 +15,19 @@ import {
 import { Folder } from 'lucide-react';
 import { toast } from 'sonner';
 import AddTopicDialog from '@/components/topics/AddTopicDialog';
+import DeleteNoteDialog from '@/components/topics/DeleteNoteDialog';
 import DeleteTopicDialog from '@/components/topics/DeleteTopicDialog';
 import EditTopicDialog from '@/components/topics/EditTopicDialog';
 import TopicTreeItem from '@/components/topics/TopicTreeItem';
 import { SidebarMenu } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
+import { useDeleteNote } from '@/hooks/notes/use-note';
 import { useDeleteTopic, useReparent } from '@/hooks/topics/use-topic';
 import { canDropTopic, findTopicPath } from '@/lib/topic-tree';
 import { cn } from '@/lib/utils';
 import type { Topic, TopicDragData } from '@/types/topic.types';
 import { useParams } from 'react-router';
+import { useNoteTabs } from '@/hooks/notes/use-note-tabs';
 
 type TopicTreeProps = {
   topics: Topic[];
@@ -38,6 +41,7 @@ type TopicTreeRootProps = {
   onAddChild: (topic: Topic) => void;
   onEdit: (topic: Topic) => void;
   onDelete: (topic: Topic) => void;
+  onDeleteNote: (topic: Topic) => void;
 };
 
 const ROOT_DROPPABLE_ID = 'topic-root-dropzone';
@@ -62,6 +66,7 @@ function TopicTreeRoot({
   onAddChild,
   onEdit,
   onDelete,
+  onDeleteNote,
 }: TopicTreeRootProps) {
   const { source } = useDragOperation();
   const dragged = source?.data as TopicDragData | undefined;
@@ -99,6 +104,7 @@ function TopicTreeRoot({
             onAddChild={onAddChild}
             onEdit={onEdit}
             onDelete={onDelete}
+            onDeleteNote={onDeleteNote}
           />
         ))}
       </SidebarMenu>
@@ -122,12 +128,20 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
   const { mutate: reparentTopic } = useReparent(accessToken);
   const { mutate: deleteTopic, isPending: isDeleting } =
     useDeleteTopic(accessToken);
+  const { mutate: deleteNote, isPending: isDeletingNote } = useDeleteNote(
+    accessToken,
+    spaceId
+  );
 
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [addChildOpen, setAddChildOpen] = useState<boolean>(false);
   const [parentTopic, setParentTopic] = useState<Topic | null>(null);
   const [topicToDelete, setTopicToDelete] = useState<Topic | null>(null);
+  const [noteTopicToDelete, setNoteTopicToDelete] = useState<Topic | null>(
+    null
+  );
   const [topicToEdit, setTopicToEdit] = useState<Topic | null>(null);
+  const { closeTab } = useNoteTabs(spaceId);
 
   const handleOpenChange = useCallback((topicId: string, open: boolean) => {
     setOpenIds((previous) => {
@@ -173,6 +187,28 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
     );
   };
 
+  const handleDeleteNote = useCallback((topic: Topic) => {
+    setNoteTopicToDelete(topic);
+  }, []);
+
+  const confirmDeleteNote = () => {
+    if (!noteTopicToDelete?.noteId) return;
+
+    deleteNote(
+      {
+        noteId: noteTopicToDelete.noteId,
+        topicId: noteTopicToDelete.topicId,
+      },
+      {
+        onSuccess: () => {
+          toast.success('Intro note deleted');
+          closeTab(noteTopicToDelete.topicId);
+          setNoteTopicToDelete(null);
+        },
+      }
+    );
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { source, target } = event.operation;
     if (event.canceled || !source || !target) return;
@@ -197,6 +233,7 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
         onAddChild={handleAddChild}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onDeleteNote={handleDeleteNote}
       />
 
       <AddTopicDialog
@@ -222,6 +259,16 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
         }}
         onConfirm={confirmDelete}
         isPending={isDeleting}
+      />
+
+      <DeleteNoteDialog
+        topic={noteTopicToDelete}
+        open={noteTopicToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingNote) setNoteTopicToDelete(null);
+        }}
+        onConfirm={confirmDeleteNote}
+        isPending={isDeletingNote}
       />
 
       <DragOverlay dropAnimation={null}>
