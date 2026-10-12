@@ -1,7 +1,6 @@
 package com.nido.nido_backend.topic;
 
 import com.nido.nido_backend.note.NoteRepository;
-import com.nido.nido_backend.note.NoteService;
 import com.nido.nido_backend.note.dto.TopicNoteIdDto;
 import com.nido.nido_backend.shared.exception.RecordAlreadyExists;
 import com.nido.nido_backend.shared.util.TopicsTree;
@@ -150,6 +149,8 @@ public class TopicService {
             throw new NoSuchElementException("The specified topic was not found with the specified user");
 
         List<UUID> topicIds = topicRepository.findActiveSubtreeIds(topicId);
+
+        if (topicIds.isEmpty()) return;
 
         Instant deletedAt = Instant.now();
         topicRepository.softDeleteByIds(topicIds, deletedAt);

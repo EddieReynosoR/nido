@@ -87,7 +87,7 @@ public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
         WHERE t.topicId IN :ids
             AND t.deletedAt IS NULL
     """)
-    int softDeleteByIds(@Param("ids") List<UUID> ids,
+    void softDeleteByIds(@Param("ids") List<UUID> ids,
                         @Param("deletedAt") Instant deletedAt);
 
     @Query("""
