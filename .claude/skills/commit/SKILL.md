@@ -1,8 +1,16 @@
 ---
+name: commit
 description: Stage, commit, and push the current changes
+disable-model-invocation: true
 ---
 
 Review the working tree from the repository root and create one or more commits.
+
+## How to ask me things
+
+Whenever you need me to choose or confirm something, always use the `AskUserQuestion`
+tool with explicit options so I can select from a list. Never ask as plain text, and
+never list the options in a message and wait for me to type an answer.
 
 ## 1. Inspect
 
@@ -16,24 +24,25 @@ If the changes cover unrelated concerns, split them into separate commits rather
 lumping everything together. Related changes across areas (e.g. a new endpoint plus the
 UI that consumes it) belong in the same commit.
 
-If you are unsure how to split, propose the grouping and wait for confirmation before
-committing.
+If you are unsure how to split, propose the grouping with `AskUserQuestion` and wait for
+my selection before committing. Offer options such as "Use the proposed grouping" (put the
+grouping in the option description or preview) and "Single commit".
 
 ## 3. Stage
 
 Stage explicitly by path — never run `git add .`.
 Before staging, check for files that must not be committed: `.env` files, credentials,
 local config, build output (`target/`, `dist/`, `node_modules/`), IDE folders (`.idea/`),
-and database dumps. If any appear untracked, flag them and suggest adding them to
-`.gitignore` instead of committing them.
+and database dumps. If any appear untracked, flag them with `AskUserQuestion`, offering
+"Add to `.gitignore`" and "Leave untracked, don't commit". Never commit them.
 
 ## 4. Ask about `[skip-review]`
 
-Before creating any commit, always ask:
+Before creating any commit, always ask with `AskUserQuestion`:
 
 > Add `[skip-review]` to the commit message? (skips the automated PR review workflow)
 
-Wait for the answer. Never assume — ask on every run, even if the same answer was given
+Options: "No" and "Yes, add `[skip-review]`". Wait for my selection. Never assume — ask on every run, even if the same answer was given
 earlier in the session.
 
 If the answer is yes, append `[skip-review]` at the end of the subject line, separated by

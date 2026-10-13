@@ -1,5 +1,7 @@
 ---
+name: migration
 description: Create a new versioned Flyway migration in the project's db/migration folder
+disable-model-invocation: true
 argument-hint: [what the migration should do, in plain language]
 allowed-tools: Read, Glob, Grep, Write, AskUserQuestion
 ---

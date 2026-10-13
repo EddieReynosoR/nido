@@ -1,6 +1,8 @@
 ---
+name: pr
 description: Create a Pull Request from the current branch's changes
-allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git branch:*), Bash(git fetch:*), Bash(git rev-parse:*), Bash(git remote:*), Bash(git symbolic-ref:*), Bash(git merge-base:*), Bash(git push:*), Bash(gh pr create:*), Bash(gh pr view:*), Read, Grep, Glob
+disable-model-invocation: true
+allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git branch:*), Bash(git fetch:*), Bash(git rev-parse:*), Bash(git remote:*), Bash(git symbolic-ref:*), Bash(git merge-base:*), Bash(git push:*), Bash(gh pr create:*), Bash(gh pr view:*), Read, Grep, Glob, AskUserQuestion
 ---
 
 ## Current context
@@ -16,18 +18,24 @@ allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git b
 
 Create a Pull Request from the current branch. Follow these steps **in order**.
 
+### How to ask me things
+
+Whenever you need me to choose or confirm something, always use the `AskUserQuestion`
+tool with explicit options so I can select from a list. Never ask as plain text, and
+never list the options in a message and wait for me to type an answer.
+
 ### Step 1 — ASK ME WHICH BRANCH TO MERGE INTO (ALWAYS)
 
-Before doing anything else, stop and ask me:
+Before doing anything else, stop and ask me with `AskUserQuestion`:
 
-> Which branch should this PR target? (default: `master`)
+> Which branch should this PR target?
 
 Rules for this step:
 - Ask **every single time**, no exceptions — even if the repo default is obvious, even if a previous PR in this session already used a base branch.
-- Show me the list of available remote branches from the context above so I can pick from it.
-- **Wait for my answer.** Do not run any diff, push, or PR command before I reply.
-- If I reply with an empty answer or just "default", use `master`. This repo's base branch is `master`, not `main` — never assume `main`.
-- Validate my answer: if the branch I name doesn't exist in the remote branch list, tell me and ask again. Do not silently fall back to another branch.
+- Build the options from the available remote branches in the context above: `master` first, labeled `master (Recommended)`, then the most relevant other branches (up to 4 options in total). I can type any other branch through the automatic "Other" option.
+- **Wait for my selection.** Do not run any diff, push, or PR command before I reply.
+- This repo's base branch is `master`, not `main` — never assume `main`.
+- Validate my answer: if the branch I name doesn't exist in the remote branch list, tell me and ask again with `AskUserQuestion`. Do not silently fall back to another branch.
 
 Once I answer, refer to my choice as `<BASE>` for the rest of these steps.
 
@@ -62,13 +70,15 @@ Push the branch with `git push -u origin <current-branch>` if it isn't on the re
 
 ### Step 6 — ASK ME ABOUT `[skip-review]` (ALWAYS)
 
-Stop and ask me this exact question:
+Stop and ask me this exact question with `AskUserQuestion`:
 
-> Should I add `[skip-review]` to the PR title? (yes / no)
+> Should I add `[skip-review]` to the PR title?
+
+Options: "No" and "Yes, add `[skip-review]`".
 
 Rules for this step:
 - Ask **every single time**, no exceptions.
-- **Wait for my answer.** Do not create the PR before I reply.
+- **Wait for my selection.** Do not create the PR before I reply.
 - Do not assume, infer, or default the answer based on the size or nature of the diff.
 - If I say yes, prefix the title with `[skip-review] ` (e.g. `[skip-review] fix: correct null check in tire lookup`).
 - If I say no, use the plain title with no prefix.
@@ -112,7 +122,7 @@ Show me the URL of the created PR.
 - If the branch name contains a ticket ID (e.g. `JIRA-123`, `#456`), include it in the title or body.
 - Do not invent testing steps — base them on what you actually see in the diff and in existing tests.
 - Mark the PR as draft (`--draft`) if the diff contains `TODO`, `FIXME`, or leftover `console.log`.
-- Never batch Step 1 and Step 6 into a single question. They are separate stops, asked at different points in the flow.
+- Never batch Step 1 and Step 6 into a single question. They are separate `AskUserQuestion` calls, asked at different points in the flow.
 - Never add yourself as co-author or attribute the PR to Claude/Claude Code, in the title,
   the body, or a trailer. If a `.github/pull_request_template.md` is used, that applies to
   it too.
