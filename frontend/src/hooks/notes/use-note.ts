@@ -1,8 +1,18 @@
 import { useCallback } from 'react';
 import type { PartialBlock } from '@blocknote/core';
-import { createNote, getNote, updateNoteContent } from '@/api/note';
+import {
+  createNote,
+  deleteNote,
+  getNote,
+  updateNoteContent,
+} from '@/api/note';
 import { HttpError } from '@/lib/http';
-import { enqueueNoteSave } from '@/lib/note-save-queue';
+import {
+  discardNoteSaves,
+  enqueueNoteSave,
+  isNoteDiscarded,
+  restoreNoteSaves,
+} from '@/lib/note-save-queue';
 import { errorToast, invalidSessionToast } from '@/lib/toast';
 import { setTopicNoteId } from '@/lib/topic-tree';
 import type {
@@ -62,6 +72,64 @@ export function useCreateNote(
   });
 }
 
+export function useDeleteNote(
+  accessToken: string | null,
+  spaceId: string | undefined
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    void,
+    HttpError,
+    { noteId: string; topicId: string },
+    { previous?: Topic[] }
+  >({
+    mutationFn: async ({ noteId }) => {
+      if (!accessToken) throw new HttpError('NO_SESSION', 400);
+      // Runs after any save already queued for this note, so a PATCH can
+      // never land after the DELETE.
+      await enqueueNoteSave(noteId, () => deleteNote(noteId, accessToken));
+    },
+    onMutate: async ({ noteId, topicId }) => {
+      // Must happen before the optimistic update unmounts the editor, whose
+      // unmount flush would otherwise save the note being deleted.
+      discardNoteSaves(noteId);
+
+      const queryKey = ['topics', spaceId];
+      await queryClient.cancelQueries({ queryKey });
+
+      const previous = queryClient.getQueryData<Topic[]>(queryKey);
+
+      queryClient.setQueryData<Topic[]>(queryKey, (old) =>
+        old ? setTopicNoteId(old, topicId, null) : old
+      );
+
+      return { previous };
+    },
+    onSuccess: (_data, { noteId }) => {
+      queryClient.removeQueries({ queryKey: ['note', noteId] });
+    },
+    onError: (error, { noteId }, context) => {
+      restoreNoteSaves(noteId);
+
+      if (context?.previous) {
+        queryClient.setQueryData(['topics', spaceId], context.previous);
+      }
+
+      if (error.message === 'NO_SESSION') invalidSessionToast();
+      else
+        errorToast({
+          id: `note-delete-error-${noteId}`,
+          error,
+          title: 'Could not delete the note',
+        });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['topics', spaceId] });
+    },
+  });
+}
+
 export function useUpdateNoteContent(accessToken: string | null) {
   const queryClient = useQueryClient();
 
@@ -86,7 +154,7 @@ export function useUpdateNoteContent(accessToken: string | null) {
       );
     },
     onError: (error, { noteId }) => {
-      queryClient.invalidateQueries({ queryKey: ['note', noteId]});
+      queryClient.invalidateQueries({ queryKey: ['note', noteId] });
       if (error.message === 'NO_SESSION') invalidSessionToast();
       else
         errorToast({
@@ -104,11 +172,20 @@ export function useSaveNoteContent(accessToken: string | null) {
 
   const save = useCallback(
     (noteId: string, content: PartialBlock[]) => {
+      if (isNoteDiscarded(noteId)) {
+        return Promise.reject(new Error('NOTE_DISCARDED'));
+      }
+
       queryClient.setQueryData<Note>(['note', noteId], (old) =>
         old ? { ...old, content } : old
       );
 
       return enqueueNoteSave(noteId, () => {
+        // The note may have been deleted while this save waited in the queue.
+        if (isNoteDiscarded(noteId)) {
+          return Promise.reject(new Error('NOTE_DISCARDED'));
+        }
+
         const version =
           queryClient.getQueryData<Note>(['note', noteId])?.version ?? 0;
 

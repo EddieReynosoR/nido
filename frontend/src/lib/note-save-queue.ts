@@ -15,3 +15,17 @@ export function enqueueNoteSave<T>(
 
   return result;
 }
+
+const discarded = new Set<string>();
+
+export function discardNoteSaves(noteId: string) {
+  discarded.add(noteId);
+}
+
+export function restoreNoteSaves(noteId: string) {
+  discarded.delete(noteId);
+}
+
+export function isNoteDiscarded(noteId: string) {
+  return discarded.has(noteId);
+}

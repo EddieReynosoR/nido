@@ -2,9 +2,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
+import { FileX, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
 import type { Topic, TopicTreeItemProps } from '@/types/topic.types';
 import { SidebarMenuAction, useSidebar } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
@@ -14,12 +15,14 @@ export function TopicActions({
   onAddChild,
   onEdit,
   onDelete,
+  onDeleteNote,
   className,
 }: {
   topic: Topic;
   onAddChild: TopicTreeItemProps['onAddChild'];
   onEdit: TopicTreeItemProps['onEdit'];
   onDelete: TopicTreeItemProps['onDelete'];
+  onDeleteNote: TopicTreeItemProps['onDeleteNote'];
   className?: string;
 }) {
   const { isMobile } = useSidebar();
@@ -58,6 +61,17 @@ export function TopicActions({
         >
           <Trash2 />
           Delete topic
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem
+          variant="destructive"
+          disabled={!topic.noteId}
+          onSelect={() => onDeleteNote(topic)}
+        >
+          <FileX />
+          Delete intro note
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

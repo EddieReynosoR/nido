@@ -11,6 +11,7 @@ import { Outlet } from 'react-router';
 import { useSpaces } from '@/hooks/use-space';
 import { useAuth } from '@/context/AuthContext';
 import { ACTIVE_SPACE_KEY } from '@/lib/space';
+import { NoteTabsProvider } from '@/context/NoteTabsContext';
 
 const SpaceContext = createContext<SpaceContextType | null>(null);
 
@@ -70,7 +71,9 @@ export function SpaceProvider() {
 
   return (
     <SpaceContext value={value}>
-      <Outlet />
+      <NoteTabsProvider spaceId={activeSpace?.spaceId}>
+        <Outlet />
+      </NoteTabsProvider>
     </SpaceContext>
   );
 }

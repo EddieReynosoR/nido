@@ -178,7 +178,7 @@ export function updateTopicInTree(
 function applyNoteId(
   topics: Topic[],
   topicId: string,
-  noteId: string
+  noteId: string | null
 ): UpdateResult {
   let updated = false;
   const next: Topic[] = [];
@@ -206,7 +206,7 @@ function applyNoteId(
 export function setTopicNoteId(
   topics: Topic[],
   topicId: string,
-  noteId: string
+  noteId: string | null
 ): Topic[] {
   const { topics: result, updated } = applyNoteId(topics, topicId, noteId);
 

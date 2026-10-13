@@ -16,9 +16,7 @@ export default function NoteTabs() {
   const { accessToken } = useAuth();
   const { activeSpace } = useSpace();
   const { data: topics } = useTopics(activeSpace?.spaceId, accessToken);
-  const { tabs, openTab, closeTab, retainTabs } = useNoteTabs(
-    activeSpace?.spaceId
-  );
+  const { tabs, openTab, closeTab, retainTabs } = useNoteTabs();
 
   useEffect(() => {
     if (topicId) openTab(topicId);

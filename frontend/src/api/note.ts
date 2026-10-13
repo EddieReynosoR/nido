@@ -52,3 +52,16 @@ export function updateNoteContent(
     'There was an error saving the note.'
   );
 }
+
+export function deleteNote(noteId: string, accessToken: string) {
+  return executeFetch<null>(
+    `${BASE_URL}/api/note/${encodeURIComponent(noteId)}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+    'There was an error deleting the note.'
+  );
+}
