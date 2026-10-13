@@ -141,7 +141,7 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
     null
   );
   const [topicToEdit, setTopicToEdit] = useState<Topic | null>(null);
-  const { closeTab } = useNoteTabs(spaceId);
+  const { closeTab } = useNoteTabs();
 
   const handleOpenChange = useCallback((topicId: string, open: boolean) => {
     setOpenIds((previous) => {
