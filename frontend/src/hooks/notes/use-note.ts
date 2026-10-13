@@ -7,7 +7,12 @@ import {
   updateNoteContent,
 } from '@/api/note';
 import { HttpError } from '@/lib/http';
-import { enqueueNoteSave } from '@/lib/note-save-queue';
+import {
+  discardNoteSaves,
+  enqueueNoteSave,
+  isNoteDiscarded,
+  restoreNoteSaves,
+} from '@/lib/note-save-queue';
 import { errorToast, invalidSessionToast } from '@/lib/toast';
 import { setTopicNoteId } from '@/lib/topic-tree';
 import type {
@@ -81,9 +86,15 @@ export function useDeleteNote(
   >({
     mutationFn: async ({ noteId }) => {
       if (!accessToken) throw new HttpError('NO_SESSION', 400);
-      await deleteNote(noteId, accessToken);
+      // Runs after any save already queued for this note, so a PATCH can
+      // never land after the DELETE.
+      await enqueueNoteSave(noteId, () => deleteNote(noteId, accessToken));
     },
-    onMutate: async ({ topicId }) => {
+    onMutate: async ({ noteId, topicId }) => {
+      // Must happen before the optimistic update unmounts the editor, whose
+      // unmount flush would otherwise save the note being deleted.
+      discardNoteSaves(noteId);
+
       const queryKey = ['topics', spaceId];
       await queryClient.cancelQueries({ queryKey });
 
@@ -99,6 +110,8 @@ export function useDeleteNote(
       queryClient.removeQueries({ queryKey: ['note', noteId] });
     },
     onError: (error, { noteId }, context) => {
+      restoreNoteSaves(noteId);
+
       if (context?.previous) {
         queryClient.setQueryData(['topics', spaceId], context.previous);
       }
@@ -159,11 +172,20 @@ export function useSaveNoteContent(accessToken: string | null) {
 
   const save = useCallback(
     (noteId: string, content: PartialBlock[]) => {
+      if (isNoteDiscarded(noteId)) {
+        return Promise.reject(new Error('NOTE_DISCARDED'));
+      }
+
       queryClient.setQueryData<Note>(['note', noteId], (old) =>
         old ? { ...old, content } : old
       );
 
       return enqueueNoteSave(noteId, () => {
+        // The note may have been deleted while this save waited in the queue.
+        if (isNoteDiscarded(noteId)) {
+          return Promise.reject(new Error('NOTE_DISCARDED'));
+        }
+
         const version =
           queryClient.getQueryData<Note>(['note', noteId])?.version ?? 0;
 
