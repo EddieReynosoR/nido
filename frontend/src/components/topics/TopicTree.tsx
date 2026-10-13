@@ -15,7 +15,7 @@ import {
 import { Folder } from 'lucide-react';
 import { toast } from 'sonner';
 import AddTopicDialog from '@/components/topics/AddTopicDialog';
-import DeleteNoteDialog from '@/components/topics/DeleteNoteDialog';
+import DeleteNoteDialog from '@/components/notes/DeleteNoteDialog';
 import DeleteTopicDialog from '@/components/topics/DeleteTopicDialog';
 import EditTopicDialog from '@/components/topics/EditTopicDialog';
 import TopicTreeItem from '@/components/topics/TopicTreeItem';

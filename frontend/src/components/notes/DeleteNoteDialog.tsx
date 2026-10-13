@@ -45,6 +45,7 @@ export default function DeleteNoteDialog({
           <AlertDialogAction
             variant="destructive"
             onClick={() => onConfirm?.()}
+            disabled={isPending}
           >
             {isPending && <Loader2 className="size-4 animate-spin" />}
             {isPending ? 'Deleting...' : 'Delete'}
