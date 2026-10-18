@@ -2,7 +2,6 @@ package com.nido.nido_backend.topic;
 
 import com.nido.nido_backend.note.NoteRepository;
 import com.nido.nido_backend.note.dto.TopicNoteIdDto;
-import com.nido.nido_backend.shared.exception.RecordAlreadyExists;
 import com.nido.nido_backend.shared.util.TopicsTree;
 import com.nido.nido_backend.spaces.SpaceEntity;
 import com.nido.nido_backend.spaces.SpaceService;
@@ -161,7 +160,6 @@ public class TopicService {
 
         if (!topicName.equalsIgnoreCase(topicEntity.getName())) {
             int topicCount;
-            String conflictMessage;
 
             if (topicHasParent) {
                 TopicEntity parent = requireTopic(
@@ -170,12 +168,8 @@ public class TopicService {
                         "The specified parent topic was not found in the specified space");
 
                 topicCount = topicRepository.countChildByNameAndParentTopicId(topicName, parent.getTopicId());
-                conflictMessage = "A topic with the name '%s' already exists in topic '%s'"
-                        .formatted(topicName, parent.getName());
-            } else {
+            } else
                 topicCount = topicRepository.countRootByNameAndSpaceId(topicName, topicEntity.getSpaceId());
-                conflictMessage = "A topic with the name '%s' already exists".formatted(topicName);
-            }
 
             if (topicCount > 0) request = request.withName("%s (%s)".formatted(request.name(), topicCount + 1));
         }
