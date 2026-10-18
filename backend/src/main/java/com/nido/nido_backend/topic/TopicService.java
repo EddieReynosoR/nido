@@ -63,8 +63,7 @@ public class TopicService {
 
         TopicEntity parentTopic = null;
 
-        boolean nameTaken;
-        String conflictMessage;
+        int topicCount;
 
         if (request.parentTopicId() != null) {
             parentTopic = getTopic(
@@ -72,17 +71,12 @@ public class TopicService {
                     space.getSpaceId(),
                     "Parent topic was not found");
 
-            nameTaken = topicRepository.existsChildByNameAndParentTopicId(request.name(), parentTopic.getTopicId());
-            conflictMessage = "A sub-topic with the name '%s' already exists in topic '%s'"
-                        .formatted(request.name(), parentTopic.getName());
+            topicCount = topicRepository.countChildByNameAndParentTopicId(request.name(), parentTopic.getTopicId());
         }
-        else {
-            nameTaken = topicRepository.existsRootByNameAndSpaceId(request.name(), spaceIdConverted);
-            conflictMessage = "A topic with the name '%s' already exists"
-                        .formatted(request.name());
-        }
+        else
+            topicCount = topicRepository.countRootByNameAndSpaceId(request.name(), spaceIdConverted);
 
-        if (nameTaken) throw new RecordAlreadyExists(conflictMessage);
+        if (topicCount > 0) request = request.withName("%s (%s)".formatted(request.name(), topicCount + 1));
 
         TopicEntity entity = request.toEntity(space.getSpaceId(), parentTopic != null ? parentTopic.getTopicId() : null);
         topicRepository.save(entity);
@@ -94,7 +88,6 @@ public class TopicService {
     public TopicEntity getTopic(UUID topicId, UUID spaceId, String message) {
         return requireTopic(topicId, spaceId, message);
     }
-
 
     public TopicEntity requireTopic(UUID topicId, UUID spaceId, String message) {
         return topicRepository.findByTopicIdAndSpaceId(topicId, spaceId)
@@ -117,8 +110,7 @@ public class TopicService {
         boolean topicHasParent = request.newParentId() != null && !request.newParentId().isEmpty();
         String topicName = entity.getName();
 
-        boolean nameTaken;
-        String conflictMessage;
+        int topicCount;
 
         if (topicHasParent) {
             TopicEntity newParent = requireTopic(
@@ -126,18 +118,14 @@ public class TopicService {
                     spaceIdConverted,
                     "The specified parent topic was not found in the specified space");
 
-            nameTaken = topicRepository.existsChildByNameAndParentTopicId(topicName, newParent.getTopicId());
-            conflictMessage = "A sub-topic with the name '%s' already exists in topic '%s'"
-                        .formatted(topicName, newParent.getName());
+            topicCount = topicRepository.countChildByNameAndParentTopicId(topicName, newParent.getTopicId());
 
             assertNotDescendant(entity.getTopicId(), newParent.getTopicId(), spaceIdConverted);
         }
-        else {
-            nameTaken = topicRepository.existsRootByNameAndSpaceId(topicName, spaceIdConverted);
-            conflictMessage = "A topic with the name '%s' already exists".formatted(topicName);
-        }
+        else
+            topicCount = topicRepository.countRootByNameAndSpaceId(topicName, spaceIdConverted);
 
-        if (nameTaken) throw new RecordAlreadyExists(conflictMessage);
+        if (topicCount > 0) request = request.withName("%s (%s)".formatted(entity.getName(), topicCount + 1));
 
         entity.setParentTopicId(topicHasParent ? UUID.fromString(request.newParentId()) : null);
         topicRepository.save(entity);
@@ -172,7 +160,7 @@ public class TopicService {
         String topicName = request.name();
 
         if (!topicName.equalsIgnoreCase(topicEntity.getName())) {
-            boolean nameTaken;
+            int topicCount;
             String conflictMessage;
 
             if (topicHasParent) {
@@ -181,15 +169,15 @@ public class TopicService {
                         topicEntity.getSpaceId(),
                         "The specified parent topic was not found in the specified space");
 
-                nameTaken = topicRepository.existsChildByNameAndParentTopicId(topicName, parent.getTopicId());
+                topicCount = topicRepository.countChildByNameAndParentTopicId(topicName, parent.getTopicId());
                 conflictMessage = "A topic with the name '%s' already exists in topic '%s'"
                         .formatted(topicName, parent.getName());
             } else {
-                nameTaken = topicRepository.existsRootByNameAndSpaceId(topicName, topicEntity.getSpaceId());
+                topicCount = topicRepository.countRootByNameAndSpaceId(topicName, topicEntity.getSpaceId());
                 conflictMessage = "A topic with the name '%s' already exists".formatted(topicName);
             }
 
-            if (nameTaken) throw new RecordAlreadyExists(conflictMessage);
+            if (topicCount > 0) request = request.withName("%s (%s)".formatted(request.name(), topicCount + 1));
         }
 
         topicEntity.setName(request.name());

@@ -12,23 +12,23 @@ import java.util.UUID;
 
 public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
     @Query("""
-    SELECT COUNT(t) > 0
+    SELECT COUNT(t)
         FROM Topic t
     WHERE LOWER(t.name) = LOWER(:name)
       AND t.spaceId = :spaceId
       AND t.parentTopicId IS NULL
       AND t.deletedAt IS NULL
     """)
-    boolean existsRootByNameAndSpaceId(@Param("name") String name, @Param("spaceId") UUID spaceId);
+    int countRootByNameAndSpaceId(@Param("name") String name, @Param("spaceId") UUID spaceId);
 
     @Query("""
-        SELECT COUNT(t) > 0
+        SELECT COUNT(t)
             FROM Topic t
         WHERE LOWER(t.name) = LOWER(:name)
             AND t.parentTopicId = :parentTopicId
             AND t.deletedAt IS NULL
         """)
-    boolean existsChildByNameAndParentTopicId(@Param("name") String name, @Param("parentTopicId") UUID parentTopicId);
+    int countChildByNameAndParentTopicId(@Param("name") String name, @Param("parentTopicId") UUID parentTopicId);
 
     @Query("""
         SELECT t

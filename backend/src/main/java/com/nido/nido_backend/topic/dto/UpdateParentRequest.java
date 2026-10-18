@@ -7,4 +7,8 @@ public record UpdateParentRequest(
         @NotNull @NotBlank String topicId,
         @NotNull @NotBlank String spaceId,
         String newParentId) {
+
+    public UpdateParentRequest withName(String name) {
+        return new UpdateParentRequest(name, spaceId, newParentId);
+    }
 }

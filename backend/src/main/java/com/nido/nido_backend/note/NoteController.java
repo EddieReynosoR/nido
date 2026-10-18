@@ -23,7 +23,7 @@ public class NoteController {
     public ResponseEntity<NoteResponse> get(
             @PathVariable UUID noteId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        var response = noteService.getNoteByTopicId(noteId, userDetails.getUsername());
+        var response = noteService.getNoteById(noteId, userDetails.getUsername());
         return ResponseEntity.ok(response);
     }
 

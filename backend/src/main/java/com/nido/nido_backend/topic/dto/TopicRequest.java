@@ -23,4 +23,8 @@ public record TopicRequest(
 
         return entity;
     }
+
+    public TopicRequest withName(String name) {
+        return new TopicRequest(name, color, spaceId, parentTopicId);
+    }
 }

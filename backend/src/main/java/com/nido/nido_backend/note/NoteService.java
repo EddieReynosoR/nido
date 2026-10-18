@@ -3,6 +3,7 @@ package com.nido.nido_backend.note;
 import com.nido.nido_backend.note.dto.*;
 import com.nido.nido_backend.note.exception.NoteVersionConflictException;
 import com.nido.nido_backend.shared.util.NoteContentMapper;
+import com.nido.nido_backend.spaces.SpaceService;
 import com.nido.nido_backend.topic.TopicRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,22 +18,30 @@ public class NoteService {
     private final NoteRepository noteRepository;
     private final NoteContentMapper noteContentMapper;
     private final TopicRepository topicRepository;
+    private final SpaceService spaceService;
 
-    public NoteService(NoteRepository noteRepository, NoteContentMapper noteContentMapper, TopicRepository topicRepository) {
+    public NoteService(NoteRepository noteRepository, NoteContentMapper noteContentMapper, TopicRepository topicRepository, SpaceService spaceService) {
         this.noteRepository = noteRepository;
         this.noteContentMapper = noteContentMapper;
         this.topicRepository = topicRepository;
+        this.spaceService = spaceService;
     }
 
     @Transactional
     public NoteResponse createNote(CreateNoteRequest request, String userId) {
-        topicRepository.getByIdAndUserId(request.topicId(), UUID.fromString(userId))
-                .orElseThrow(() -> new NoSuchElementException("Topic not found"));
+        spaceService.getOwnedBy(request.spaceId(), UUID.fromString(userId));
 
         NoteEntity entity = new NoteEntity();
+        if (request.topicId() != null) {
+            topicRepository.findByTopicIdAndSpaceId(request.topicId(), request.spaceId())
+                    .orElseThrow(() -> new NoSuchElementException("The specified topic does is not part of the specified space"));
+
+            entity.setTopicId(request.topicId());
+        }
+
         entity.setTitle(request.title());
         entity.setContent(noteContentMapper.toJsonString(request.content()));
-        entity.setTopicId(request.topicId());
+        entity.setSpaceId(request.spaceId());
         entity.setIntro(request.isIntro());
 
         noteRepository.save(entity);
@@ -40,7 +49,7 @@ public class NoteService {
     }
 
     @Transactional(readOnly = true)
-    public NoteResponse getNoteByTopicId(UUID noteId, String userId) {
+    public NoteResponse getNoteById(UUID noteId, String userId) {
         var entity = noteRepository.getByIdAndUserId(noteId, UUID.fromString(userId))
                 .orElseThrow(() -> new NoSuchElementException("Note not found"));
 
