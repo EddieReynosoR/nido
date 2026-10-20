@@ -88,7 +88,7 @@ public class SpaceService {
 
     @Transactional(readOnly = true)
     public SpaceContentResponse getContent(UUID spaceId, String userId) {
-        SpaceEntity spaceEntity = getOwnedBy(spaceId, UUID.fromString(userId));
+        getOwnedBy(spaceId, UUID.fromString(userId));
         List<TopicEntity> topics = topicRepository.getBySpaceId(spaceId);
         var notes = noteService.getNotesFromSpace(spaceId);
         var notesInRoot = notes.withoutTopic();
