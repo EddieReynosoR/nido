@@ -3,14 +3,18 @@ package com.nido.nido_backend.note;
 import com.nido.nido_backend.note.dto.*;
 import com.nido.nido_backend.note.exception.NoteVersionConflictException;
 import com.nido.nido_backend.shared.util.NoteContentMapper;
+import com.nido.nido_backend.spaces.SpaceRepository;
 import com.nido.nido_backend.spaces.SpaceService;
 import com.nido.nido_backend.topic.TopicRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class NoteService {
@@ -18,18 +22,19 @@ public class NoteService {
     private final NoteRepository noteRepository;
     private final NoteContentMapper noteContentMapper;
     private final TopicRepository topicRepository;
-    private final SpaceService spaceService;
+    private final SpaceRepository spaceRepository;
 
-    public NoteService(NoteRepository noteRepository, NoteContentMapper noteContentMapper, TopicRepository topicRepository, SpaceService spaceService) {
+    public NoteService(NoteRepository noteRepository, NoteContentMapper noteContentMapper, TopicRepository topicRepository, SpaceRepository spaceRepository) {
         this.noteRepository = noteRepository;
         this.noteContentMapper = noteContentMapper;
         this.topicRepository = topicRepository;
-        this.spaceService = spaceService;
+        this.spaceRepository = spaceRepository;
     }
 
     @Transactional
     public NoteResponse createNote(CreateNoteRequest request, String userId) {
-        spaceService.getOwnedBy(request.spaceId(), UUID.fromString(userId));
+        spaceRepository.findBySpaceIdAndUserIdAndDeletedAtIsNull(request.spaceId(), UUID.fromString(userId))
+                .orElseThrow(() -> new NoSuchElementException("Space not found"));
 
         NoteEntity entity = new NoteEntity();
         if (request.topicId() != null) {
@@ -76,5 +81,35 @@ public class NoteService {
                 .orElseThrow(() -> new NoSuchElementException("Note not found"));
 
         note.setDeletedAt(Instant.now());
+    }
+
+    @Transactional
+    public void softDeleteByTopics(List<UUID> topicIds) {
+        var deletedAt = Instant.now();
+        noteRepository.softDeleteByTopicIds(topicIds, deletedAt);
+    }
+
+    @Transactional
+    public Map<UUID, UUID> getIntroNotes(List<UUID> topicIds) {
+        return noteRepository.findIntroNotesByTopicIds(topicIds).stream()
+                .collect(Collectors.toMap(TopicNoteIdDto::topicId, TopicNoteIdDto::noteId));
+    }
+
+    @Transactional
+    public GetNotesResponse getNotesFromSpace(UUID spaceId) {
+        var notes = noteRepository.findNotesBySpaceId(spaceId);
+
+        List<NoteTreeResponse> notesInRoot = notes
+                .stream().filter(n -> n.getTopicId() == null)
+                .map(NoteTreeResponse::from)
+                .toList();
+
+        Map<UUID, List<NoteTreeResponse>> notesInTopic = notes
+                .stream().filter(n -> n.getTopicId() != null)
+                .collect(Collectors.groupingBy(
+                        NoteEntity::getTopicId,
+                        Collectors.mapping(NoteTreeResponse::from, Collectors.toList())));
+
+        return new GetNotesResponse(notesInRoot, notesInTopic);
     }
 }

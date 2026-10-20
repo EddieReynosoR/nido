@@ -1,8 +1,6 @@
 package com.nido.nido_backend.topic;
 
-import com.nido.nido_backend.note.NoteRepository;
-import com.nido.nido_backend.note.dto.TopicNoteIdDto;
-import com.nido.nido_backend.shared.util.TopicsTree;
+import com.nido.nido_backend.note.NoteService;
 import com.nido.nido_backend.spaces.SpaceEntity;
 import com.nido.nido_backend.spaces.SpaceService;
 import com.nido.nido_backend.topic.dto.TopicRequest;
@@ -14,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class TopicService {
@@ -23,34 +20,12 @@ public class TopicService {
 
     private final TopicRepository topicRepository;
     private final SpaceService spaceService;
-    private final NoteRepository noteRepository;
+    private final NoteService noteService;
 
-    public TopicService(TopicRepository topicRepository, SpaceService spaceService, NoteRepository noteRepository) {
+    public TopicService(TopicRepository topicRepository, SpaceService spaceService, NoteService noteService) {
         this.topicRepository = topicRepository;
         this.spaceService = spaceService;
-        this.noteRepository = noteRepository;
-    }
-
-    @Transactional(readOnly = true)
-    public List<TopicResponse> get(UUID spaceId, String userId) {
-        SpaceEntity spaceEntity = spaceService.getOwnedBy(spaceId, UUID.fromString(userId));
-        List<TopicEntity> topics = topicRepository.getBySpaceId(spaceEntity.getSpaceId());
-
-        if (topics.isEmpty()) return new ArrayList<>();
-
-        List<TopicResponse> responseList = TopicResponse.toList(topics);
-        List<UUID> topicIds = topics.stream()
-                .map(TopicEntity::getTopicId)
-                .toList();
-
-        var introNotes = noteRepository.findIntroNotesByTopicIds(topicIds).stream()
-                .collect(Collectors.toMap(TopicNoteIdDto::topicId, TopicNoteIdDto::noteId));
-
-        var result = responseList.stream()
-                .map(t -> t.withNote(introNotes.get(t.topicId())))
-                .toList();
-
-        return TopicsTree.createTopicsTree(result);
+        this.noteService = noteService;
     }
 
     @Transactional
@@ -141,7 +116,7 @@ public class TopicService {
 
         Instant deletedAt = Instant.now();
         topicRepository.softDeleteByIds(topicIds, deletedAt);
-        noteRepository.softDeleteByTopicIds(topicIds, deletedAt);
+        noteService.softDeleteByTopics(topicIds);
     }
 
     private void assertNotDescendant(UUID topicId, UUID newParentId, UUID spaceId) {
