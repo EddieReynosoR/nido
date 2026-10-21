@@ -39,7 +39,7 @@ public class NoteService {
         NoteEntity entity = new NoteEntity();
         if (request.topicId() != null) {
             topicRepository.findByTopicIdAndSpaceId(request.topicId(), request.spaceId())
-                    .orElseThrow(() -> new NoSuchElementException("The specified topic does is not part of the specified space"));
+                    .orElseThrow(() -> new NoSuchElementException("The specified topic is not part of the specified space"));
 
             entity.setTopicId(request.topicId());
         }
@@ -89,13 +89,13 @@ public class NoteService {
         noteRepository.softDeleteByTopicIds(topicIds, deletedAt);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Map<UUID, UUID> getIntroNotes(List<UUID> topicIds) {
         return noteRepository.findIntroNotesByTopicIds(topicIds).stream()
                 .collect(Collectors.toMap(TopicNoteIdDto::topicId, TopicNoteIdDto::noteId));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public GetNotesResponse getNotesFromSpace(UUID spaceId) {
         var notes = noteRepository.findNotesBySpaceId(spaceId);
 

@@ -37,20 +37,18 @@ public class TopicService {
 
         TopicEntity parentTopic = null;
 
-        int topicCount;
-
         if (request.parentTopicId() != null) {
             parentTopic = getTopic(
                     UUID.fromString(request.parentTopicId()),
                     space.getSpaceId(),
                     "Parent topic was not found");
-
-            topicCount = topicRepository.countChildByNameAndParentTopicId(request.name(), parentTopic.getTopicId());
         }
-        else
-            topicCount = topicRepository.countRootByNameAndSpaceId(request.name(), spaceIdConverted);
 
-        if (topicCount > 0) request = request.withName("%s (%s)".formatted(request.name(), topicCount + 1));
+        request = request.withName(resolveUniqueName(
+                request.name(),
+                spaceIdConverted,
+                parentTopic != null ? parentTopic.getTopicId() : null,
+                null));
 
         TopicEntity entity = request.toEntity(space.getSpaceId(), parentTopic != null ? parentTopic.getTopicId() : null);
         topicRepository.save(entity);
@@ -82,9 +80,7 @@ public class TopicService {
                 "The specified topic was not found in the specified space");
 
         boolean topicHasParent = request.newParentId() != null && !request.newParentId().isEmpty();
-        String topicName = entity.getName();
-
-        int topicCount;
+        UUID newParentId = null;
 
         if (topicHasParent) {
             TopicEntity newParent = requireTopic(
@@ -92,16 +88,12 @@ public class TopicService {
                     spaceIdConverted,
                     "The specified parent topic was not found in the specified space");
 
-            topicCount = topicRepository.countChildByNameAndParentTopicId(topicName, newParent.getTopicId());
-
             assertNotDescendant(entity.getTopicId(), newParent.getTopicId(), spaceIdConverted);
+            newParentId = newParent.getTopicId();
         }
-        else
-            topicCount = topicRepository.countRootByNameAndSpaceId(topicName, spaceIdConverted);
 
-        if (topicCount > 0) request = request.withName("%s (%s)".formatted(entity.getName(), topicCount + 1));
-
-        entity.setParentTopicId(topicHasParent ? UUID.fromString(request.newParentId()) : null);
+        entity.setName(resolveUniqueName(entity.getName(), spaceIdConverted, newParentId, entity.getTopicId()));
+        entity.setParentTopicId(newParentId);
         topicRepository.save(entity);
     }
 
@@ -119,6 +111,22 @@ public class TopicService {
         noteService.softDeleteByTopics(topicIds);
     }
 
+    private String resolveUniqueName(String name, UUID spaceId, UUID parentTopicId, UUID excludeTopicId) {
+        List<String> siblings = parentTopicId != null
+                ? topicRepository.findChildNamesStartingWith(name, parentTopicId, excludeTopicId)
+                : topicRepository.findRootNamesStartingWith(name, spaceId, excludeTopicId);
+
+        Set<String> taken = new HashSet<>();
+        for (String sibling : siblings) taken.add(sibling.toLowerCase(Locale.ROOT));
+
+        if (!taken.contains(name.toLowerCase(Locale.ROOT))) return name;
+
+        int suffix = 2;
+        while (taken.contains("%s (%d)".formatted(name, suffix).toLowerCase(Locale.ROOT))) suffix++;
+
+        return "%s (%d)".formatted(name, suffix);
+    }
+
     private void assertNotDescendant(UUID topicId, UUID newParentId, UUID spaceId) {
         if (topicRepository.isAncestorOrSelf(topicId, newParentId, spaceId, MAX_ANCESTRY_DEPTH))
             throw new IllegalArgumentException(
@@ -130,23 +138,18 @@ public class TopicService {
         TopicEntity topicEntity = topicRepository.getByIdAndUserId(request.topicId(), UUID.fromString(userId))
                 .orElseThrow(() -> new NoSuchElementException("The specified topic was not found with the specified user"));
 
-        boolean topicHasParent = topicEntity.getParentTopicId() != null;
-        String topicName = request.name();
-
-        if (!topicName.equalsIgnoreCase(topicEntity.getName())) {
-            int topicCount;
-
-            if (topicHasParent) {
-                TopicEntity parent = requireTopic(
+        if (!request.name().equalsIgnoreCase(topicEntity.getName())) {
+            if (topicEntity.getParentTopicId() != null)
+                requireTopic(
                         topicEntity.getParentTopicId(),
                         topicEntity.getSpaceId(),
                         "The specified parent topic was not found in the specified space");
 
-                topicCount = topicRepository.countChildByNameAndParentTopicId(topicName, parent.getTopicId());
-            } else
-                topicCount = topicRepository.countRootByNameAndSpaceId(topicName, topicEntity.getSpaceId());
-
-            if (topicCount > 0) request = request.withName("%s (%s)".formatted(request.name(), topicCount + 1));
+            request = request.withName(resolveUniqueName(
+                    request.name(),
+                    topicEntity.getSpaceId(),
+                    topicEntity.getParentTopicId(),
+                    topicEntity.getTopicId()));
         }
 
         topicEntity.setName(request.name());

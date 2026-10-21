@@ -31,8 +31,7 @@ public interface NoteRepository extends JpaRepository<NoteEntity, UUID> {
 
     @Query("""
         SELECT n FROM Note n
-        JOIN Topic t ON t.topicId = n.topicId
-        JOIN Space s ON s.spaceId = t.spaceId
+        JOIN Space s ON s.spaceId = n.spaceId
         WHERE n.noteId = :noteId
             AND s.userId = :userId
             AND s.deletedAt IS NULL

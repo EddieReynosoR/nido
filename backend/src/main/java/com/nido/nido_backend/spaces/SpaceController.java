@@ -4,7 +4,6 @@ import com.nido.nido_backend.spaces.dto.CreateSpaceRequest;
 import com.nido.nido_backend.spaces.dto.SpaceContentResponse;
 import com.nido.nido_backend.spaces.dto.SpaceResponse;
 import com.nido.nido_backend.spaces.dto.UpdateSpaceRequest;
-import com.nido.nido_backend.topic.dto.TopicResponse;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -15,7 +14,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RequestMapping("api/space")
