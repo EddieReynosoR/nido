@@ -12,23 +12,29 @@ import java.util.UUID;
 
 public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
     @Query("""
-    SELECT COUNT(t) > 0
+    SELECT t.name
         FROM Topic t
-    WHERE LOWER(t.name) = LOWER(:name)
+    WHERE LOWER(SUBSTRING(t.name, 1, LENGTH(:prefix))) = LOWER(:prefix)
       AND t.spaceId = :spaceId
       AND t.parentTopicId IS NULL
       AND t.deletedAt IS NULL
+      AND (:excludeTopicId IS NULL OR t.topicId <> :excludeTopicId)
     """)
-    boolean existsRootByNameAndSpaceId(@Param("name") String name, @Param("spaceId") UUID spaceId);
+    List<String> findRootNamesStartingWith(@Param("prefix") String prefix,
+                                           @Param("spaceId") UUID spaceId,
+                                           @Param("excludeTopicId") UUID excludeTopicId);
 
     @Query("""
-        SELECT COUNT(t) > 0
+        SELECT t.name
             FROM Topic t
-        WHERE LOWER(t.name) = LOWER(:name)
+        WHERE LOWER(SUBSTRING(t.name, 1, LENGTH(:prefix))) = LOWER(:prefix)
             AND t.parentTopicId = :parentTopicId
             AND t.deletedAt IS NULL
+            AND (:excludeTopicId IS NULL OR t.topicId <> :excludeTopicId)
         """)
-    boolean existsChildByNameAndParentTopicId(@Param("name") String name, @Param("parentTopicId") UUID parentTopicId);
+    List<String> findChildNamesStartingWith(@Param("prefix") String prefix,
+                                            @Param("parentTopicId") UUID parentTopicId,
+                                            @Param("excludeTopicId") UUID excludeTopicId);
 
     @Query("""
         SELECT t

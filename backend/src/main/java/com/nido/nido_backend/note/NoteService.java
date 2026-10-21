@@ -3,13 +3,18 @@ package com.nido.nido_backend.note;
 import com.nido.nido_backend.note.dto.*;
 import com.nido.nido_backend.note.exception.NoteVersionConflictException;
 import com.nido.nido_backend.shared.util.NoteContentMapper;
+import com.nido.nido_backend.spaces.SpaceRepository;
+import com.nido.nido_backend.spaces.SpaceService;
 import com.nido.nido_backend.topic.TopicRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class NoteService {
@@ -17,22 +22,31 @@ public class NoteService {
     private final NoteRepository noteRepository;
     private final NoteContentMapper noteContentMapper;
     private final TopicRepository topicRepository;
+    private final SpaceRepository spaceRepository;
 
-    public NoteService(NoteRepository noteRepository, NoteContentMapper noteContentMapper, TopicRepository topicRepository) {
+    public NoteService(NoteRepository noteRepository, NoteContentMapper noteContentMapper, TopicRepository topicRepository, SpaceRepository spaceRepository) {
         this.noteRepository = noteRepository;
         this.noteContentMapper = noteContentMapper;
         this.topicRepository = topicRepository;
+        this.spaceRepository = spaceRepository;
     }
 
     @Transactional
     public NoteResponse createNote(CreateNoteRequest request, String userId) {
-        topicRepository.getByIdAndUserId(request.topicId(), UUID.fromString(userId))
-                .orElseThrow(() -> new NoSuchElementException("Topic not found"));
+        spaceRepository.findBySpaceIdAndUserIdAndDeletedAtIsNull(request.spaceId(), UUID.fromString(userId))
+                .orElseThrow(() -> new NoSuchElementException("Space not found"));
 
         NoteEntity entity = new NoteEntity();
+        if (request.topicId() != null) {
+            topicRepository.findByTopicIdAndSpaceId(request.topicId(), request.spaceId())
+                    .orElseThrow(() -> new NoSuchElementException("The specified topic is not part of the specified space"));
+
+            entity.setTopicId(request.topicId());
+        }
+
         entity.setTitle(request.title());
         entity.setContent(noteContentMapper.toJsonString(request.content()));
-        entity.setTopicId(request.topicId());
+        entity.setSpaceId(request.spaceId());
         entity.setIntro(request.isIntro());
 
         noteRepository.save(entity);
@@ -40,7 +54,7 @@ public class NoteService {
     }
 
     @Transactional(readOnly = true)
-    public NoteResponse getNoteByTopicId(UUID noteId, String userId) {
+    public NoteResponse getNoteById(UUID noteId, String userId) {
         var entity = noteRepository.getByIdAndUserId(noteId, UUID.fromString(userId))
                 .orElseThrow(() -> new NoSuchElementException("Note not found"));
 
@@ -67,5 +81,35 @@ public class NoteService {
                 .orElseThrow(() -> new NoSuchElementException("Note not found"));
 
         note.setDeletedAt(Instant.now());
+    }
+
+    @Transactional
+    public void softDeleteByTopics(List<UUID> topicIds) {
+        var deletedAt = Instant.now();
+        noteRepository.softDeleteByTopicIds(topicIds, deletedAt);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<UUID, UUID> getIntroNotes(List<UUID> topicIds) {
+        return noteRepository.findIntroNotesByTopicIds(topicIds).stream()
+                .collect(Collectors.toMap(TopicNoteIdDto::topicId, TopicNoteIdDto::noteId));
+    }
+
+    @Transactional(readOnly = true)
+    public GetNotesResponse getNotesFromSpace(UUID spaceId) {
+        var notes = noteRepository.findNotesBySpaceId(spaceId);
+
+        List<NoteTreeResponse> notesInRoot = notes
+                .stream().filter(n -> n.getTopicId() == null)
+                .map(NoteTreeResponse::from)
+                .toList();
+
+        Map<UUID, List<NoteTreeResponse>> notesInTopic = notes
+                .stream().filter(n -> n.getTopicId() != null)
+                .collect(Collectors.groupingBy(
+                        NoteEntity::getTopicId,
+                        Collectors.mapping(NoteTreeResponse::from, Collectors.toList())));
+
+        return new GetNotesResponse(notesInRoot, notesInTopic);
     }
 }

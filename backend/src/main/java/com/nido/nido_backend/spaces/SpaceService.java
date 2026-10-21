@@ -1,25 +1,33 @@
 package com.nido.nido_backend.spaces;
 
+import com.nido.nido_backend.note.NoteService;
 import com.nido.nido_backend.shared.exception.NoRowsAffectedException;
 import com.nido.nido_backend.shared.exception.RecordAlreadyExists;
+import com.nido.nido_backend.shared.util.TopicsTree;
+import com.nido.nido_backend.spaces.dto.SpaceContentResponse;
 import com.nido.nido_backend.spaces.dto.SpaceResponse;
+import com.nido.nido_backend.topic.TopicEntity;
+import com.nido.nido_backend.topic.TopicRepository;
+import com.nido.nido_backend.topic.TopicService;
+import com.nido.nido_backend.topic.dto.TopicResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class SpaceService {
     private final SpaceRepository spaceRepository;
+    private final TopicRepository topicRepository;
+    private final NoteService noteService;
 
-    public SpaceService(SpaceRepository spaceRepository) {
+    public SpaceService(SpaceRepository spaceRepository, TopicRepository topicRepository, NoteService noteService) {
         this.spaceRepository = spaceRepository;
+        this.topicRepository = topicRepository;
+        this.noteService = noteService;
     }
 
     @Transactional
@@ -76,5 +84,30 @@ public class SpaceService {
     public SpaceEntity getOwnedBy(UUID spaceId, UUID userId) {
         return spaceRepository.findBySpaceIdAndUserIdAndDeletedAtIsNull(spaceId, userId)
                 .orElseThrow(() -> new NoSuchElementException("Space not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public SpaceContentResponse getContent(UUID spaceId, String userId) {
+        getOwnedBy(spaceId, UUID.fromString(userId));
+        List<TopicEntity> topics = topicRepository.getBySpaceId(spaceId);
+        var notes = noteService.getNotesFromSpace(spaceId);
+        var notesInRoot = notes.withoutTopic();
+        var notesInTopic = notes.withTopic();
+
+        if (topics.isEmpty()) return new SpaceContentResponse(new ArrayList<>(), notesInRoot);
+
+        List<TopicResponse> responseList = TopicResponse.toList(topics);
+        List<UUID> topicIds = topics.stream()
+                .map(TopicEntity::getTopicId)
+                .toList();
+
+        Map<UUID, UUID> introNotes = noteService.getIntroNotes(topicIds);
+
+        var result = responseList.stream()
+                .map(t -> t.withIntroNote(introNotes.get(t.topicId())))
+                .map(t -> t.withNotes(notesInTopic.getOrDefault(t.topicId(), new ArrayList<>())))
+                .toList();
+
+        return new SpaceContentResponse(TopicsTree.createTopicsTree(result), notesInRoot);
     }
 }

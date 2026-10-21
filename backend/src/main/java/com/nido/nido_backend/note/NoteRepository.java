@@ -22,8 +22,16 @@ public interface NoteRepository extends JpaRepository<NoteEntity, UUID> {
 
     @Query("""
         SELECT n FROM Note n
-        JOIN Topic t ON t.topicId = n.topicId
-        JOIN Space s ON s.spaceId = t.spaceId
+        WHERE n.isIntro = false
+            AND n.spaceId = :spaceId
+            AND n.deletedAt IS NULL
+        ORDER BY n.title ASC
+    """)
+    List<NoteEntity> findNotesBySpaceId(@Param("spaceId") UUID spaceId);
+
+    @Query("""
+        SELECT n FROM Note n
+        JOIN Space s ON s.spaceId = n.spaceId
         WHERE n.noteId = :noteId
             AND s.userId = :userId
             AND s.deletedAt IS NULL

@@ -1,6 +1,7 @@
 package com.nido.nido_backend.spaces;
 
 import com.nido.nido_backend.spaces.dto.CreateSpaceRequest;
+import com.nido.nido_backend.spaces.dto.SpaceContentResponse;
 import com.nido.nido_backend.spaces.dto.SpaceResponse;
 import com.nido.nido_backend.spaces.dto.UpdateSpaceRequest;
 import jakarta.validation.Valid;
@@ -56,6 +57,14 @@ public class SpaceController {
                 UUID.fromString(user.getUsername()),
                 request.name());
 
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/content")
+    public ResponseEntity<SpaceContentResponse> get(
+            @RequestParam("spaceId") UUID spaceId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var response = spaceService.getContent(spaceId, userDetails.getUsername());
         return ResponseEntity.ok(response);
     }
 }

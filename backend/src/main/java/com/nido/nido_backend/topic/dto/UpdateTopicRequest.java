@@ -10,4 +10,8 @@ public record UpdateTopicRequest(
         @NotBlank @Size(max = 50) String name,
         @NotBlank @Size(max = 6) String color,
         @NotNull UUID topicId) {
+
+    public UpdateTopicRequest withName(String name) {
+        return new UpdateTopicRequest(name, color, topicId);
+    }
 }

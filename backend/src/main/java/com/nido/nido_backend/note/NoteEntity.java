@@ -23,7 +23,7 @@ public class NoteEntity {
     @Column(name = "content", columnDefinition = "jsonb", nullable = false)
     private String content;
 
-    @Column(name = "topic_id", nullable = false)
+    @Column(name = "topic_id")
     private UUID topicId;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
@@ -42,6 +42,9 @@ public class NoteEntity {
 
     @Column(name = "is_intro")
     private boolean isIntro;
+
+    @Column(name = "space_id")
+    private UUID spaceId;
 
     public UUID getNoteId() { return noteId; }
 
@@ -78,4 +81,8 @@ public class NoteEntity {
     public boolean isIntro() { return isIntro; }
 
     public void setIntro(boolean intro) { isIntro = intro; }
+
+    public UUID getSpaceId() { return spaceId; }
+
+    public void setSpaceId(UUID spaceId) { this.spaceId = spaceId; }
 }

@@ -22,14 +22,6 @@ public class TopicController {
 
     public TopicController(TopicService topicService) { this.topicService = topicService; }
 
-    @GetMapping
-    public ResponseEntity<List<TopicResponse>> get(
-            @RequestParam("spaceId") UUID spaceId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        var response = topicService.get(spaceId, userDetails.getUsername());
-        return ResponseEntity.ok(response);
-    }
-
     @PostMapping("/create")
     public ResponseEntity<TopicResponse> create(
             @Valid @RequestBody TopicRequest request,

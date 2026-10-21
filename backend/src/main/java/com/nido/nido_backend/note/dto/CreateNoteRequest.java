@@ -10,6 +10,7 @@ import java.util.UUID;
 public record CreateNoteRequest(
         @NotBlank @Size(max = 150) String title,
         @NotNull JsonNode content,
-        @NotNull UUID topicId,
+        @NotNull UUID spaceId,
+        UUID topicId,
         boolean isIntro) {
 }
