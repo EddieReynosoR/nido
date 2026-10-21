@@ -35,7 +35,6 @@ public interface NoteRepository extends JpaRepository<NoteEntity, UUID> {
         WHERE n.noteId = :noteId
             AND s.userId = :userId
             AND s.deletedAt IS NULL
-            AND t.deletedAt IS NULL
             AND n.deletedAt IS NULL
     """)
     Optional<NoteEntity> getByIdAndUserId(@Param("noteId") UUID noteId, @Param("userId") UUID userId);
