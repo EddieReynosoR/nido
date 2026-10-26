@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/sidebar';
 import type { Topic, TopicTreeItemProps } from '@/types/topic.types';
 import { TopicActions } from './TopicActions';
+import NoteTreeItem from '@/components/notes/NoteTreeItem';
 import { useTopicDnd } from '@/hooks/topics/use-topic-dnd';
 import { useTopicSelection } from '@/hooks/topics/use-topic-selection';
 import {
@@ -71,7 +72,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
   const isActive = activePath?.at(-1) === topic.topicId;
   const open = openIds.has(topic.topicId);
 
-  if (!topic.topics.length) {
+  if (!topic.topics.length && !topic.notes.length) {
     return (
       <SidebarMenuSubItem>
         <div {...rowProps}>
@@ -147,6 +148,9 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
                 onDeleteNote={onDeleteNote}
               />
             ))}
+            {topic.notes.map((note) => (
+              <NoteTreeItem key={note.noteId} note={note} nested />
+            ))}
           </SidebarMenuSub>
         </CollapsibleContent>
       </SidebarMenuSubItem>
@@ -169,7 +173,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
   const isActive = activePath?.at(-1) === topic.topicId;
   const open = openIds.has(topic.topicId);
 
-  if (!topic.topics.length) {
+  if (!topic.topics.length && !topic.notes.length) {
     return (
       <SidebarMenuItem>
         <div {...rowProps}>
@@ -240,6 +244,9 @@ const TopicTreeItem = memo(function TopicTreeItem({
                 onDelete={onDelete}
                 onDeleteNote={onDeleteNote}
               />
+            ))}
+            {topic.notes.map((note) => (
+              <NoteTreeItem key={note.noteId} note={note} nested />
             ))}
           </SidebarMenuSub>
         </CollapsibleContent>

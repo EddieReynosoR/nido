@@ -1,3 +1,5 @@
+import type { NoteTreeItem } from '@/types/note.types';
+
 export type Topic = {
   topicId: string;
   name: string;
@@ -7,6 +9,7 @@ export type Topic = {
   deletedAt: string | null;
   topics: Topic[];
   noteId: string | null;
+  notes: NoteTreeItem[];
 };
 
 export type ReparentRequest = {

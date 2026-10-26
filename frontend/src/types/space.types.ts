@@ -2,10 +2,17 @@ import type {
   RefetchOptions,
   QueryObserverResult,
 } from '@tanstack/react-query';
+import type { NoteTreeItem } from '@/types/note.types';
+import type { Topic } from '@/types/topic.types';
 
 export type Space = {
   spaceId: string;
   name: string;
+};
+
+export type SpaceContent = {
+  topics: Topic[];
+  notes: NoteTreeItem[];
 };
 
 export interface getSpaceResponse {

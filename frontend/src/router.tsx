@@ -10,6 +10,7 @@ import RequireAuth from './components/RequireAuth';
 import LandingPage from './pages/LandingPage';
 import EmptyState from './pages/EmptyState';
 import TopicNotePage from './pages/TopicNotePage';
+import NotePage from './pages/NotePage';
 
 export const router = createBrowserRouter([
   {
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
                     children: [
                       { index: true, Component: EmptyState },
                       { path: 'topics/:topicId', Component: TopicNotePage },
+                      { path: 'notes/:noteId', Component: NotePage },
                     ],
                   },
                 ],

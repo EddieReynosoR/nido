@@ -3,6 +3,7 @@ import type { Topic } from '@/types/topic.types';
 
 export function buildIntroNoteRequest(topic: Topic): CreateNoteRequest {
   return {
+    spaceId: topic.spaceId,
     topicId: topic.topicId,
     title: topic.name,
     content: [

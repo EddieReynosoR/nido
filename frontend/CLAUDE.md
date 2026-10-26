@@ -4,6 +4,7 @@ React 19 + TypeScript SPA built with Vite. See the root `CLAUDE.md` for the pack
 manager and the checks to run before finishing.
 
 ## Stack
+
 - Routing: `react-router` v7 data router (`src/router.tsx`, `Component:` routes).
 - Server state: TanStack Query. Client state: React context.
 - UI: shadcn/ui (Radix, `radix-nova` style) + Tailwind v4, icons from `lucide-react`,
@@ -13,6 +14,7 @@ manager and the checks to run before finishing.
 - API base URL comes from `VITE_API_URL` in `.env`.
 
 ## Layout of `src/`
+
 - `api/`: one file per resource. Plain functions that call `executeFetch<T>` from
   `api/auth.ts` with the access token and a user-facing error message. No React here.
 - `hooks/`: TanStack Query wrappers around `api/` (`useX` queries, `useCreateX` etc.
@@ -29,13 +31,16 @@ manager and the checks to run before finishing.
 - `constants/const.ts`: shared constants and reusable Tailwind class strings.
 
 ## Conventions
+
 - Import with the `@/` alias, and use `import type` for types (`verbatimModuleSyntax`).
 - Prettier: single quotes, semicolons, 2 spaces, trailing commas `es5`, width 80.
 - Merge class names with `cn()` from `@/lib/utils`.
 - All user-facing text is in English.
 
 ## Data fetching
-- Query keys: `['spaces', accessToken]`, `['topics', spaceId]`, `['note', noteId]`.
+
+- Query keys: `['spaces', accessToken]`, `['content', spaceId]` (topics tree + root
+  notes, built with `spaceContentKey`), `['note', noteId]`.
   Reuse them exactly; invalidation depends on them.
 - Hooks take `accessToken` (from `useAuth()`) as an argument. Queries use
   `enabled: !!accessToken` (and any id); mutations throw `HttpError('NO_SESSION', 400)`
@@ -47,6 +52,7 @@ manager and the checks to run before finishing.
   same note never overlap. Deleting a note must call `discardNoteSaves` first.
 
 ## Errors and feedback
+
 - `executeFetch` throws `HttpError` (has `status`), `TokenError` (auth codes), or
   `TypeError` (server unreachable). Branch on these classes rather than on message text (the one
   exception is the `NO_SESSION` sentinel above).
@@ -55,6 +61,7 @@ manager and the checks to run before finishing.
   repeats replace each other. Map a `409` to a specific `customMessage`.
 
 ## Forms
+
 - Define the schema in `lib/<resource>-schema.ts` and export its inferred type.
 - Use `useForm` + `Controller` with the `Field`, `FieldLabel`, `FieldError` components from
   `components/ui/field.tsx`, and set `aria-invalid` from `fieldState`.

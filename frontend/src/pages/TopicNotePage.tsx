@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { useSpace } from '@/context/SpaceContext';
 import { useCreateNote, useNote } from '@/hooks/notes/use-note';
-import { useTopics } from '@/hooks/topics/use-topic';
+import {
+  selectTopics,
+  useSpaceContent,
+} from '@/hooks/spaces/use-space-content';
 import { buildIntroNoteRequest } from '@/lib/note';
 import { findTopicInTree } from '@/lib/topic-tree';
 import type { CreateNoteRequest } from '@/types/note.types';
@@ -15,9 +18,10 @@ export default function TopicNotePage() {
   const { topicId } = useParams();
   const { accessToken } = useAuth();
   const { activeSpace, isLoading: spacesLoading } = useSpace();
-  const { data: topics, isLoading: topicsLoading } = useTopics(
+  const { data: topics, isLoading: topicsLoading } = useSpaceContent(
     activeSpace?.spaceId,
-    accessToken
+    accessToken,
+    selectTopics
   );
   const topic = topics && topicId ? findTopicInTree(topics, topicId) : null;
   const {
