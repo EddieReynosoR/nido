@@ -19,18 +19,25 @@ import DeleteNoteDialog from '@/components/notes/DeleteNoteDialog';
 import DeleteTopicDialog from '@/components/topics/DeleteTopicDialog';
 import EditTopicDialog from '@/components/topics/EditTopicDialog';
 import TopicTreeItem from '@/components/topics/TopicTreeItem';
+import NoteTreeItem from '@/components/notes/NoteTreeItem';
 import { SidebarMenu } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
 import { useDeleteNote } from '@/hooks/notes/use-note';
 import { useDeleteTopic, useReparent } from '@/hooks/topics/use-topic';
-import { canDropTopic, findTopicPath } from '@/lib/topic-tree';
+import {
+  canDropTopic,
+  findNoteTopicPath,
+  findTopicPath,
+} from '@/lib/topic-tree';
 import { cn } from '@/lib/utils';
+import type { NoteTreeItem as NoteTreeItemType } from '@/types/note.types';
 import type { Topic, TopicDragData } from '@/types/topic.types';
 import { useParams } from 'react-router';
 import { useNoteTabs } from '@/hooks/notes/use-note-tabs';
 
 type TopicTreeProps = {
   topics: Topic[];
+  notes: NoteTreeItemType[];
   spaceId: string;
 };
 
@@ -123,7 +130,7 @@ function TopicTreeRoot({
   );
 }
 
-export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
+export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
   const { accessToken } = useAuth();
   const { mutate: reparentTopic } = useReparent(accessToken);
   const { mutate: deleteTopic, isPending: isDeleting } =
@@ -134,6 +141,22 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
   );
 
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+
+  const { noteId } = useParams();
+  const [revealedNoteId, setRevealedNoteId] = useState<string | undefined>();
+
+  if (noteId !== revealedNoteId) {
+    setRevealedNoteId(noteId);
+
+    const path = noteId ? findNoteTopicPath(topics, noteId) : null;
+    if (path) {
+      setOpenIds((previous) =>
+        path.every((id) => previous.has(id))
+          ? previous
+          : new Set([...previous, ...path])
+      );
+    }
+  }
   const [addChildOpen, setAddChildOpen] = useState<boolean>(false);
   const [parentTopic, setParentTopic] = useState<Topic | null>(null);
   const [topicToDelete, setTopicToDelete] = useState<Topic | null>(null);
@@ -202,7 +225,7 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
       {
         onSuccess: () => {
           toast.success('Intro note deleted');
-          closeTab(noteTopicToDelete.topicId);
+          closeTab({ type: 'topic', id: noteTopicToDelete.topicId });
           setNoteTopicToDelete(null);
         },
       }
@@ -235,6 +258,14 @@ export default function TopicTree({ topics, spaceId }: TopicTreeProps) {
         onDelete={handleDelete}
         onDeleteNote={handleDeleteNote}
       />
+
+      {notes.length ? (
+        <SidebarMenu>
+          {notes.map((note) => (
+            <NoteTreeItem key={note.noteId} note={note} />
+          ))}
+        </SidebarMenu>
+      ) : null}
 
       <AddTopicDialog
         open={addChildOpen}

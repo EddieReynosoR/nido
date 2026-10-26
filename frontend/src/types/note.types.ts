@@ -1,7 +1,8 @@
 import type { PartialBlock } from '@blocknote/core';
 
 export type CreateNoteRequest = {
-  topicId: string;
+  spaceId: string;
+  topicId: string | null;
   title: string;
   content: PartialBlock[];
   isIntro: boolean;
@@ -11,7 +12,8 @@ export type Note = {
   noteId: string;
   title: string;
   content: PartialBlock[];
-  topicId: string;
+  spaceId: string;
+  topicId: string | null;
   isIntro: boolean;
   version: number;
   updatedAt: string;
@@ -25,4 +27,18 @@ export type UpdateNoteContentRequest = {
 export type NoteContentResponse = {
   version: number;
   updatedAt: string;
+};
+
+export type NoteTreeItem = {
+  noteId: string;
+  title: string;
+  spaceId: string;
+  topicId: string | null;
+  version: number;
+  updatedAt: string;
+};
+
+export type NoteTab = {
+  type: 'topic' | 'note';
+  id: string;
 };

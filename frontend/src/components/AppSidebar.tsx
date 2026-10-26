@@ -44,7 +44,7 @@ import { toggleTheme } from '@/lib/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useSpace } from '@/context/SpaceContext';
 import { useAuth } from '@/context/AuthContext';
-import { useTopics } from '@/hooks/topics/use-topic';
+import { useSpaceContent } from '@/hooks/spaces/use-space-content';
 import { toast } from 'sonner';
 
 export default function AppSidebar() {
@@ -61,14 +61,15 @@ export default function AppSidebar() {
     refetch,
   } = useSpace();
   const {
-    data: topicsData,
+    data: content,
     isLoading: topicsLoading,
     error: topicsError,
     isError: topicsIsError,
     refetch: refetchTopics,
-  } = useTopics(activeSpace?.spaceId, accessToken);
+  } = useSpaceContent(activeSpace?.spaceId, accessToken);
 
-  const topics = topicsData ?? [];
+  const topics = content?.topics ?? [];
+  const rootNotes = content?.notes ?? [];
 
   const [open, setOpen] = useState<boolean>(false);
   const [addTopicOpen, setAddTopicOpen] = useState<boolean>(false);
@@ -202,8 +203,12 @@ export default function AppSidebar() {
                   Retry
                 </button>
               </div>
-            ) : topics.length && activeSpace ? (
-              <TopicTree topics={topics} spaceId={activeSpace.spaceId} />
+            ) : (topics.length || rootNotes.length) && activeSpace ? (
+              <TopicTree
+                topics={topics}
+                notes={rootNotes}
+                spaceId={activeSpace.spaceId}
+              />
             ) : (
               <p className="px-2 py-1.5 text-sm text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden select-none">
                 No folders

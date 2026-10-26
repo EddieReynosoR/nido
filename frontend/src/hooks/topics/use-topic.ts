@@ -1,18 +1,15 @@
-import {
-  create,
-  deleteTopic,
-  getTopics,
-  reparent,
-  updateTopic,
-} from '@/api/topic';
+import { create, deleteTopic, reparent, updateTopic } from '@/api/topic';
+import { spaceContentKey } from '@/hooks/spaces/use-space-content';
 import { HttpError } from '@/lib/http';
 import { errorToast, invalidSessionToast } from '@/lib/toast';
 import {
   insertTopicInTree,
+  mapTopicsInContent,
   moveTopicInTree,
   removeTopicFromTree,
   updateTopicInTree,
 } from '@/lib/topic-tree';
+import type { SpaceContent } from '@/types/space.types';
 import type {
   CreateTopicRequest,
   DeleteTopicRequest,
@@ -20,19 +17,7 @@ import type {
   Topic,
   UpdateTopicRequest,
 } from '@/types/topic.types';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
-export function useTopics(
-  spaceId: string | undefined,
-  accessToken: string | null
-) {
-  return useQuery({
-    queryKey: ['topics', spaceId],
-    queryFn: () => getTopics(spaceId!, accessToken!),
-    enabled: !!spaceId && !!accessToken,
-    staleTime: 30000,
-  });
-}
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export function useCreate(accessToken: string | null) {
   const queryClient = useQueryClient();
@@ -41,17 +26,17 @@ export function useCreate(accessToken: string | null) {
     void,
     HttpError,
     CreateTopicRequest,
-    { previous?: Topic[]; tempId: string }
+    { previous?: SpaceContent | null; tempId: string }
   >({
     mutationFn: async (request) => {
       if (!accessToken) throw new HttpError('NO_SESSION', 400);
       await create(request, accessToken);
     },
     onMutate: async (request) => {
-      const queryKey = ['topics', request.spaceId];
+      const queryKey = spaceContentKey(request.spaceId);
       await queryClient.cancelQueries({ queryKey });
 
-      const previous = queryClient.getQueryData<Topic[]>(queryKey);
+      const previous = queryClient.getQueryData<SpaceContent | null>(queryKey);
       const tempId = crypto.randomUUID();
 
       const optimisticTopic: Topic = {
@@ -63,19 +48,23 @@ export function useCreate(accessToken: string | null) {
         deletedAt: null,
         topics: [],
         noteId: null,
+        notes: [],
       };
 
-      queryClient.setQueryData<Topic[]>(queryKey, (old) =>
-        old
-          ? insertTopicInTree(old, optimisticTopic, request.parentTopicId)
-          : old
+      queryClient.setQueryData<SpaceContent | null>(queryKey, (old) =>
+        mapTopicsInContent(old, (topics) =>
+          insertTopicInTree(topics, optimisticTopic, request.parentTopicId)
+        )
       );
 
       return { previous, tempId };
     },
     onError: (error, request, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(['topics', request.spaceId], context.previous);
+        queryClient.setQueryData(
+          spaceContentKey(request.spaceId),
+          context.previous
+        );
       }
 
       if (error.message === 'NO_SESSION') invalidSessionToast();
@@ -92,7 +81,9 @@ export function useCreate(accessToken: string | null) {
       }
     },
     onSettled: (_data, _error, request) => {
-      queryClient.invalidateQueries({ queryKey: ['topics', request.spaceId] });
+      queryClient.invalidateQueries({
+        queryKey: spaceContentKey(request.spaceId),
+      });
     },
   });
 }
@@ -100,27 +91,37 @@ export function useCreate(accessToken: string | null) {
 export function useReparent(accessToken: string | null) {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, ReparentRequest, { previous?: Topic[] }>({
+  return useMutation<
+    void,
+    Error,
+    ReparentRequest,
+    { previous?: SpaceContent | null }
+  >({
     mutationFn: async (request) => {
       if (!accessToken) throw new Error('NO_SESSION');
       await reparent(request, accessToken);
     },
     onMutate: async (request) => {
-      const queryKey = ['topics', request.spaceId];
+      const queryKey = spaceContentKey(request.spaceId);
 
       await queryClient.cancelQueries({ queryKey });
 
-      const previous = queryClient.getQueryData<Topic[]>(queryKey);
+      const previous = queryClient.getQueryData<SpaceContent | null>(queryKey);
 
-      queryClient.setQueryData<Topic[]>(queryKey, (old) =>
-        old ? moveTopicInTree(old, request.topicId, request.newParentId) : old
+      queryClient.setQueryData<SpaceContent | null>(queryKey, (old) =>
+        mapTopicsInContent(old, (topics) =>
+          moveTopicInTree(topics, request.topicId, request.newParentId)
+        )
       );
 
       return { previous };
     },
     onError: (error, request, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(['topics', request.spaceId], context.previous);
+        queryClient.setQueryData(
+          spaceContentKey(request.spaceId),
+          context.previous
+        );
       }
 
       if (error.message === 'NO_SESSION') invalidSessionToast();
@@ -133,7 +134,9 @@ export function useReparent(accessToken: string | null) {
       }
     },
     onSettled: (_data, _error, request) => {
-      queryClient.invalidateQueries({ queryKey: ['topics', request.spaceId] });
+      queryClient.invalidateQueries({
+        queryKey: spaceContentKey(request.spaceId),
+      });
     },
   });
 }
@@ -145,27 +148,32 @@ export function useDeleteTopic(accessToken: string | null) {
     void,
     HttpError,
     DeleteTopicRequest,
-    { previous?: Topic[] }
+    { previous?: SpaceContent | null }
   >({
     mutationFn: async (request) => {
       if (!accessToken) throw new HttpError('NO_SESSION', 400);
       await deleteTopic(request.topicId, accessToken);
     },
     onMutate: async (request) => {
-      const queryKey = ['topics', request.spaceId];
+      const queryKey = spaceContentKey(request.spaceId);
       await queryClient.cancelQueries({ queryKey });
 
-      const previous = queryClient.getQueryData<Topic[]>(queryKey);
+      const previous = queryClient.getQueryData<SpaceContent | null>(queryKey);
 
-      queryClient.setQueryData<Topic[]>(queryKey, (old) =>
-        old ? removeTopicFromTree(old, request.topicId) : old
+      queryClient.setQueryData<SpaceContent | null>(queryKey, (old) =>
+        mapTopicsInContent(old, (topics) =>
+          removeTopicFromTree(topics, request.topicId)
+        )
       );
 
       return { previous };
     },
     onError: (error, request, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(['topics', request.spaceId], context.previous);
+        queryClient.setQueryData(
+          spaceContentKey(request.spaceId),
+          context.previous
+        );
       }
 
       if (error.message === 'NO_SESSION') invalidSessionToast();
@@ -178,7 +186,9 @@ export function useDeleteTopic(accessToken: string | null) {
       }
     },
     onSettled: (_data, _error, request) => {
-      queryClient.invalidateQueries({ queryKey: ['topics', request.spaceId] });
+      queryClient.invalidateQueries({
+        queryKey: spaceContentKey(request.spaceId),
+      });
     },
   });
 }
@@ -190,32 +200,35 @@ export function useUpdateTopic(accessToken: string | null) {
     void,
     HttpError,
     UpdateTopicRequest,
-    { previous?: Topic[] }
+    { previous?: SpaceContent | null }
   >({
     mutationFn: async (request) => {
       if (!accessToken) throw new HttpError('NO_SESSION', 400);
       await updateTopic(request, accessToken);
     },
     onMutate: async (request) => {
-      const queryKey = ['topics', request.spaceId];
+      const queryKey = spaceContentKey(request.spaceId);
       await queryClient.cancelQueries({ queryKey });
 
-      const previous = queryClient.getQueryData<Topic[]>(queryKey);
+      const previous = queryClient.getQueryData<SpaceContent | null>(queryKey);
 
-      queryClient.setQueryData<Topic[]>(queryKey, (old) =>
-        old
-          ? updateTopicInTree(old, request.topicId, {
-              name: request.name,
-              color: request.color,
-            })
-          : old
+      queryClient.setQueryData<SpaceContent | null>(queryKey, (old) =>
+        mapTopicsInContent(old, (topics) =>
+          updateTopicInTree(topics, request.topicId, {
+            name: request.name,
+            color: request.color,
+          })
+        )
       );
 
       return { previous };
     },
     onError: (error, request, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(['topics', request.spaceId], context.previous);
+        queryClient.setQueryData(
+          spaceContentKey(request.spaceId),
+          context.previous
+        );
       }
 
       if (error.message === 'NO_SESSION') invalidSessionToast();
@@ -232,7 +245,9 @@ export function useUpdateTopic(accessToken: string | null) {
       }
     },
     onSettled: (_data, _error, request) => {
-      queryClient.invalidateQueries({ queryKey: ['topics', request.spaceId] });
+      queryClient.invalidateQueries({
+        queryKey: spaceContentKey(request.spaceId),
+      });
     },
   });
 }

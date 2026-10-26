@@ -1,5 +1,9 @@
 import { executeFetch, BASE_URL } from './auth';
-import type { getSpaceResponse, Space } from '@/types/space.types';
+import type {
+  getSpaceResponse,
+  Space,
+  SpaceContent,
+} from '@/types/space.types';
 
 export function getSpaces(accessToken: string) {
   return executeFetch<getSpaceResponse>(
@@ -54,5 +58,18 @@ export function editSpace(spaceId: string, name: string, accessToken: string) {
       body: JSON.stringify({ name, spaceId }),
     },
     'There was an error editing the space.'
+  );
+}
+
+export function getSpaceContent(spaceId: string, accessToken: string) {
+  return executeFetch<SpaceContent>(
+    `${BASE_URL}/api/space/content?spaceId=${encodeURIComponent(spaceId)}`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+    'There was an error fetching the content of the respective space.'
   );
 }

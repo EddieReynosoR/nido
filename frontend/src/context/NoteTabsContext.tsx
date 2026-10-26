@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { NoteTabsContext } from '@/hooks/notes/use-note-tabs';
-import { readNoteTabs, writeNoteTabs } from '@/lib/note-tabs';
+import { isSameTab, readNoteTabs, writeNoteTabs } from '@/lib/note-tabs';
+import type { NoteTab } from '@/types/note.types';
 
 export function NoteTabsProvider({
   spaceId,
@@ -19,7 +20,7 @@ export function NoteTabsProvider({
   }
 
   const updateTabs = useCallback(
-    (update: (ids: string[]) => string[]) => {
+    (update: (ids: NoteTab[]) => NoteTab[]) => {
       if (!spaceId) return;
 
       setState((previous) => {
@@ -34,15 +35,17 @@ export function NoteTabsProvider({
   );
 
   const openTab = useCallback(
-    (topicId: string) =>
-      updateTabs((ids) => (ids.includes(topicId) ? ids : [...ids, topicId])),
+    (tab: NoteTab) =>
+      updateTabs((ids) =>
+        ids.some((item) => isSameTab(item, tab)) ? ids : [...ids, tab]
+      ),
     [updateTabs]
   );
 
   const closeTab = useCallback(
-    (topicId: string) => {
-      const index = state.ids.indexOf(topicId);
-      updateTabs((ids) => ids.filter((id) => id !== topicId));
+    (tab: NoteTab) => {
+      const index = state.ids.findIndex((item) => isSameTab(item, tab));
+      updateTabs((ids) => ids.filter((item) => !isSameTab(item, tab)));
 
       if (index === -1) return null;
       return state.ids[index + 1] ?? state.ids[index - 1] ?? null;
@@ -51,7 +54,7 @@ export function NoteTabsProvider({
   );
 
   const retainTabs = useCallback(
-    (isValid: (topicId: string) => boolean) =>
+    (isValid: (tab: NoteTab) => boolean) =>
       updateTabs((ids) =>
         ids.every(isValid) ? ids : ids.filter((id) => isValid(id))
       ),

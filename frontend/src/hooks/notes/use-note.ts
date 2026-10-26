@@ -1,11 +1,6 @@
 import { useCallback } from 'react';
 import type { PartialBlock } from '@blocknote/core';
-import {
-  createNote,
-  deleteNote,
-  getNote,
-  updateNoteContent,
-} from '@/api/note';
+import { createNote, deleteNote, getNote, updateNoteContent } from '@/api/note';
 import { HttpError } from '@/lib/http';
 import {
   discardNoteSaves,
@@ -14,14 +9,15 @@ import {
   restoreNoteSaves,
 } from '@/lib/note-save-queue';
 import { errorToast, invalidSessionToast } from '@/lib/toast';
-import { setTopicNoteId } from '@/lib/topic-tree';
+import { spaceContentKey } from '@/hooks/spaces/use-space-content';
+import { mapTopicsInContent, setTopicNoteId } from '@/lib/topic-tree';
 import type {
   CreateNoteRequest,
   Note,
   NoteContentResponse,
   UpdateNoteContentRequest,
 } from '@/types/note.types';
-import type { Topic } from '@/types/topic.types';
+import type { SpaceContent } from '@/types/space.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useNote(
@@ -54,14 +50,21 @@ export function useCreateNote(
     },
     onSuccess: (note) => {
       queryClient.setQueryData(['note', note.noteId], note);
-      queryClient.setQueryData<Topic[]>(['topics', spaceId], (old) =>
-        old ? setTopicNoteId(old, note.topicId, note.noteId) : old
+      const { topicId } = note;
+      if (!topicId) return;
+
+      queryClient.setQueryData<SpaceContent | null>(
+        spaceContentKey(spaceId),
+        (old) =>
+          mapTopicsInContent(old, (topics) =>
+            setTopicNoteId(topics, topicId, note.noteId)
+          )
       );
     },
     onError: (error, request) => {
       if (error.message === 'NO_SESSION') invalidSessionToast();
       else {
-        queryClient.invalidateQueries({ queryKey: ['topics', spaceId] });
+        queryClient.invalidateQueries({ queryKey: spaceContentKey(spaceId) });
         errorToast({
           id: `note-create-error-${request.topicId}`,
           error,
@@ -82,7 +85,7 @@ export function useDeleteNote(
     void,
     HttpError,
     { noteId: string; topicId: string },
-    { previous?: Topic[] }
+    { previous?: SpaceContent | null }
   >({
     mutationFn: async ({ noteId }) => {
       if (!accessToken) throw new HttpError('NO_SESSION', 400);
@@ -95,13 +98,15 @@ export function useDeleteNote(
       // unmount flush would otherwise save the note being deleted.
       discardNoteSaves(noteId);
 
-      const queryKey = ['topics', spaceId];
+      const queryKey = spaceContentKey(spaceId);
       await queryClient.cancelQueries({ queryKey });
 
-      const previous = queryClient.getQueryData<Topic[]>(queryKey);
+      const previous = queryClient.getQueryData<SpaceContent | null>(queryKey);
 
-      queryClient.setQueryData<Topic[]>(queryKey, (old) =>
-        old ? setTopicNoteId(old, topicId, null) : old
+      queryClient.setQueryData<SpaceContent | null>(queryKey, (old) =>
+        mapTopicsInContent(old, (topics) =>
+          setTopicNoteId(topics, topicId, null)
+        )
       );
 
       return { previous };
@@ -113,7 +118,7 @@ export function useDeleteNote(
       restoreNoteSaves(noteId);
 
       if (context?.previous) {
-        queryClient.setQueryData(['topics', spaceId], context.previous);
+        queryClient.setQueryData(spaceContentKey(spaceId), context.previous);
       }
 
       if (error.message === 'NO_SESSION') invalidSessionToast();
@@ -125,7 +130,7 @@ export function useDeleteNote(
         });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['topics', spaceId] });
+      queryClient.invalidateQueries({ queryKey: spaceContentKey(spaceId) });
     },
   });
 }

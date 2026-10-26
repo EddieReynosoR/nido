@@ -1,3 +1,5 @@
+import type { NoteTreeItem } from '@/types/note.types';
+import type { SpaceContent } from '@/types/space.types';
 import type { Topic, TopicDragData } from '@/types/topic.types';
 
 const byName = (a: Topic, b: Topic) => a.name.localeCompare(b.name);
@@ -221,5 +223,57 @@ export function canDropTopic(
     targetId !== dragged.parentId &&
     targetId !== dragged.topicId &&
     !(targetId !== null && dragged.descendantIds.has(targetId))
+  );
+}
+
+export function mapTopicsInContent(
+  content: SpaceContent | null | undefined,
+  update: (topics: Topic[]) => Topic[]
+): SpaceContent | null | undefined {
+  if (!content) return content;
+
+  const topics = update(content.topics);
+
+  return topics === content.topics ? content : { ...content, topics };
+}
+
+export function findNoteTopicPath(
+  topics: Topic[],
+  noteId: string
+): string[] | null {
+  for (const topic of topics) {
+    if (topic.notes.some((note) => note.noteId === noteId)) {
+      return [topic.topicId];
+    }
+
+    const path = findNoteTopicPath(topic.topics, noteId);
+    if (path) return [topic.topicId, ...path];
+  }
+
+  return null;
+}
+
+function findNoteInTopics(
+  topics: Topic[],
+  noteId: string
+): NoteTreeItem | null {
+  for (const topic of topics) {
+    const note = topic.notes.find((item) => item.noteId === noteId);
+    if (note) return note;
+
+    const found = findNoteInTopics(topic.topics, noteId);
+    if (found) return found;
+  }
+
+  return null;
+}
+
+export function findNoteInContent(
+  content: SpaceContent,
+  noteId: string
+): NoteTreeItem | null {
+  return (
+    content.notes.find((note) => note.noteId === noteId) ??
+    findNoteInTopics(content.topics, noteId)
   );
 }
