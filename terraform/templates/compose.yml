@@ -1,0 +1,26 @@
+services:
+  backend:
+    image: ${BACKEND_IMAGE}
+    restart: unless-stopped
+    env_file: .env
+    expose:
+      - "9000"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ORIGIN_VERIFY: ${ORIGIN_VERIFY}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+
+volumes:
+  caddy_data:
+  caddy_config:

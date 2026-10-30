@@ -1,0 +1,68 @@
+#!/bin/bash
+# Arranque de la EC2: instala Docker, escribe la config de Nido y levanta los contenedores.
+# Los secretos no van aquí: start.sh los lee de SSM Parameter Store.
+set -euo pipefail
+exec > >(tee -a /var/log/nido-bootstrap.log) 2>&1
+
+# 1 GB de swap: t3.micro solo tiene 1 GB de RAM.
+if [ ! -f /swapfile ]; then
+  dd if=/dev/zero of=/swapfile bs=1M count=1024
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+fi
+
+dnf install -y docker
+systemctl enable --now docker
+
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl -fsSL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+mkdir -p /opt/nido
+cd /opt/nido
+
+cat > Caddyfile <<'NIDO_CADDY'
+${caddyfile}
+NIDO_CADDY
+
+cat > compose.yml <<'NIDO_COMPOSE'
+${compose_file}
+NIDO_COMPOSE
+
+cat > .env.base <<'NIDO_ENV'
+${env_file}
+NIDO_ENV
+
+# start.sh también lo usa scripts/deploy-backend.sh para actualizar el backend.
+cat > start.sh <<'NIDO_START'
+#!/bin/bash
+set -euo pipefail
+cd /opt/nido
+
+get() {
+  aws ssm get-parameter --region ${region} --with-decryption \
+    --name "/${project}/$1" --query Parameter.Value --output text
+}
+
+umask 077
+{
+  cat .env.base
+  echo "DB_PASSWORD=$(get db_password)"
+  echo "JWT_SECRET=$(get jwt_secret)"
+  echo "ORIGIN_VERIFY=$(get origin_verify)"
+} > .env
+
+%{ if use_ghcr_auth ~}
+get ghcr_token | docker login ghcr.io -u "${ghcr_username}" --password-stdin
+%{ endif ~}
+
+docker compose pull
+docker compose up -d --remove-orphans
+docker image prune -f
+NIDO_START
+chmod 700 start.sh
+
+./start.sh

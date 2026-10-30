@@ -54,3 +54,13 @@ frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 frontend/*.local
+
+# ======================
+# TERRAFORM
+# ======================
+terraform/**/.terraform/
+terraform/**/*.tfstate
+terraform/**/*.tfstate.*
+terraform/**/*.tfplan
+terraform/terraform.tfvars
+terraform/backend.hcl

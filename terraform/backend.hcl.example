@@ -1,0 +1,2 @@
+bucket = "nido-tfstate-REEMPLAZA-CON-TU-ID"
+region = "us-east-1"

@@ -1,0 +1,8 @@
+region      = "us-east-1"
+domain_name = "ejemplo.com"
+app_domain  = "nido.ejemplo.com"
+acme_email  = "tu-correo@ejemplo.com"
+
+# Solo si el paquete de ghcr.io es privado:
+# ghcr_username = "EddieReynosoR"
+# ghcr_token    = "ghp_..."

@@ -1,0 +1,16 @@
+{
+	email ${acme_email}
+}
+
+${origin_domain} {
+	# Solo CloudFront conoce este valor; cualquier otra petición recibe 403.
+	@cloudfront header X-Origin-Verify {$ORIGIN_VERIFY}
+
+	handle @cloudfront {
+		reverse_proxy backend:9000
+	}
+
+	handle {
+		respond 403
+	}
+}
