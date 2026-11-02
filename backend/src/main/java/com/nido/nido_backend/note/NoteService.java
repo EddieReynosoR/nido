@@ -10,10 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +33,9 @@ public class NoteService {
         spaceRepository.findBySpaceIdAndUserIdAndDeletedAtIsNull(request.spaceId(), UUID.fromString(userId))
                 .orElseThrow(() -> new NoSuchElementException("Space not found"));
 
+        if (request.isIntro() && request.topicId() == null)
+            throw new IllegalArgumentException("An intro note must belong to a topic");
+
         NoteEntity entity = new NoteEntity();
         if (request.topicId() != null) {
             topicRepository.findByTopicIdAndSpaceId(request.topicId(), request.spaceId())
@@ -44,13 +44,32 @@ public class NoteService {
             entity.setTopicId(request.topicId());
         }
 
-        entity.setTitle(request.title());
+        entity.setTitle(!request.isIntro() ?
+                resolveUniqueTitle(request.title(), request.spaceId(), request.topicId()) :
+                request.title());
         entity.setContent(noteContentMapper.toJsonString(request.content()));
         entity.setSpaceId(request.spaceId());
         entity.setIntro(request.isIntro());
 
         noteRepository.save(entity);
         return NoteResponse.from(entity, request.content());
+    }
+
+    private String resolveUniqueTitle(String name, UUID spaceId, UUID topicId) {
+        List<String> cousins = topicId == null ?
+                noteRepository.findRootTitlesStartingWith(name, spaceId) :
+                noteRepository.findByTopicTitlesStartingWith(name, spaceId, topicId);
+        var cousinsSet = cousins.stream()
+                .map(t -> t.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toSet());
+
+        if (!cousinsSet.contains(name.toLowerCase(Locale.ROOT))) return name;
+
+        int suffix = 2;
+        while (cousinsSet.contains("%s (%d)".formatted(name, suffix).toLowerCase(Locale.ROOT)))
+            suffix++;
+
+        return "%s (%d)".formatted(name, suffix);
     }
 
     @Transactional(readOnly = true)
