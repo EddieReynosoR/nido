@@ -19,6 +19,19 @@ export function buildIntroNoteRequest(topic: Topic): CreateNoteRequest {
   };
 }
 
+export function buildTopicNoteRequest(
+  topic: Topic,
+  title: string
+): CreateNoteRequest {
+  return {
+    spaceId: topic.spaceId,
+    topicId: topic.topicId,
+    title,
+    content: buildNoteContent(title),
+    isIntro: false,
+  };
+}
+
 export function buildRootNoteRequest(
   spaceId: string,
   title: string

@@ -15,6 +15,7 @@ import {
 import { Folder } from 'lucide-react';
 import { toast } from 'sonner';
 import AddTopicDialog from '@/components/topics/AddTopicDialog';
+import AddNoteDialog from '@/components/notes/AddNoteDialog';
 import DeleteNoteDialog from '@/components/notes/DeleteNoteDialog';
 import DeleteTopicDialog from '@/components/topics/DeleteTopicDialog';
 import EditTopicDialog from '@/components/topics/EditTopicDialog';
@@ -46,6 +47,7 @@ type TopicTreeRootProps = {
   openIds: Set<string>;
   onOpenChange: (topicId: string, open: boolean) => void;
   onAddChild: (topic: Topic) => void;
+  onAddNote: (topic: Topic) => void;
   onEdit: (topic: Topic) => void;
   onDelete: (topic: Topic) => void;
   onDeleteNote: (topic: Topic) => void;
@@ -71,6 +73,7 @@ function TopicTreeRoot({
   openIds,
   onOpenChange,
   onAddChild,
+  onAddNote,
   onEdit,
   onDelete,
   onDeleteNote,
@@ -109,6 +112,7 @@ function TopicTreeRoot({
             activePath={activePath?.[0] === topic.topicId ? activePath : null}
             onOpenChange={onOpenChange}
             onAddChild={onAddChild}
+            onAddNote={onAddNote}
             onEdit={onEdit}
             onDelete={onDelete}
             onDeleteNote={onDeleteNote}
@@ -159,6 +163,8 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
   }
   const [addChildOpen, setAddChildOpen] = useState<boolean>(false);
   const [parentTopic, setParentTopic] = useState<Topic | null>(null);
+  const [addNoteOpen, setAddNoteOpen] = useState<boolean>(false);
+  const [noteParentTopic, setNoteParentTopic] = useState<Topic | null>(null);
   const [topicToDelete, setTopicToDelete] = useState<Topic | null>(null);
   const [noteTopicToDelete, setNoteTopicToDelete] = useState<Topic | null>(
     null
@@ -182,6 +188,15 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
     (topic: Topic) => {
       setParentTopic(topic);
       setAddChildOpen(true);
+      handleOpenChange(topic.topicId, true);
+    },
+    [handleOpenChange]
+  );
+
+  const handleAddNote = useCallback(
+    (topic: Topic) => {
+      setNoteParentTopic(topic);
+      setAddNoteOpen(true);
       handleOpenChange(topic.topicId, true);
     },
     [handleOpenChange]
@@ -254,6 +269,7 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
         openIds={openIds}
         onOpenChange={handleOpenChange}
         onAddChild={handleAddChild}
+        onAddNote={handleAddNote}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onDeleteNote={handleDeleteNote}
@@ -271,6 +287,12 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
         open={addChildOpen}
         onOpenChange={setAddChildOpen}
         parentTopic={parentTopic}
+      />
+
+      <AddNoteDialog
+        topic={noteParentTopic}
+        open={addNoteOpen}
+        onOpenChange={setAddNoteOpen}
       />
 
       <EditTopicDialog

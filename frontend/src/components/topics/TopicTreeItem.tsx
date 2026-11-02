@@ -63,6 +63,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
   activePath,
   onOpenChange,
   onAddChild,
+  onAddNote,
   onEdit,
   onDelete,
   onDeleteNote,
@@ -88,6 +89,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
           <TopicActions
             topic={topic}
             onAddChild={onAddChild}
+            onAddNote={onAddNote}
             onEdit={onEdit}
             onDelete={onDelete}
             onDeleteNote={onDeleteNote}
@@ -125,6 +127,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
           <TopicActions
             topic={topic}
             onAddChild={onAddChild}
+            onAddNote={onAddNote}
             onEdit={onEdit}
             onDelete={onDelete}
             onDeleteNote={onDeleteNote}
@@ -143,6 +146,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
                 }
                 onOpenChange={onOpenChange}
                 onAddChild={onAddChild}
+                onAddNote={onAddNote}
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onDeleteNote={onDeleteNote}
@@ -164,6 +168,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
   activePath,
   onOpenChange,
   onAddChild,
+  onAddNote,
   onEdit,
   onDelete,
   onDeleteNote,
@@ -189,6 +194,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
           <TopicActions
             topic={topic}
             onAddChild={onAddChild}
+            onAddNote={onAddNote}
             onEdit={onEdit}
             onDelete={onDelete}
             onDeleteNote={onDeleteNote}
@@ -222,6 +228,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
           <TopicActions
             topic={topic}
             onAddChild={onAddChild}
+            onAddNote={onAddNote}
             onEdit={onEdit}
             onDelete={onDelete}
             onDeleteNote={onDeleteNote}
@@ -240,6 +247,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
                 }
                 onOpenChange={onOpenChange}
                 onAddChild={onAddChild}
+                onAddNote={onAddNote}
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onDeleteNote={onDeleteNote}
