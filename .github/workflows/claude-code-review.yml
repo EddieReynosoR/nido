@@ -13,7 +13,8 @@ jobs:
     if: |
       !github.event.pull_request.draft && 
       github.event.pull_request.head.repo.full_name == github.repository 
-      && !contains(github.event.pull_request.title, '[skip-review]')
+      && !contains(github.event.pull_request.title, '[skip-review]') &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
 
     runs-on: ubuntu-latest
     timeout-minutes: 15
