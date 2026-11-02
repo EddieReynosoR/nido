@@ -10,7 +10,11 @@ import {
 } from '@/lib/note-save-queue';
 import { errorToast, invalidSessionToast } from '@/lib/toast';
 import { spaceContentKey } from '@/hooks/spaces/use-space-content';
-import { mapTopicsInContent, setTopicNoteId } from '@/lib/topic-tree';
+import {
+  insertRootNoteSorted,
+  mapTopicsInContent,
+  setTopicNoteId,
+} from '@/lib/topic-tree';
 import type {
   CreateNoteRequest,
   Note,
@@ -48,8 +52,25 @@ export function useCreateNote(
 
       return note;
     },
-    onSuccess: (note) => {
+    onSuccess: (note, request) => {
       queryClient.setQueryData(['note', note.noteId], note);
+
+      if (!request.isIntro) {
+        queryClient.setQueryData<SpaceContent | null>(
+          spaceContentKey(spaceId),
+          (old) =>
+            insertRootNoteSorted(old, {
+              noteId: note.noteId,
+              title: note.title,
+              spaceId: note.spaceId,
+              topicId: note.topicId,
+              version: note.version,
+              updatedAt: note.updatedAt,
+            })
+        );
+        return;
+      }
+
       const { topicId } = note;
       if (!topicId) return;
 
@@ -66,11 +87,19 @@ export function useCreateNote(
       else {
         queryClient.invalidateQueries({ queryKey: spaceContentKey(spaceId) });
         errorToast({
-          id: `note-create-error-${request.topicId}`,
+          id: `note-create-error-${spaceId}`,
           error,
+          customMessage:
+            error.status === 409
+              ? `A note titled "${request.title}" already exists here.`
+              : undefined,
           title: 'Could not create the note',
         });
       }
+    },
+    onSettled: (_data, _error, request) => {
+      if (request.isIntro) return;
+      queryClient.invalidateQueries({ queryKey: spaceContentKey(spaceId) });
     },
   });
 }

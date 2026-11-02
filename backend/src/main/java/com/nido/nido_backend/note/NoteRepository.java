@@ -13,6 +13,30 @@ import java.util.UUID;
 
 public interface NoteRepository extends JpaRepository<NoteEntity, UUID> {
     @Query("""
+    SELECT n.title
+        FROM Note n
+    WHERE LOWER(SUBSTRING(n.title, 1, LENGTH(:prefix))) = LOWER(:prefix)
+      AND n.spaceId = :spaceId
+      AND n.topicId IS NULL
+      AND n.deletedAt IS NULL
+    """)
+    List<String> findRootTitlesStartingWith(@Param("prefix") String prefix,
+                                            @Param("spaceId") UUID spaceId);
+
+    @Query("""
+    SELECT n.title
+        FROM Note n
+    WHERE LOWER(SUBSTRING(n.title, 1, LENGTH(:prefix))) = LOWER(:prefix)
+      AND n.spaceId = :spaceId
+      AND n.topicId = :topicId
+      AND n.isIntro IS FALSE
+      AND n.deletedAt IS NULL
+    """)
+    List<String> findByTopicTitlesStartingWith(@Param("prefix") String prefix,
+                                               @Param("spaceId") UUID spaceId,
+                                               @Param("topicId") UUID topicId);
+
+    @Query("""
         SELECT n.topicId as topicId, n.noteId as noteId FROM Note n
         WHERE n.topicId IN :topicIds
             AND n.isIntro = true

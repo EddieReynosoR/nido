@@ -3,21 +3,23 @@ package com.nido.nido_backend.note;
 import com.nido.nido_backend.note.dto.*;
 import com.nido.nido_backend.note.exception.NoteVersionConflictException;
 import com.nido.nido_backend.shared.util.NoteContentMapper;
+import com.nido.nido_backend.shared.util.UniqueNames;
 import com.nido.nido_backend.spaces.SpaceRepository;
-import com.nido.nido_backend.spaces.SpaceService;
 import com.nido.nido_backend.topic.TopicRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.NoSuchElementException;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class NoteService {
+
+    private static final int MAX_TITLE_LENGTH = 150;
 
     private final NoteRepository noteRepository;
     private final NoteContentMapper noteContentMapper;
@@ -36,6 +38,9 @@ public class NoteService {
         spaceRepository.findBySpaceIdAndUserIdAndDeletedAtIsNull(request.spaceId(), UUID.fromString(userId))
                 .orElseThrow(() -> new NoSuchElementException("Space not found"));
 
+        if (request.isIntro() && request.topicId() == null)
+            throw new IllegalArgumentException("An intro note must belong to a topic");
+
         NoteEntity entity = new NoteEntity();
         if (request.topicId() != null) {
             topicRepository.findByTopicIdAndSpaceId(request.topicId(), request.spaceId())
@@ -44,13 +49,21 @@ public class NoteService {
             entity.setTopicId(request.topicId());
         }
 
-        entity.setTitle(request.title());
+        entity.setTitle(!request.isIntro() ?
+                resolveUniqueTitle(request.title(), request.spaceId(), request.topicId()) :
+                request.title());
         entity.setContent(noteContentMapper.toJsonString(request.content()));
         entity.setSpaceId(request.spaceId());
         entity.setIntro(request.isIntro());
 
         noteRepository.save(entity);
         return NoteResponse.from(entity, request.content());
+    }
+
+    private String resolveUniqueTitle(String name, UUID spaceId, UUID topicId) {
+        return UniqueNames.resolve(name, MAX_TITLE_LENGTH, prefix -> topicId == null
+                ? noteRepository.findRootTitlesStartingWith(prefix, spaceId)
+                : noteRepository.findByTopicTitlesStartingWith(prefix, spaceId, topicId));
     }
 
     @Transactional(readOnly = true)

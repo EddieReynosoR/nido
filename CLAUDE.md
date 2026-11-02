@@ -16,6 +16,10 @@ there is no free-form canvas positioning.
 - Backend: `cd backend && ./mvnw -q compile`
 - Frontend: `cd frontend && pnpm lint && pnpm build`
 
+## Code style
+
+- Never add code comments (frontend or backend).
+
 ## Easy to get wrong
 
 - Rows are soft-deleted (`deleted_at`); every query must filter live rows.

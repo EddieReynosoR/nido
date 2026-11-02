@@ -12,7 +12,7 @@ import SpaceSwitcher, {
 } from '@/components/spaces/SpaceSwitcher';
 import AddSpaceForm from '@/components/spaces/AddSpaceForm';
 import TopicTree from '@/components/topics/TopicTree';
-import AddTopicDialog from '@/components/topics/AddTopicDialog';
+import AddRootItemDialog from '@/components/spaces/AddRootItemDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -173,14 +173,17 @@ export default function AppSidebar() {
             Folders
           </SidebarGroupLabel>
           <SidebarGroupAction
-            aria-label="Add folder"
+            aria-label="Add folder or note"
             className="text-accent-green"
             disabled={!activeSpace}
             onClick={() => setAddTopicOpen(true)}
           >
             <Plus />
           </SidebarGroupAction>
-          <AddTopicDialog open={addTopicOpen} onOpenChange={setAddTopicOpen} />
+          <AddRootItemDialog
+            open={addTopicOpen}
+            onOpenChange={setAddTopicOpen}
+          />
           <SidebarGroupContent>
             {topicsLoading ? (
               <SidebarMenu>

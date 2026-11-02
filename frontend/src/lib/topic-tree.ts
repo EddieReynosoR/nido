@@ -237,6 +237,20 @@ export function mapTopicsInContent(
   return topics === content.topics ? content : { ...content, topics };
 }
 
+export function insertRootNoteSorted(
+  content: SpaceContent | null | undefined,
+  note: NoteTreeItem
+): SpaceContent | null | undefined {
+  if (!content) return content;
+
+  const notes = content.notes
+    .filter((n) => n.noteId !== note.noteId)
+    .concat(note)
+    .sort((a, b) => a.title.localeCompare(b.title));
+
+  return { ...content, notes };
+}
+
 export function findNoteTopicPath(
   topics: Topic[],
   noteId: string

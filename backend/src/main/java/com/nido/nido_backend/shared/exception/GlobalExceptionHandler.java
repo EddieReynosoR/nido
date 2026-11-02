@@ -124,6 +124,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String description = switch (constraint == null ? "" : constraint) {
             case "uq_topic_root_name_per_space_live", "uq_topic_name_per_parent_live" ->
                     "A topic with that name already exists at this level";
+            case "uq_note_title_per_space_root_live", "uq_note_title_per_topic_live" ->
+                    "A note with that title already exists here";
             case "uq_space_name_per_user_live" -> "A space with that name already exists";
             case "uq_users_email_live" -> "An account with that email already exists";
             default -> "The operation conflicts with an existing record";
