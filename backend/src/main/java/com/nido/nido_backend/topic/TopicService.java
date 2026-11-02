@@ -3,6 +3,7 @@ package com.nido.nido_backend.topic;
 import com.nido.nido_backend.note.NoteService;
 import com.nido.nido_backend.spaces.SpaceEntity;
 import com.nido.nido_backend.spaces.SpaceService;
+import com.nido.nido_backend.shared.util.UniqueNames;
 import com.nido.nido_backend.topic.dto.TopicRequest;
 import com.nido.nido_backend.topic.dto.TopicResponse;
 import com.nido.nido_backend.topic.dto.UpdateParentRequest;
@@ -17,6 +18,7 @@ import java.util.*;
 public class TopicService {
 
     private static final int MAX_ANCESTRY_DEPTH = 256;
+    private static final int MAX_NAME_LENGTH = 50;
 
     private final TopicRepository topicRepository;
     private final SpaceService spaceService;
@@ -112,19 +114,9 @@ public class TopicService {
     }
 
     private String resolveUniqueName(String name, UUID spaceId, UUID parentTopicId, UUID excludeTopicId) {
-        List<String> siblings = parentTopicId != null
-                ? topicRepository.findChildNamesStartingWith(name, parentTopicId, excludeTopicId)
-                : topicRepository.findRootNamesStartingWith(name, spaceId, excludeTopicId);
-
-        Set<String> taken = new HashSet<>();
-        for (String sibling : siblings) taken.add(sibling.toLowerCase(Locale.ROOT));
-
-        if (!taken.contains(name.toLowerCase(Locale.ROOT))) return name;
-
-        int suffix = 2;
-        while (taken.contains("%s (%d)".formatted(name, suffix).toLowerCase(Locale.ROOT))) suffix++;
-
-        return "%s (%d)".formatted(name, suffix);
+        return UniqueNames.resolve(name, MAX_NAME_LENGTH, prefix -> parentTopicId != null
+                ? topicRepository.findChildNamesStartingWith(prefix, parentTopicId, excludeTopicId)
+                : topicRepository.findRootNamesStartingWith(prefix, spaceId, excludeTopicId));
     }
 
     private void assertNotDescendant(UUID topicId, UUID newParentId, UUID spaceId) {

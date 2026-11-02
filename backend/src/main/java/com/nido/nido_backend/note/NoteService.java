@@ -3,18 +3,23 @@ package com.nido.nido_backend.note;
 import com.nido.nido_backend.note.dto.*;
 import com.nido.nido_backend.note.exception.NoteVersionConflictException;
 import com.nido.nido_backend.shared.util.NoteContentMapper;
+import com.nido.nido_backend.shared.util.UniqueNames;
 import com.nido.nido_backend.spaces.SpaceRepository;
-import com.nido.nido_backend.spaces.SpaceService;
 import com.nido.nido_backend.topic.TopicRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
+import java.util.NoSuchElementException;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class NoteService {
+
+    private static final int MAX_TITLE_LENGTH = 150;
 
     private final NoteRepository noteRepository;
     private final NoteContentMapper noteContentMapper;
@@ -56,20 +61,9 @@ public class NoteService {
     }
 
     private String resolveUniqueTitle(String name, UUID spaceId, UUID topicId) {
-        List<String> cousins = topicId == null ?
-                noteRepository.findRootTitlesStartingWith(name, spaceId) :
-                noteRepository.findByTopicTitlesStartingWith(name, spaceId, topicId);
-        var cousinsSet = cousins.stream()
-                .map(t -> t.toLowerCase(Locale.ROOT))
-                .collect(Collectors.toSet());
-
-        if (!cousinsSet.contains(name.toLowerCase(Locale.ROOT))) return name;
-
-        int suffix = 2;
-        while (cousinsSet.contains("%s (%d)".formatted(name, suffix).toLowerCase(Locale.ROOT)))
-            suffix++;
-
-        return "%s (%d)".formatted(name, suffix);
+        return UniqueNames.resolve(name, MAX_TITLE_LENGTH, prefix -> topicId == null
+                ? noteRepository.findRootTitlesStartingWith(prefix, spaceId)
+                : noteRepository.findByTopicTitlesStartingWith(prefix, spaceId, topicId));
     }
 
     @Transactional(readOnly = true)
