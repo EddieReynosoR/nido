@@ -2,10 +2,18 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { FileX, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+  FilePlus,
+  FileX,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import type { Topic, TopicTreeItemProps } from '@/types/topic.types';
 import { SidebarMenuAction, useSidebar } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
@@ -13,6 +21,7 @@ import { cn } from '@/lib/utils';
 export function TopicActions({
   topic,
   onAddChild,
+  onAddNote,
   onEdit,
   onDelete,
   onDeleteNote,
@@ -20,6 +29,7 @@ export function TopicActions({
 }: {
   topic: Topic;
   onAddChild: TopicTreeItemProps['onAddChild'];
+  onAddNote: TopicTreeItemProps['onAddNote'];
   onEdit: TopicTreeItemProps['onEdit'];
   onDelete: TopicTreeItemProps['onDelete'];
   onDeleteNote: TopicTreeItemProps['onDeleteNote'];
@@ -45,6 +55,10 @@ export function TopicActions({
         side={isMobile ? 'bottom' : 'right'}
         sideOffset={4}
       >
+        <DropdownMenuLabel className="text-xs text-muted-foreground">
+          Topics
+        </DropdownMenuLabel>
+
         <DropdownMenuItem onSelect={() => onAddChild(topic)}>
           <Plus className="text-accent-green" />
           Add topic
@@ -64,6 +78,15 @@ export function TopicActions({
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
+
+        <DropdownMenuLabel className="text-xs text-muted-foreground">
+          Notes
+        </DropdownMenuLabel>
+
+        <DropdownMenuItem onSelect={() => onAddNote(topic)}>
+          <FilePlus className="text-accent-green" />
+          Add note
+        </DropdownMenuItem>
 
         <DropdownMenuItem
           variant="destructive"

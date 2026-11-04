@@ -50,6 +50,7 @@ export type TopicTreeItemProps = {
   activePath: string[] | null;
   onOpenChange: (topicId: string, open: boolean) => void;
   onAddChild: (topic: Topic) => void;
+  onAddNote: (topic: Topic) => void;
   onEdit: (topic: Topic) => void;
   onDelete: (topic: Topic) => void;
   onDeleteNote: (topic: Topic) => void;

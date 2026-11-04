@@ -12,6 +12,7 @@ import { errorToast, invalidSessionToast } from '@/lib/toast';
 import { spaceContentKey } from '@/hooks/spaces/use-space-content';
 import {
   insertRootNoteSorted,
+  insertTopicNoteSorted,
   mapTopicsInContent,
   setTopicNoteId,
 } from '@/lib/topic-tree';
@@ -56,17 +57,22 @@ export function useCreateNote(
       queryClient.setQueryData(['note', note.noteId], note);
 
       if (!request.isIntro) {
+        const treeItem = {
+          noteId: note.noteId,
+          title: note.title,
+          spaceId: note.spaceId,
+          topicId: note.topicId,
+          version: note.version,
+          updatedAt: note.updatedAt,
+        };
+        const parentTopicId = note.topicId;
+
         queryClient.setQueryData<SpaceContent | null>(
           spaceContentKey(spaceId),
           (old) =>
-            insertRootNoteSorted(old, {
-              noteId: note.noteId,
-              title: note.title,
-              spaceId: note.spaceId,
-              topicId: note.topicId,
-              version: note.version,
-              updatedAt: note.updatedAt,
-            })
+            parentTopicId
+              ? insertTopicNoteSorted(old, parentTopicId, treeItem)
+              : insertRootNoteSorted(old, treeItem)
         );
         return;
       }

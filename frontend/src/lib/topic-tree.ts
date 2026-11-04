@@ -251,6 +251,50 @@ export function insertRootNoteSorted(
   return { ...content, notes };
 }
 
+function applyNoteInsert(
+  topics: Topic[],
+  topicId: string,
+  note: NoteTreeItem
+): UpdateResult {
+  let updated = false;
+  const next: Topic[] = [];
+
+  for (const topic of topics) {
+    if (topic.topicId === topicId) {
+      updated = true;
+      const notes = topic.notes
+        .filter((n) => n.noteId !== note.noteId)
+        .concat(note)
+        .sort((a, b) => a.title.localeCompare(b.title));
+      next.push({ ...topic, notes });
+      continue;
+    }
+
+    const result = applyNoteInsert(topic.topics, topicId, note);
+
+    if (result.updated) {
+      updated = true;
+      next.push({ ...topic, topics: result.topics });
+    } else {
+      next.push(topic);
+    }
+  }
+
+  return { topics: next, updated };
+}
+
+export function insertTopicNoteSorted(
+  content: SpaceContent | null | undefined,
+  topicId: string,
+  note: NoteTreeItem
+): SpaceContent | null | undefined {
+  return mapTopicsInContent(content, (topics) => {
+    const { topics: result, updated } = applyNoteInsert(topics, topicId, note);
+
+    return updated ? result : topics;
+  });
+}
+
 export function findNoteTopicPath(
   topics: Topic[],
   noteId: string

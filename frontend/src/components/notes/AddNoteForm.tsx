@@ -10,17 +10,20 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { addNoteSchema, type AddNoteSchema } from '@/lib/note-schema';
-import { buildRootNoteRequest } from '@/lib/note';
+import { buildRootNoteRequest, buildTopicNoteRequest } from '@/lib/note';
 import { useCreateNote } from '@/hooks/notes/use-note';
 import { useAuth } from '@/context/AuthContext';
 import { useSpace } from '@/context/SpaceContext';
+import type { Topic } from '@/types/topic.types';
 
 type AddNoteFormProps = {
+  topic?: Topic | null;
   onSuccess: () => void;
   onPendingChange?: (pending: boolean) => void;
 };
 
 export default function AddNoteForm({
+  topic,
   onSuccess,
   onPendingChange,
 }: AddNoteFormProps) {
@@ -44,7 +47,11 @@ export default function AddNoteForm({
   const onSubmit = ({ title }: AddNoteSchema) => {
     if (!activeSpace) return;
 
-    createNote(buildRootNoteRequest(activeSpace.spaceId, title), {
+    const request = topic
+      ? buildTopicNoteRequest(topic, title)
+      : buildRootNoteRequest(activeSpace.spaceId, title);
+
+    createNote(request, {
       onSuccess: (note) => {
         toast.success('Note created');
         onSuccess();
