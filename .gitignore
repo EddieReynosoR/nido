@@ -3,7 +3,7 @@
 # ======================
 .env
 *.log
-docs/
+/docs/
 
 # ======================
 # BACKEND (SPRING BOOT)
