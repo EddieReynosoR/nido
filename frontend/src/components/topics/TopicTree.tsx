@@ -33,8 +33,9 @@ import {
 import { cn } from '@/lib/utils';
 import type { NoteTreeItem as NoteTreeItemType } from '@/types/note.types';
 import type { Topic, TopicDragData } from '@/types/topic.types';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useNoteTabs } from '@/hooks/notes/use-note-tabs';
+import { tabPath } from '@/lib/note-tabs';
 
 type TopicTreeProps = {
   topics: Topic[];
@@ -177,6 +178,7 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
   );
   const [topicToEdit, setTopicToEdit] = useState<Topic | null>(null);
   const { closeTab } = useNoteTabs();
+  const navigate = useNavigate();
 
   const handleOpenChange = useCallback((topicId: string, open: boolean) => {
     setOpenIds((previous) => {
@@ -269,6 +271,11 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
       },
       {
         onSuccess: () => {
+          toast.success('Note deleted');
+          const next = closeTab({ type: 'note', id: noteToDelete.noteId });
+          if (noteId === noteToDelete.noteId) {
+            navigate(next ? tabPath(next) : '/');
+          }
           setNoteToDelete(null);
         },
       }
