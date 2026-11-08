@@ -9,34 +9,38 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Loader2 } from 'lucide-react';
-import type { Topic } from '@/types/topic.types';
 import { useLastValue } from '@/hooks/use-last-value';
 
 export default function DeleteNoteDialog({
-  topic,
+  name,
+  isIntro,
   open,
   onOpenChange,
   onConfirm,
   isPending,
 }: {
-  topic: Topic | null;
+  name: string | null;
+  isIntro: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onConfirm?: () => void;
   isPending?: boolean;
 }) {
-  const displayedTopic = useLastValue(topic);
+  const displayedName = useLastValue(name);
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Delete the intro note of “{displayedTopic?.name}”?
+            {isIntro
+              ? `Delete the intro note of “${displayedName}”?`
+              : `Delete “${displayedName}”?`}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            This will delete the intro note of this folder. Its sub-folders and
-            their notes are not affected. This action cannot be undone.
+            {isIntro
+              ? 'This will delete the intro note of this folder. Its sub-folders and their notes are not affected. This action cannot be undone.'
+              : 'This will delete this note. This action cannot be undone.'}
           </AlertDialogDescription>
         </AlertDialogHeader>
 

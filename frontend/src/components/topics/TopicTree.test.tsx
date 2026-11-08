@@ -1,0 +1,118 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import TopicTree from '@/components/topics/TopicTree';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { NoteTabsProvider } from '@/context/NoteTabsContext';
+import { useSpaceContent } from '@/hooks/spaces/use-space-content';
+import type { NoteTreeItem } from '@/types/note.types';
+import type { SpaceContent } from '@/types/space.types';
+import type { Topic } from '@/types/topic.types';
+
+const SPACE_ID = 'space-1';
+
+const server = vi.hoisted(() => ({
+  content: null as SpaceContent | null,
+}));
+
+vi.mock('@/context/AuthContext', () => ({
+  useAuth: () => ({ accessToken: 'token' }),
+}));
+
+vi.mock('@/api/space', () => ({
+  getSpaceContent: vi.fn(async () => structuredClone(server.content)),
+}));
+
+vi.mock('@/api/note', () => ({
+  createNote: vi.fn(),
+  getNote: vi.fn(),
+  updateNoteContent: vi.fn(),
+  deleteNote: vi.fn(async (noteId: string) => {
+    if (!server.content) return null;
+    server.content.notes = server.content.notes.filter(
+      (note) => note.noteId !== noteId
+    );
+    return null;
+  }),
+}));
+
+function note(noteId: string, title: string, topicId: string | null) {
+  return {
+    noteId,
+    title,
+    spaceId: SPACE_ID,
+    topicId,
+    version: 1,
+    updatedAt: '2026-11-01T00:00:00Z',
+  } satisfies NoteTreeItem;
+}
+
+function topic(topicId: string, name: string, notes: NoteTreeItem[]) {
+  return {
+    topicId,
+    name,
+    color: '#888888',
+    parentId: null,
+    spaceId: SPACE_ID,
+    deletedAt: null,
+    topics: [],
+    noteId: null,
+    notes,
+  } satisfies Topic;
+}
+
+function Sidebar() {
+  const { data } = useSpaceContent(SPACE_ID, 'token');
+  if (!data) return null;
+
+  return (
+    <TopicTree topics={data.topics} notes={data.notes} spaceId={SPACE_ID} />
+  );
+}
+
+function renderSidebar() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <TooltipProvider>
+          <SidebarProvider>
+            <NoteTabsProvider spaceId={SPACE_ID}>
+              <Sidebar />
+            </NoteTabsProvider>
+          </SidebarProvider>
+        </TooltipProvider>
+      </MemoryRouter>
+    </QueryClientProvider>
+  );
+}
+
+describe('TopicTree note deletion', () => {
+  beforeEach(() => {
+    server.content = {
+      topics: [topic('topic-1', 'Biology', [])],
+      notes: [note('note-root', 'Root note', null)],
+    };
+  });
+
+  it('deleting a root note after confirming removes it from the sidebar', async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Note options for Root note' })
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Delete note' }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() =>
+      expect(screen.queryByText('Root note')).not.toBeInTheDocument()
+    );
+  });
+});
