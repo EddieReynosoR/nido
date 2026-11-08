@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { deleteNote } from '@/api/note';
 import NoteTabs from '@/components/notes/NoteTabs';
@@ -80,10 +80,12 @@ function topic(topicId: string, name: string, notes: NoteTreeItem[]) {
 
 function Sidebar() {
   const { data } = useSpaceContent(SPACE_ID, 'token');
+  const { pathname } = useLocation();
   if (!data) return null;
 
   return (
     <>
+      <output data-testid="location">{pathname}</output>
       <NoteTabs />
       <TopicTree topics={data.topics} notes={data.notes} spaceId={SPACE_ID} />
     </>
@@ -263,6 +265,25 @@ describe('TopicTree note deletion', () => {
     expect(within(tabs).getByRole('link', { name: 'Note B' })).toHaveAttribute(
       'aria-current',
       'page'
+    );
+  });
+
+  it("deleting the only open note I'm viewing takes me home", async () => {
+    const user = userEvent.setup();
+    renderSidebar('/notes/note-root');
+
+    expect(await screen.findByTestId('location')).toHaveTextContent(
+      '/notes/note-root'
+    );
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Note options for Root note' })
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Delete note' }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(/^\/$/)
     );
   });
 });
