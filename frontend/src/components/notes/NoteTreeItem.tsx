@@ -25,7 +25,7 @@ export default function NoteTreeItem({
 }: {
   note: NoteTreeItemType;
   nested?: boolean;
-  onDelete?: (note: NoteTreeItemType) => void;
+  onDelete: (note: NoteTreeItemType) => void;
 }) {
   const navigate = useNavigate();
   const { noteId } = useParams();
@@ -44,6 +44,7 @@ export default function NoteTreeItem({
             <NoteLabel note={note} />
           </button>
         </SidebarMenuSubButton>
+        <NoteActions note={note} onDelete={onDelete} />
       </SidebarMenuSubItem>
     );
   }
@@ -58,7 +59,7 @@ export default function NoteTreeItem({
       >
         <NoteLabel note={note} />
       </SidebarMenuButton>
-      {onDelete && <NoteActions note={note} onDelete={onDelete} />}
+      <NoteActions note={note} onDelete={onDelete} />
     </SidebarMenuItem>
   );
 }

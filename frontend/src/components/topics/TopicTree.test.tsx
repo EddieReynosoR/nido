@@ -32,9 +32,16 @@ vi.mock('@/api/note', () => ({
   updateNoteContent: vi.fn(),
   deleteNote: vi.fn(async (noteId: string) => {
     if (!server.content) return null;
+    const removeFrom = (topics: Topic[]) => {
+      for (const topic of topics) {
+        topic.notes = topic.notes.filter((note) => note.noteId !== noteId);
+        removeFrom(topic.topics);
+      }
+    };
     server.content.notes = server.content.notes.filter(
       (note) => note.noteId !== noteId
     );
+    removeFrom(server.content.topics);
     return null;
   }),
 }));
@@ -114,5 +121,32 @@ describe('TopicTree note deletion', () => {
     await waitFor(() =>
       expect(screen.queryByText('Root note')).not.toBeInTheDocument()
     );
+  });
+
+  it('deleting a note inside a topic after confirming removes it from that topic', async () => {
+    server.content = {
+      topics: [
+        topic('topic-1', 'Biology', [
+          note('note-nested', 'Cell structure', 'topic-1'),
+        ]),
+      ],
+      notes: [],
+    };
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.dblClick(await screen.findByText('Biology'));
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Note options for Cell structure',
+      })
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Delete note' }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() =>
+      expect(screen.queryByText('Cell structure')).not.toBeInTheDocument()
+    );
+    expect(screen.getByText('Biology')).toBeInTheDocument();
   });
 });

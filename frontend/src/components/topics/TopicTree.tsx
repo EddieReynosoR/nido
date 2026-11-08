@@ -51,6 +51,7 @@ type TopicTreeRootProps = {
   onEdit: (topic: Topic) => void;
   onDelete: (topic: Topic) => void;
   onDeleteNote: (topic: Topic) => void;
+  onDeleteNoteItem: (note: NoteTreeItemType) => void;
 };
 
 const ROOT_DROPPABLE_ID = 'topic-root-dropzone';
@@ -77,6 +78,7 @@ function TopicTreeRoot({
   onEdit,
   onDelete,
   onDeleteNote,
+  onDeleteNoteItem,
 }: TopicTreeRootProps) {
   const { source } = useDragOperation();
   const dragged = source?.data as TopicDragData | undefined;
@@ -116,6 +118,7 @@ function TopicTreeRoot({
             onEdit={onEdit}
             onDelete={onDelete}
             onDeleteNote={onDeleteNote}
+            onDeleteNoteItem={onDeleteNoteItem}
           />
         ))}
       </SidebarMenu>
@@ -298,6 +301,7 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onDeleteNote={handleDeleteIntroNote}
+        onDeleteNoteItem={handleDeleteNote}
       />
 
       {notes.length ? (
