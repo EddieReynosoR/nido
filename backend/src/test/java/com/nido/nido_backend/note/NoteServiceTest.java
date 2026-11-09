@@ -131,6 +131,58 @@ class NoteServiceTest {
     }
 
     @Test
+    void checksUniquenessInTheNotesRealTopicWhenTheRequestSendsADifferentTopicId() {
+        var note = regularNote("Old title");
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(noteRepository.findByTopicTitlesStartingWith(anyString(), eq(spaceId), eq(topicId), eq(note.getNoteId())))
+                .thenReturn(List.of("Lecture notes"));
+
+        var response = noteService.renameNote(
+                note.getNoteId(), new RenameNoteRequest("Lecture notes", 1L, UUID.randomUUID()), userId.toString());
+
+        assertEquals("Lecture notes (2)", response.title());
+    }
+
+    @Test
+    void checksUniquenessInTheNotesRealTopicWhenTheRequestSendsNoTopicId() {
+        var note = regularNote("Old title");
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(noteRepository.findByTopicTitlesStartingWith(anyString(), eq(spaceId), eq(topicId), eq(note.getNoteId())))
+                .thenReturn(List.of("Lecture notes"));
+
+        var response = noteService.renameNote(
+                note.getNoteId(), new RenameNoteRequest("Lecture notes", 1L, null), userId.toString());
+
+        assertEquals("Lecture notes (2)", response.title());
+    }
+
+    @Test
+    void checksUniquenessAmongRootNotesWhenTheNoteIsInTheRootAndTheRequestSendsATopicId() {
+        var note = regularNote("Old title");
+        note.setTopicId(null);
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(noteRepository.findRootTitlesStartingWith(anyString(), eq(spaceId), eq(note.getNoteId())))
+                .thenReturn(List.of("Lecture notes"));
+
+        var response = noteService.renameNote(
+                note.getNoteId(), new RenameNoteRequest("Lecture notes", 1L, topicId), userId.toString());
+
+        assertEquals("Lecture notes (2)", response.title());
+    }
+
+    @Test
+    void acceptsARequestTopicIdThatIsEqualButNotTheSameInstance() {
+        var note = regularNote("Old title");
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        var equalTopicId = new UUID(topicId.getMostSignificantBits(), topicId.getLeastSignificantBits());
+
+        var response = noteService.renameNote(
+                note.getNoteId(), new RenameNoteRequest("Lecture notes", 1L, equalTopicId), userId.toString());
+
+        assertEquals("Lecture notes", response.title());
+    }
+
+    @Test
     void rejectsRenamingAnIntroNote() {
         var note = regularNote("Math");
         note.setIntro(true);
