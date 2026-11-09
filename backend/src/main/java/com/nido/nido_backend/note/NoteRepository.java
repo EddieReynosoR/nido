@@ -15,7 +15,7 @@ public interface NoteRepository extends JpaRepository<NoteEntity, UUID> {
     @Query("""
     SELECT n.title
         FROM Note n
-    WHERE LOWER(SUBSTRING(n.title, 1, LENGTH(:prefix))) = LOWER(:prefix)
+    WHERE SUBSTRING(n.title, 1, LENGTH(:prefix)) = :prefix
       AND n.spaceId = :spaceId
       AND n.topicId IS NULL
       AND n.deletedAt IS NULL
@@ -28,7 +28,7 @@ public interface NoteRepository extends JpaRepository<NoteEntity, UUID> {
     @Query("""
     SELECT n.title
         FROM Note n
-    WHERE LOWER(SUBSTRING(n.title, 1, LENGTH(:prefix))) = LOWER(:prefix)
+    WHERE SUBSTRING(n.title, 1, LENGTH(:prefix)) = :prefix
       AND n.spaceId = :spaceId
       AND n.topicId = :topicId
       AND n.isIntro IS FALSE

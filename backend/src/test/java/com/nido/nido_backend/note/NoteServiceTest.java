@@ -79,7 +79,20 @@ class NoteServiceTest {
     }
 
     @Test
-    void addsTwoInParenthesesWhenAnotherNoteInTheSamePlaceHasThatTitleIgnoringCase() {
+    void addsTwoInParenthesesWhenAnotherNoteInTheSamePlaceHasExactlyThatTitle() {
+        var note = regularNote("Old title");
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(noteRepository.findByTopicTitlesStartingWith(anyString(), eq(spaceId), eq(topicId), eq(note.getNoteId())))
+                .thenReturn(List.of("Lecture notes"));
+
+        var response = noteService.renameNote(
+                note.getNoteId(), new RenameNoteRequest("Lecture notes", 1L, topicId), userId.toString());
+
+        assertEquals("Lecture notes (2)", response.title());
+    }
+
+    @Test
+    void keepsTheRequestedTitleWhenAnotherNoteHasThatTitleWithDifferentCase() {
         var note = regularNote("Old title");
         when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
         when(noteRepository.findByTopicTitlesStartingWith(anyString(), eq(spaceId), eq(topicId), eq(note.getNoteId())))
@@ -88,7 +101,7 @@ class NoteServiceTest {
         var response = noteService.renameNote(
                 note.getNoteId(), new RenameNoteRequest("Lecture notes", 1L, topicId), userId.toString());
 
-        assertEquals("Lecture notes (2)", response.title());
+        assertEquals("Lecture notes", response.title());
     }
 
     @Test
@@ -105,7 +118,7 @@ class NoteServiceTest {
     }
 
     @Test
-    void keepsTheRequestedTitleWhenOnlyTheNoteItselfHasThatTitleIgnoringCase() {
+    void keepsTheRequestedTitleWhenOnlyTheNoteItselfHasThatTitle() {
         var note = regularNote("algebra");
         when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
         when(noteRepository.findByTopicTitlesStartingWith(anyString(), eq(spaceId), eq(topicId), eq(note.getNoteId())))
