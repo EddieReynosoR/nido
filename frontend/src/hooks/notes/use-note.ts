@@ -14,6 +14,7 @@ import {
   insertRootNoteSorted,
   insertTopicNoteSorted,
   mapTopicsInContent,
+  removeNoteFromContent,
   setTopicNoteId,
 } from '@/lib/topic-tree';
 import type {
@@ -119,7 +120,7 @@ export function useDeleteNote(
   return useMutation<
     void,
     HttpError,
-    { noteId: string; topicId: string },
+    { noteId: string; topicId: string | null; isIntro: boolean },
     { previous?: SpaceContent | null }
   >({
     mutationFn: async ({ noteId }) => {
@@ -128,7 +129,7 @@ export function useDeleteNote(
       // never land after the DELETE.
       await enqueueNoteSave(noteId, () => deleteNote(noteId, accessToken));
     },
-    onMutate: async ({ noteId, topicId }) => {
+    onMutate: async ({ noteId, topicId, isIntro }) => {
       // Must happen before the optimistic update unmounts the editor, whose
       // unmount flush would otherwise save the note being deleted.
       discardNoteSaves(noteId);
@@ -139,9 +140,11 @@ export function useDeleteNote(
       const previous = queryClient.getQueryData<SpaceContent | null>(queryKey);
 
       queryClient.setQueryData<SpaceContent | null>(queryKey, (old) =>
-        mapTopicsInContent(old, (topics) =>
-          setTopicNoteId(topics, topicId, null)
-        )
+        isIntro && topicId
+          ? mapTopicsInContent(old, (topics) =>
+              setTopicNoteId(topics, topicId, null)
+            )
+          : removeNoteFromContent(old, noteId, topicId)
       );
 
       return { previous };

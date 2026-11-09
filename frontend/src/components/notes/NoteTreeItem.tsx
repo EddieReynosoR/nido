@@ -1,4 +1,5 @@
 import { FileText } from 'lucide-react';
+import NoteActions from '@/components/notes/NoteActions';
 import { useNavigate, useParams } from 'react-router';
 import {
   SidebarMenuButton,
@@ -7,6 +8,7 @@ import {
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import type { NoteTreeItem as NoteTreeItemType } from '@/types/note.types';
+import { revealOnHover, revealOnHoverSub } from '@/constants/const';
 
 function NoteLabel({ note }: { note: NoteTreeItemType }) {
   return (
@@ -20,9 +22,11 @@ function NoteLabel({ note }: { note: NoteTreeItemType }) {
 export default function NoteTreeItem({
   note,
   nested = false,
+  onDelete,
 }: {
   note: NoteTreeItemType;
   nested?: boolean;
+  onDelete: (note: NoteTreeItemType) => void;
 }) {
   const navigate = useNavigate();
   const { noteId } = useParams();
@@ -41,6 +45,11 @@ export default function NoteTreeItem({
             <NoteLabel note={note} />
           </button>
         </SidebarMenuSubButton>
+        <NoteActions
+          note={note}
+          onDelete={onDelete}
+          className={revealOnHoverSub}
+        />
       </SidebarMenuSubItem>
     );
   }
@@ -55,6 +64,7 @@ export default function NoteTreeItem({
       >
         <NoteLabel note={note} />
       </SidebarMenuButton>
+      <NoteActions note={note} onDelete={onDelete} className={revealOnHover} />
     </SidebarMenuItem>
   );
 }

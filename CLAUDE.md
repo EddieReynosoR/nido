@@ -26,3 +26,7 @@ there is no free-form canvas positioning.
 - Every endpoint checks the resource belongs to the JWT user.
 - Changing a JPA entity requires a new migration file, or the app won't boot.
 - Only free libraries and services; ask before adding a dependency.
+
+## Tracker
+
+Tracker: GitHub repo EddieReynosoR/nido, project EddieReynosoR #3 (Nido App), Status: Backlog

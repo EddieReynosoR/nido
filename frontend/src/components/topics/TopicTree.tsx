@@ -33,8 +33,10 @@ import {
 import { cn } from '@/lib/utils';
 import type { NoteTreeItem as NoteTreeItemType } from '@/types/note.types';
 import type { Topic, TopicDragData } from '@/types/topic.types';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useNoteTabs } from '@/hooks/notes/use-note-tabs';
+import { tabPath } from '@/lib/note-tabs';
+import { discardNoteSaves } from '@/lib/note-save-queue';
 
 type TopicTreeProps = {
   topics: Topic[];
@@ -51,6 +53,7 @@ type TopicTreeRootProps = {
   onEdit: (topic: Topic) => void;
   onDelete: (topic: Topic) => void;
   onDeleteNote: (topic: Topic) => void;
+  onDeleteNoteItem: (note: NoteTreeItemType) => void;
 };
 
 const ROOT_DROPPABLE_ID = 'topic-root-dropzone';
@@ -77,6 +80,7 @@ function TopicTreeRoot({
   onEdit,
   onDelete,
   onDeleteNote,
+  onDeleteNoteItem,
 }: TopicTreeRootProps) {
   const { source } = useDragOperation();
   const dragged = source?.data as TopicDragData | undefined;
@@ -116,6 +120,7 @@ function TopicTreeRoot({
             onEdit={onEdit}
             onDelete={onDelete}
             onDeleteNote={onDeleteNote}
+            onDeleteNoteItem={onDeleteNoteItem}
           />
         ))}
       </SidebarMenu>
@@ -146,7 +151,7 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
 
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
 
-  const { noteId } = useParams();
+  const { noteId, topicId } = useParams();
   const [revealedNoteId, setRevealedNoteId] = useState<string | undefined>();
 
   if (noteId !== revealedNoteId) {
@@ -169,8 +174,12 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
   const [noteTopicToDelete, setNoteTopicToDelete] = useState<Topic | null>(
     null
   );
+  const [noteToDelete, setNoteToDelete] = useState<NoteTreeItemType | null>(
+    null
+  );
   const [topicToEdit, setTopicToEdit] = useState<Topic | null>(null);
   const { closeTab } = useNoteTabs();
+  const navigate = useNavigate();
 
   const handleOpenChange = useCallback((topicId: string, open: boolean) => {
     setOpenIds((previous) => {
@@ -225,25 +234,45 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
     );
   };
 
-  const handleDeleteNote = useCallback((topic: Topic) => {
+  const handleDeleteIntroNote = useCallback((topic: Topic) => {
     setNoteTopicToDelete(topic);
   }, []);
 
-  const confirmDeleteNote = () => {
-    if (!noteTopicToDelete?.noteId) return;
+  const confirmDeleteIntroNote = () => {
+    const target = noteTopicToDelete;
+    if (!target?.noteId) return;
+
+    discardNoteSaves(target.noteId);
+    const next = closeTab({ type: 'topic', id: target.topicId });
+    if (topicId === target.topicId) {
+      navigate(next ? tabPath(next) : '/');
+    }
+    setNoteTopicToDelete(null);
 
     deleteNote(
-      {
-        noteId: noteTopicToDelete.noteId,
-        topicId: noteTopicToDelete.topicId,
-      },
-      {
-        onSuccess: () => {
-          toast.success('Intro note deleted');
-          closeTab({ type: 'topic', id: noteTopicToDelete.topicId });
-          setNoteTopicToDelete(null);
-        },
-      }
+      { noteId: target.noteId, topicId: target.topicId, isIntro: true },
+      { onSuccess: () => toast.success('Intro note deleted') }
+    );
+  };
+
+  const handleDeleteNote = useCallback((note: NoteTreeItemType) => {
+    setNoteToDelete(note);
+  }, []);
+
+  const confirmDeleteNote = () => {
+    const target = noteToDelete;
+    if (!target) return;
+
+    discardNoteSaves(target.noteId);
+    const next = closeTab({ type: 'note', id: target.noteId });
+    if (noteId === target.noteId) {
+      navigate(next ? tabPath(next) : '/');
+    }
+    setNoteToDelete(null);
+
+    deleteNote(
+      { noteId: target.noteId, topicId: target.topicId, isIntro: false },
+      { onSuccess: () => toast.success('Note deleted') }
     );
   };
 
@@ -272,13 +301,18 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
         onAddNote={handleAddNote}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        onDeleteNote={handleDeleteNote}
+        onDeleteNote={handleDeleteIntroNote}
+        onDeleteNoteItem={handleDeleteNote}
       />
 
       {notes.length ? (
         <SidebarMenu>
           {notes.map((note) => (
-            <NoteTreeItem key={note.noteId} note={note} />
+            <NoteTreeItem
+              key={note.noteId}
+              note={note}
+              onDelete={handleDeleteNote}
+            />
           ))}
         </SidebarMenu>
       ) : null}
@@ -315,10 +349,22 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
       />
 
       <DeleteNoteDialog
-        topic={noteTopicToDelete}
+        name={noteTopicToDelete?.name ?? null}
+        isIntro
         open={noteTopicToDelete !== null}
         onOpenChange={(open) => {
           if (!open && !isDeletingNote) setNoteTopicToDelete(null);
+        }}
+        onConfirm={confirmDeleteIntroNote}
+        isPending={isDeletingNote}
+      />
+
+      <DeleteNoteDialog
+        name={noteToDelete?.title ?? null}
+        isIntro={false}
+        open={noteToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingNote) setNoteToDelete(null);
         }}
         onConfirm={confirmDeleteNote}
         isPending={isDeletingNote}

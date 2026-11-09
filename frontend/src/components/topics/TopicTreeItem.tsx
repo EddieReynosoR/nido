@@ -67,6 +67,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
   onEdit,
   onDelete,
   onDeleteNote,
+  onDeleteNoteItem,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
   const { onSelect } = useTopicSelection(topic);
@@ -150,10 +151,16 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onDeleteNote={onDeleteNote}
+                onDeleteNoteItem={onDeleteNoteItem}
               />
             ))}
             {topic.notes.map((note) => (
-              <NoteTreeItem key={note.noteId} note={note} nested />
+              <NoteTreeItem
+                key={note.noteId}
+                note={note}
+                nested
+                onDelete={onDeleteNoteItem}
+              />
             ))}
           </SidebarMenuSub>
         </CollapsibleContent>
@@ -172,6 +179,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
   onEdit,
   onDelete,
   onDeleteNote,
+  onDeleteNoteItem,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
   const { onSelect } = useTopicSelection(topic);
@@ -251,10 +259,16 @@ const TopicTreeItem = memo(function TopicTreeItem({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onDeleteNote={onDeleteNote}
+                onDeleteNoteItem={onDeleteNoteItem}
               />
             ))}
             {topic.notes.map((note) => (
-              <NoteTreeItem key={note.noteId} note={note} nested />
+              <NoteTreeItem
+                key={note.noteId}
+                note={note}
+                nested
+                onDelete={onDeleteNoteItem}
+              />
             ))}
           </SidebarMenuSub>
         </CollapsibleContent>
