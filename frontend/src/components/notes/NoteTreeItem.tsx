@@ -8,6 +8,7 @@ import {
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import type { NoteTreeItem as NoteTreeItemType } from '@/types/note.types';
+import { revealOnHover, revealOnHoverSub } from '@/constants/const';
 
 function NoteLabel({ note }: { note: NoteTreeItemType }) {
   return (
@@ -44,7 +45,11 @@ export default function NoteTreeItem({
             <NoteLabel note={note} />
           </button>
         </SidebarMenuSubButton>
-        <NoteActions note={note} onDelete={onDelete} />
+        <NoteActions
+          note={note}
+          onDelete={onDelete}
+          className={revealOnHoverSub}
+        />
       </SidebarMenuSubItem>
     );
   }
@@ -59,7 +64,7 @@ export default function NoteTreeItem({
       >
         <NoteLabel note={note} />
       </SidebarMenuButton>
-      <NoteActions note={note} onDelete={onDelete} />
+      <NoteActions note={note} onDelete={onDelete} className={revealOnHover} />
     </SidebarMenuItem>
   );
 }

@@ -7,13 +7,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenuAction, useSidebar } from '@/components/ui/sidebar';
 import type { NoteTreeItem } from '@/types/note.types';
+import { cn } from '@/lib/utils';
 
 export default function NoteActions({
   note,
   onDelete,
+  className,
 }: {
   note: NoteTreeItem;
   onDelete: (note: NoteTreeItem) => void;
+  className?: string;
 }) {
   const { isMobile } = useSidebar();
 
@@ -22,7 +25,7 @@ export default function NoteActions({
       <DropdownMenuTrigger asChild>
         <SidebarMenuAction
           aria-label={`Note options for ${note.title}`}
-          className="text-sidebar-foreground/60"
+          className={cn('text-sidebar-foreground/60', className)}
         >
           <MoreHorizontal />
         </SidebarMenuAction>
