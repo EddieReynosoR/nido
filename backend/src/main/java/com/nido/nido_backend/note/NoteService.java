@@ -131,6 +131,9 @@ public class NoteService {
         if (!Objects.equals(note.getVersion(), request.version()))
             throw new NoteVersionConflictException(note.getVersion(), note.getUpdatedAt());
 
+        if (note.isIntro())
+            throw new IllegalArgumentException("An intro note can be only renamed by its topic");
+
         note.setTitle(resolveUniqueTitle(request.title(), note.getSpaceId(), request.topicId(), noteId));
         noteRepository.saveAndFlush(note);
 

@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -88,5 +89,54 @@ class NoteServiceTest {
                 note.getNoteId(), new RenameNoteRequest("Lecture notes", 1L, topicId), userId.toString());
 
         assertEquals("Lecture notes (2)", response.title());
+    }
+
+    @Test
+    void usesTheNextFreeNumberWhenTwoInParenthesesIsAlreadyTaken() {
+        var note = regularNote("Old title");
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(noteRepository.findByTopicTitlesStartingWith(anyString(), eq(spaceId), eq(topicId), eq(note.getNoteId())))
+                .thenReturn(List.of("Lecture notes", "Lecture notes (2)"));
+
+        var response = noteService.renameNote(
+                note.getNoteId(), new RenameNoteRequest("Lecture notes", 1L, topicId), userId.toString());
+
+        assertEquals("Lecture notes (3)", response.title());
+    }
+
+    @Test
+    void keepsTheRequestedTitleWhenOnlyTheNoteItselfHasThatTitleIgnoringCase() {
+        var note = regularNote("algebra");
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(noteRepository.findByTopicTitlesStartingWith(anyString(), eq(spaceId), eq(topicId), eq(note.getNoteId())))
+                .thenReturn(List.of());
+
+        var response = noteService.renameNote(
+                note.getNoteId(), new RenameNoteRequest("Algebra", 1L, topicId), userId.toString());
+
+        assertEquals("Algebra", response.title());
+    }
+
+    @Test
+    void rejectsRenamingAnIntroNote() {
+        var note = regularNote("Math");
+        note.setIntro(true);
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                noteService.renameNote(
+                        note.getNoteId(), new RenameNoteRequest("Algebra", 1L, topicId), userId.toString()));
+
+        assertEquals("Math", note.getTitle());
+    }
+
+    @Test
+    void throwsNotFoundWhenTheNoteDoesNotExistOrDoesNotBelongToTheUser() {
+        var noteId = UUID.randomUUID();
+        when(noteRepository.getByIdAndUserId(noteId, userId)).thenReturn(Optional.empty());
+
+        assertThrows(NoSuchElementException.class, () ->
+                noteService.renameNote(
+                        noteId, new RenameNoteRequest("Algebra", 1L, topicId), userId.toString()));
     }
 }
