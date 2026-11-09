@@ -22,7 +22,7 @@ export const spaceApiMock = () => ({
 
 export const noteApiMock = () => ({
   createNote: vi.fn(),
-  getNote: vi.fn(),
+  getNote: vi.fn(async () => null),
   updateNoteContent: vi.fn(),
   renameNote: vi.fn(),
   deleteNote: vi.fn(async (noteId: string) => {

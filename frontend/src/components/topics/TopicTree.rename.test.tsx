@@ -1,7 +1,8 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { renameNote } from '@/api/note';
+import { getNote, renameNote } from '@/api/note';
+import { HttpError } from '@/lib/http';
 import { renderSidebar, resetServerContent } from '@/test/topic-tree-utils';
 import { server } from '@/test/topic-tree-mocks';
 
@@ -148,5 +149,54 @@ describe('TopicTree note rename', () => {
         hidden: true,
       })
     ).toBeInTheDocument();
+  });
+
+  it('on a server error the dialog stays open, the old title is kept and a toast appears', async () => {
+    vi.mocked(renameNote).mockRejectedValue(new HttpError('Server error', 500));
+    const user = userEvent.setup();
+    renderSidebar('/notes/note-root');
+    const tabs = await screen.findByRole('navigation', { name: 'Open notes' });
+    expect(await within(tabs).findByText('Root note')).toBeInTheDocument();
+
+    const dialog = await openRenameDialog(user);
+    await renameTo(user, dialog, 'Lecture notes');
+
+    expect(
+      await screen.findByText('Could not rename the note')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('dialog', { name: 'Rename note' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: 'Note options for Root note',
+        hidden: true,
+      })
+    ).toBeInTheDocument();
+    expect(within(tabs).getByText('Root note')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', {
+        name: 'Note options for Lecture notes',
+        hidden: true,
+      })
+    ).not.toBeInTheDocument();
+  });
+
+  it('on a version conflict the note is refetched and a specific message is shown', async () => {
+    vi.mocked(renameNote).mockRejectedValue(
+      new HttpError('Version conflict', 409)
+    );
+    const user = userEvent.setup();
+    renderSidebar('/notes/note-root');
+    await waitFor(() => expect(getNote).toHaveBeenCalledTimes(1));
+
+    const dialog = await openRenameDialog(user);
+    await renameTo(user, dialog, 'Lecture notes');
+
+    expect(
+      await screen.findByText(/This note was changed elsewhere/)
+    ).toBeInTheDocument();
+    await waitFor(() => expect(getNote).toHaveBeenCalledTimes(2));
+    expect(getNote).toHaveBeenLastCalledWith('note-root', 'token');
   });
 });
