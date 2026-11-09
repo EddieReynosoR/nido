@@ -14,6 +14,7 @@ import {
   insertRootNoteSorted,
   insertTopicNoteSorted,
   mapTopicsInContent,
+  removeNoteFromContent,
   setTopicNoteId,
 } from '@/lib/topic-tree';
 import type {
@@ -138,13 +139,13 @@ export function useDeleteNote(
 
       const previous = queryClient.getQueryData<SpaceContent | null>(queryKey);
 
-      if (isIntro && topicId) {
-        queryClient.setQueryData<SpaceContent | null>(queryKey, (old) =>
-          mapTopicsInContent(old, (topics) =>
-            setTopicNoteId(topics, topicId, null)
-          )
-        );
-      }
+      queryClient.setQueryData<SpaceContent | null>(queryKey, (old) =>
+        isIntro && topicId
+          ? mapTopicsInContent(old, (topics) =>
+              setTopicNoteId(topics, topicId, null)
+            )
+          : removeNoteFromContent(old, noteId, topicId)
+      );
 
       return { previous };
     },

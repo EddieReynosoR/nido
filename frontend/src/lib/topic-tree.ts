@@ -295,6 +295,62 @@ export function insertTopicNoteSorted(
   });
 }
 
+function applyNoteRemove(
+  topics: Topic[],
+  topicId: string,
+  noteId: string
+): UpdateResult {
+  let updated = false;
+  const next: Topic[] = [];
+
+  for (const topic of topics) {
+    if (topic.topicId === topicId) {
+      updated = true;
+      next.push({
+        ...topic,
+        notes: topic.notes.filter((note) => note.noteId !== noteId),
+      });
+      continue;
+    }
+
+    const result = applyNoteRemove(topic.topics, topicId, noteId);
+
+    if (result.updated) {
+      updated = true;
+      next.push({ ...topic, topics: result.topics });
+    } else {
+      next.push(topic);
+    }
+  }
+
+  return { topics: next, updated };
+}
+
+export function removeNoteFromContent(
+  content: SpaceContent | null | undefined,
+  noteId: string,
+  topicId: string | null
+): SpaceContent | null | undefined {
+  if (!content) return content;
+
+  if (!topicId) {
+    return {
+      ...content,
+      notes: content.notes.filter((note) => note.noteId !== noteId),
+    };
+  }
+
+  return mapTopicsInContent(content, (topics) => {
+    const { topics: result, updated } = applyNoteRemove(
+      topics,
+      topicId,
+      noteId
+    );
+
+    return updated ? result : topics;
+  });
+}
+
 export function findNoteTopicPath(
   topics: Topic[],
   noteId: string

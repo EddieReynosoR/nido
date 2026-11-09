@@ -36,6 +36,7 @@ import type { Topic, TopicDragData } from '@/types/topic.types';
 import { useNavigate, useParams } from 'react-router';
 import { useNoteTabs } from '@/hooks/notes/use-note-tabs';
 import { tabPath } from '@/lib/note-tabs';
+import { discardNoteSaves } from '@/lib/note-save-queue';
 
 type TopicTreeProps = {
   topics: Topic[];
@@ -150,7 +151,7 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
 
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
 
-  const { noteId } = useParams();
+  const { noteId, topicId } = useParams();
   const [revealedNoteId, setRevealedNoteId] = useState<string | undefined>();
 
   if (noteId !== revealedNoteId) {
@@ -238,21 +239,19 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
   }, []);
 
   const confirmDeleteIntroNote = () => {
-    if (!noteTopicToDelete?.noteId) return;
+    const target = noteTopicToDelete;
+    if (!target?.noteId) return;
+
+    discardNoteSaves(target.noteId);
+    const next = closeTab({ type: 'topic', id: target.topicId });
+    if (topicId === target.topicId) {
+      navigate(next ? tabPath(next) : '/');
+    }
+    setNoteTopicToDelete(null);
 
     deleteNote(
-      {
-        noteId: noteTopicToDelete.noteId,
-        topicId: noteTopicToDelete.topicId,
-        isIntro: true,
-      },
-      {
-        onSuccess: () => {
-          toast.success('Intro note deleted');
-          closeTab({ type: 'topic', id: noteTopicToDelete.topicId });
-          setNoteTopicToDelete(null);
-        },
-      }
+      { noteId: target.noteId, topicId: target.topicId, isIntro: true },
+      { onSuccess: () => toast.success('Intro note deleted') }
     );
   };
 
@@ -261,24 +260,19 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
   }, []);
 
   const confirmDeleteNote = () => {
-    if (!noteToDelete) return;
+    const target = noteToDelete;
+    if (!target) return;
+
+    discardNoteSaves(target.noteId);
+    const next = closeTab({ type: 'note', id: target.noteId });
+    if (noteId === target.noteId) {
+      navigate(next ? tabPath(next) : '/');
+    }
+    setNoteToDelete(null);
 
     deleteNote(
-      {
-        noteId: noteToDelete.noteId,
-        topicId: noteToDelete.topicId,
-        isIntro: false,
-      },
-      {
-        onSuccess: () => {
-          toast.success('Note deleted');
-          const next = closeTab({ type: 'note', id: noteToDelete.noteId });
-          if (noteId === noteToDelete.noteId) {
-            navigate(next ? tabPath(next) : '/');
-          }
-          setNoteToDelete(null);
-        },
-      }
+      { noteId: target.noteId, topicId: target.topicId, isIntro: false },
+      { onSuccess: () => toast.success('Note deleted') }
     );
   };
 
