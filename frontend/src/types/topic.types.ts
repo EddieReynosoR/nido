@@ -55,4 +55,5 @@ export type TopicTreeItemProps = {
   onDelete: (topic: Topic) => void;
   onDeleteNote: (topic: Topic) => void;
   onDeleteNoteItem: (note: NoteTreeItem) => void;
+  onRenameNoteItem: (note: NoteTreeItem) => void;
 };

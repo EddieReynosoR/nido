@@ -1,6 +1,12 @@
 import { useCallback } from 'react';
 import type { PartialBlock } from '@blocknote/core';
-import { createNote, deleteNote, getNote, updateNoteContent } from '@/api/note';
+import {
+  createNote,
+  deleteNote,
+  getNote,
+  renameNote,
+  updateNoteContent,
+} from '@/api/note';
 import { HttpError } from '@/lib/http';
 import {
   discardNoteSaves,
@@ -16,11 +22,13 @@ import {
   mapTopicsInContent,
   removeNoteFromContent,
   setTopicNoteId,
+  updateNoteInContent,
 } from '@/lib/topic-tree';
 import type {
   CreateNoteRequest,
   Note,
   NoteContentResponse,
+  RenameNoteResponse,
   UpdateNoteContentRequest,
 } from '@/types/note.types';
 import type { SpaceContent } from '@/types/space.types';
@@ -166,6 +174,67 @@ export function useDeleteNote(
           error,
           title: 'Could not delete the note',
         });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: spaceContentKey(spaceId) });
+    },
+  });
+}
+
+export function useRenameNote(
+  accessToken: string | null,
+  spaceId: string | undefined
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    RenameNoteResponse,
+    HttpError,
+    { noteId: string; title: string; topicId: string | null }
+  >({
+    mutationFn: async ({ noteId, title, topicId }) => {
+      if (!accessToken) throw new HttpError('NO_SESSION', 400);
+
+      const response = await enqueueNoteSave(noteId, () => {
+        const version =
+          queryClient.getQueryData<Note>(['note', noteId])?.version ?? 0;
+
+        return renameNote(noteId, { title, version, topicId }, accessToken);
+      });
+      if (!response) {
+        throw new HttpError('The server did not return the renamed note.', 500);
+      }
+
+      return response;
+    },
+    onSuccess: (response, { noteId, topicId }) => {
+      queryClient.setQueryData<SpaceContent | null>(
+        spaceContentKey(spaceId),
+        (old) => updateNoteInContent(old, noteId, topicId, response)
+      );
+      queryClient.setQueryData<Note>(['note', noteId], (old) =>
+        old ? { ...old, ...response } : old
+      );
+    },
+    onError: (error, { noteId }) => {
+      if (error.message === 'NO_SESSION') {
+        invalidSessionToast();
+        return;
+      }
+
+      if (error.status === 409) {
+        queryClient.invalidateQueries({ queryKey: ['note', noteId] });
+      }
+
+      errorToast({
+        id: `note-rename-error-${noteId}`,
+        error,
+        customMessage:
+          error.status === 409
+            ? 'This note was changed elsewhere. Reloaded the latest version, try renaming again.'
+            : undefined,
+        title: 'Could not rename the note',
+      });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: spaceContentKey(spaceId) });

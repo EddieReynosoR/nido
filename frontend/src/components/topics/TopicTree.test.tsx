@@ -39,6 +39,7 @@ vi.mock('@/api/note', () => ({
   createNote: vi.fn(),
   getNote: vi.fn(),
   updateNoteContent: vi.fn(),
+  renameNote: vi.fn(),
   deleteNote: vi.fn(async (noteId: string) => {
     if (!server.content) return null;
     const removeFrom = (topics: Topic[]) => {
@@ -409,5 +410,50 @@ describe('TopicTree note deletion', () => {
       await screen.findByText('Could not delete the note')
     ).toBeInTheDocument();
     expect(isNoteDiscarded('note-root')).toBe(false);
+  });
+});
+
+describe('TopicTree note rename', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    server.content = {
+      topics: [topic('topic-1', 'Biology', [])],
+      notes: [note('note-root', 'Root note', null)],
+    };
+  });
+
+  it('the note menu offers "Rename note" and opens a dialog pre-filled with the current title', async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Note options for Root note' })
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Rename note' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Rename note' });
+    expect(within(dialog).getByRole('textbox', { name: 'Title' })).toHaveValue(
+      'Root note'
+    );
+  });
+
+  it('Save is disabled while the title is unchanged', async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Note options for Root note' })
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Rename note' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Rename note' });
+    const save = within(dialog).getByRole('button', { name: 'Save changes' });
+    expect(save).toBeDisabled();
+
+    await user.type(
+      within(dialog).getByRole('textbox', { name: 'Title' }),
+      ' 2'
+    );
+    expect(save).toBeEnabled();
   });
 });

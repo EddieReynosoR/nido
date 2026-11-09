@@ -2,6 +2,8 @@ import type {
   CreateNoteRequest,
   Note,
   NoteContentResponse,
+  RenameNoteRequest,
+  RenameNoteResponse,
   UpdateNoteContentRequest,
 } from '@/types/note.types';
 import { executeFetch, BASE_URL } from './auth';
@@ -50,6 +52,25 @@ export function updateNoteContent(
       body: JSON.stringify(request),
     },
     'There was an error saving the note.'
+  );
+}
+
+export function renameNote(
+  noteId: string,
+  request: RenameNoteRequest,
+  accessToken: string
+) {
+  return executeFetch<RenameNoteResponse>(
+    `${BASE_URL}/api/note/${encodeURIComponent(noteId)}/title`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(request),
+    },
+    'There was an error renaming the note.'
   );
 }
 

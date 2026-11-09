@@ -29,6 +29,18 @@ export type NoteContentResponse = {
   updatedAt: string;
 };
 
+export type RenameNoteRequest = {
+  title: string;
+  version: number;
+  topicId: string | null;
+};
+
+export type RenameNoteResponse = {
+  title: string;
+  version: number;
+  updatedAt: string;
+};
+
 export type NoteTreeItem = {
   noteId: string;
   title: string;

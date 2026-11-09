@@ -1,4 +1,4 @@
-import { FileX, MoreHorizontal } from 'lucide-react';
+import { FileX, MoreHorizontal, Pencil } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,10 +11,12 @@ import { cn } from '@/lib/utils';
 
 export default function NoteActions({
   note,
+  onRename,
   onDelete,
   className,
 }: {
   note: NoteTreeItem;
+  onRename: (note: NoteTreeItem) => void;
   onDelete: (note: NoteTreeItem) => void;
   className?: string;
 }) {
@@ -37,6 +39,10 @@ export default function NoteActions({
         side={isMobile ? 'bottom' : 'right'}
         sideOffset={4}
       >
+        <DropdownMenuItem onSelect={() => onRename(note)}>
+          <Pencil />
+          Rename note
+        </DropdownMenuItem>
         <DropdownMenuItem variant="destructive" onSelect={() => onDelete(note)}>
           <FileX />
           Delete note

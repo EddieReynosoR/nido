@@ -18,6 +18,7 @@ import AddTopicDialog from '@/components/topics/AddTopicDialog';
 import AddNoteDialog from '@/components/notes/AddNoteDialog';
 import DeleteNoteDialog from '@/components/notes/DeleteNoteDialog';
 import DeleteTopicDialog from '@/components/topics/DeleteTopicDialog';
+import EditNoteDialog from '@/components/notes/EditNoteDialog';
 import EditTopicDialog from '@/components/topics/EditTopicDialog';
 import TopicTreeItem from '@/components/topics/TopicTreeItem';
 import NoteTreeItem from '@/components/notes/NoteTreeItem';
@@ -54,6 +55,7 @@ type TopicTreeRootProps = {
   onDelete: (topic: Topic) => void;
   onDeleteNote: (topic: Topic) => void;
   onDeleteNoteItem: (note: NoteTreeItemType) => void;
+  onRenameNoteItem: (note: NoteTreeItemType) => void;
 };
 
 const ROOT_DROPPABLE_ID = 'topic-root-dropzone';
@@ -81,6 +83,7 @@ function TopicTreeRoot({
   onDelete,
   onDeleteNote,
   onDeleteNoteItem,
+  onRenameNoteItem,
 }: TopicTreeRootProps) {
   const { source } = useDragOperation();
   const dragged = source?.data as TopicDragData | undefined;
@@ -121,6 +124,7 @@ function TopicTreeRoot({
             onDelete={onDelete}
             onDeleteNote={onDeleteNote}
             onDeleteNoteItem={onDeleteNoteItem}
+            onRenameNoteItem={onRenameNoteItem}
           />
         ))}
       </SidebarMenu>
@@ -175,6 +179,9 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
     null
   );
   const [noteToDelete, setNoteToDelete] = useState<NoteTreeItemType | null>(
+    null
+  );
+  const [noteToRename, setNoteToRename] = useState<NoteTreeItemType | null>(
     null
   );
   const [topicToEdit, setTopicToEdit] = useState<Topic | null>(null);
@@ -259,6 +266,10 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
     setNoteToDelete(note);
   }, []);
 
+  const handleRenameNote = useCallback((note: NoteTreeItemType) => {
+    setNoteToRename(note);
+  }, []);
+
   const confirmDeleteNote = () => {
     const target = noteToDelete;
     if (!target) return;
@@ -303,6 +314,7 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
         onDelete={handleDelete}
         onDeleteNote={handleDeleteIntroNote}
         onDeleteNoteItem={handleDeleteNote}
+        onRenameNoteItem={handleRenameNote}
       />
 
       {notes.length ? (
@@ -311,6 +323,7 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
             <NoteTreeItem
               key={note.noteId}
               note={note}
+              onRename={handleRenameNote}
               onDelete={handleDeleteNote}
             />
           ))}
@@ -335,6 +348,15 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
         open={topicToEdit !== null}
         onOpenChange={(open) => {
           if (!open) setTopicToEdit(null);
+        }}
+      />
+
+      <EditNoteDialog
+        note={noteToRename}
+        spaceId={spaceId}
+        open={noteToRename !== null}
+        onOpenChange={(open) => {
+          if (!open) setNoteToRename(null);
         }}
       />
 
