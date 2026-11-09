@@ -22,10 +22,12 @@ function NoteLabel({ note }: { note: NoteTreeItemType }) {
 export default function NoteTreeItem({
   note,
   nested = false,
+  onRename,
   onDelete,
 }: {
   note: NoteTreeItemType;
   nested?: boolean;
+  onRename: (note: NoteTreeItemType) => void;
   onDelete: (note: NoteTreeItemType) => void;
 }) {
   const navigate = useNavigate();
@@ -47,6 +49,7 @@ export default function NoteTreeItem({
         </SidebarMenuSubButton>
         <NoteActions
           note={note}
+          onRename={onRename}
           onDelete={onDelete}
           className={revealOnHoverSub}
         />
@@ -64,7 +67,12 @@ export default function NoteTreeItem({
       >
         <NoteLabel note={note} />
       </SidebarMenuButton>
-      <NoteActions note={note} onDelete={onDelete} className={revealOnHover} />
+      <NoteActions
+        note={note}
+        onRename={onRename}
+        onDelete={onDelete}
+        className={revealOnHover}
+      />
     </SidebarMenuItem>
   );
 }

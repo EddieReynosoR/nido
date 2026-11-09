@@ -1,9 +1,6 @@
 package com.nido.nido_backend.note;
 
-import com.nido.nido_backend.note.dto.CreateNoteRequest;
-import com.nido.nido_backend.note.dto.NoteContentResponse;
-import com.nido.nido_backend.note.dto.NoteResponse;
-import com.nido.nido_backend.note.dto.NoteContentRequest;
+import com.nido.nido_backend.note.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -50,5 +47,14 @@ public class NoteController {
             @AuthenticationPrincipal UserDetails userDetails) {
         noteService.softDelete(noteId, userDetails.getUsername());
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{noteId}/title")
+    public ResponseEntity<RenameNoteResponse> updateTitle(
+            @PathVariable UUID noteId,
+            @Valid @RequestBody RenameNoteRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var response = noteService.renameNote(noteId, request, userDetails.getUsername());
+        return ResponseEntity.ok(response);
     }
 }

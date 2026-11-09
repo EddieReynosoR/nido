@@ -15,26 +15,30 @@ public interface NoteRepository extends JpaRepository<NoteEntity, UUID> {
     @Query("""
     SELECT n.title
         FROM Note n
-    WHERE LOWER(SUBSTRING(n.title, 1, LENGTH(:prefix))) = LOWER(:prefix)
+    WHERE SUBSTRING(n.title, 1, LENGTH(:prefix)) = :prefix
       AND n.spaceId = :spaceId
       AND n.topicId IS NULL
       AND n.deletedAt IS NULL
+      AND (:excludeNoteId IS NULL OR n.noteId <> :excludeNoteId)
     """)
     List<String> findRootTitlesStartingWith(@Param("prefix") String prefix,
-                                            @Param("spaceId") UUID spaceId);
+                                            @Param("spaceId") UUID spaceId,
+                                            @Param("excludeNoteId") UUID excludeNoteId);
 
     @Query("""
     SELECT n.title
         FROM Note n
-    WHERE LOWER(SUBSTRING(n.title, 1, LENGTH(:prefix))) = LOWER(:prefix)
+    WHERE SUBSTRING(n.title, 1, LENGTH(:prefix)) = :prefix
       AND n.spaceId = :spaceId
       AND n.topicId = :topicId
       AND n.isIntro IS FALSE
       AND n.deletedAt IS NULL
+      AND (:excludeNoteId IS NULL OR n.noteId <> :excludeNoteId)
     """)
     List<String> findByTopicTitlesStartingWith(@Param("prefix") String prefix,
                                                @Param("spaceId") UUID spaceId,
-                                               @Param("topicId") UUID topicId);
+                                               @Param("topicId") UUID topicId,
+                                               @Param("excludeNoteId") UUID excludeNoteId);
 
     @Query("""
         SELECT n.topicId as topicId, n.noteId as noteId FROM Note n

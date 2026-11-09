@@ -130,7 +130,7 @@ public class TopicService {
         TopicEntity topicEntity = topicRepository.getByIdAndUserId(request.topicId(), UUID.fromString(userId))
                 .orElseThrow(() -> new NoSuchElementException("The specified topic was not found with the specified user"));
 
-        if (!request.name().equalsIgnoreCase(topicEntity.getName())) {
+        if (!request.name().equals(topicEntity.getName())) {
             if (topicEntity.getParentTopicId() != null)
                 requireTopic(
                         topicEntity.getParentTopicId(),

@@ -68,6 +68,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
   onDelete,
   onDeleteNote,
   onDeleteNoteItem,
+  onRenameNoteItem,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
   const { onSelect } = useTopicSelection(topic);
@@ -152,6 +153,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
                 onDelete={onDelete}
                 onDeleteNote={onDeleteNote}
                 onDeleteNoteItem={onDeleteNoteItem}
+                onRenameNoteItem={onRenameNoteItem}
               />
             ))}
             {topic.notes.map((note) => (
@@ -159,6 +161,7 @@ const TopicSubTreeItem = memo(function TopicSubTreeItem({
                 key={note.noteId}
                 note={note}
                 nested
+                onRename={onRenameNoteItem}
                 onDelete={onDeleteNoteItem}
               />
             ))}
@@ -180,6 +183,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
   onDelete,
   onDeleteNote,
   onDeleteNoteItem,
+  onRenameNoteItem,
 }: TopicTreeItemProps) {
   const { rowProps, handleProps } = useTopicDnd(topic, onOpenChange);
   const { onSelect } = useTopicSelection(topic);
@@ -260,6 +264,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
                 onDelete={onDelete}
                 onDeleteNote={onDeleteNote}
                 onDeleteNoteItem={onDeleteNoteItem}
+                onRenameNoteItem={onRenameNoteItem}
               />
             ))}
             {topic.notes.map((note) => (
@@ -267,6 +272,7 @@ const TopicTreeItem = memo(function TopicTreeItem({
                 key={note.noteId}
                 note={note}
                 nested
+                onRename={onRenameNoteItem}
                 onDelete={onDeleteNoteItem}
               />
             ))}

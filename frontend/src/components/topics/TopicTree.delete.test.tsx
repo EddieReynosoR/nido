@@ -1,132 +1,37 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
-import { Toaster } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { deleteNote } from '@/api/note';
-import NoteTabs from '@/components/notes/NoteTabs';
-import TopicTree from '@/components/topics/TopicTree';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { NoteTabsProvider } from '@/context/NoteTabsContext';
-import { useSpaceContent } from '@/hooks/spaces/use-space-content';
 import { HttpError } from '@/lib/http';
 import { isNoteDiscarded } from '@/lib/note-save-queue';
-import type { NoteTreeItem } from '@/types/note.types';
-import type { SpaceContent } from '@/types/space.types';
-import type { Topic } from '@/types/topic.types';
+import {
+  note,
+  renderSidebar,
+  resetServerContent,
+  topic,
+} from '@/test/topic-tree-utils';
+import { SPACE_ID, server } from '@/test/topic-tree-mocks';
 
-const SPACE_ID = 'space-1';
+vi.mock('@/context/AuthContext', async () =>
+  (await import('@/test/topic-tree-mocks')).authMock()
+);
 
-const server = vi.hoisted(() => ({
-  content: null as SpaceContent | null,
-}));
+vi.mock('@/context/SpaceContext', async () =>
+  (await import('@/test/topic-tree-mocks')).spaceMock()
+);
 
-vi.mock('@/context/AuthContext', () => ({
-  useAuth: () => ({ accessToken: 'token' }),
-}));
+vi.mock('@/api/space', async () =>
+  (await import('@/test/topic-tree-mocks')).spaceApiMock()
+);
 
-vi.mock('@/context/SpaceContext', () => ({
-  useSpace: () => ({ activeSpace: { spaceId: 'space-1' } }),
-}));
-
-vi.mock('@/api/space', () => ({
-  getSpaceContent: vi.fn(async () => structuredClone(server.content)),
-}));
-
-vi.mock('@/api/note', () => ({
-  createNote: vi.fn(),
-  getNote: vi.fn(),
-  updateNoteContent: vi.fn(),
-  deleteNote: vi.fn(async (noteId: string) => {
-    if (!server.content) return null;
-    const removeFrom = (topics: Topic[]) => {
-      for (const topic of topics) {
-        if (topic.noteId === noteId) topic.noteId = null;
-        topic.notes = topic.notes.filter((note) => note.noteId !== noteId);
-        removeFrom(topic.topics);
-      }
-    };
-    server.content.notes = server.content.notes.filter(
-      (note) => note.noteId !== noteId
-    );
-    removeFrom(server.content.topics);
-    return null;
-  }),
-}));
-
-function note(noteId: string, title: string, topicId: string | null) {
-  return {
-    noteId,
-    title,
-    spaceId: SPACE_ID,
-    topicId,
-    version: 1,
-    updatedAt: '2026-11-01T00:00:00Z',
-  } satisfies NoteTreeItem;
-}
-
-function topic(topicId: string, name: string, notes: NoteTreeItem[]) {
-  return {
-    topicId,
-    name,
-    color: '#888888',
-    parentId: null,
-    spaceId: SPACE_ID,
-    deletedAt: null,
-    topics: [],
-    noteId: null,
-    notes,
-  } satisfies Topic;
-}
-
-function Sidebar() {
-  const { data } = useSpaceContent(SPACE_ID, 'token');
-  const { pathname } = useLocation();
-  if (!data) return null;
-
-  return (
-    <>
-      <output data-testid="location">{pathname}</output>
-      <NoteTabs />
-      <TopicTree topics={data.topics} notes={data.notes} spaceId={SPACE_ID} />
-    </>
-  );
-}
-
-function renderSidebar(initialPath = '/') {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[initialPath]}>
-        <TooltipProvider>
-          <SidebarProvider>
-            <NoteTabsProvider spaceId={SPACE_ID}>
-              <Routes>
-                <Route path="/notes/:noteId" element={<Sidebar />} />
-                <Route path="/topics/:topicId" element={<Sidebar />} />
-                <Route path="*" element={<Sidebar />} />
-              </Routes>
-              <Toaster />
-            </NoteTabsProvider>
-          </SidebarProvider>
-        </TooltipProvider>
-      </MemoryRouter>
-    </QueryClientProvider>
-  );
-}
+vi.mock('@/api/note', async () =>
+  (await import('@/test/topic-tree-mocks')).noteApiMock()
+);
 
 describe('TopicTree note deletion', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    server.content = {
-      topics: [topic('topic-1', 'Biology', [])],
-      notes: [note('note-root', 'Root note', null)],
-    };
+    resetServerContent();
   });
 
   it('deleting a root note after confirming removes it from the sidebar', async () => {

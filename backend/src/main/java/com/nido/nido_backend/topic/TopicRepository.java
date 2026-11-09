@@ -14,7 +14,7 @@ public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
     @Query("""
     SELECT t.name
         FROM Topic t
-    WHERE LOWER(SUBSTRING(t.name, 1, LENGTH(:prefix))) = LOWER(:prefix)
+    WHERE SUBSTRING(t.name, 1, LENGTH(:prefix)) = :prefix
       AND t.spaceId = :spaceId
       AND t.parentTopicId IS NULL
       AND t.deletedAt IS NULL
@@ -27,7 +27,7 @@ public interface TopicRepository extends JpaRepository<TopicEntity, UUID> {
     @Query("""
         SELECT t.name
             FROM Topic t
-        WHERE LOWER(SUBSTRING(t.name, 1, LENGTH(:prefix))) = LOWER(:prefix)
+        WHERE SUBSTRING(t.name, 1, LENGTH(:prefix)) = :prefix
             AND t.parentTopicId = :parentTopicId
             AND t.deletedAt IS NULL
             AND (:excludeTopicId IS NULL OR t.topicId <> :excludeTopicId)

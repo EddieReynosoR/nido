@@ -10,10 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Map;
-import java.util.UUID;
-import java.util.NoSuchElementException;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,7 +47,7 @@ public class NoteService {
         }
 
         entity.setTitle(!request.isIntro() ?
-                resolveUniqueTitle(request.title(), request.spaceId(), request.topicId()) :
+                resolveUniqueTitle(request.title(), request.spaceId(), request.topicId(), null) :
                 request.title());
         entity.setContent(noteContentMapper.toJsonString(request.content()));
         entity.setSpaceId(request.spaceId());
@@ -60,10 +57,10 @@ public class NoteService {
         return NoteResponse.from(entity, request.content());
     }
 
-    private String resolveUniqueTitle(String name, UUID spaceId, UUID topicId) {
+    private String resolveUniqueTitle(String name, UUID spaceId, UUID topicId, UUID noteId) {
         return UniqueNames.resolve(name, MAX_TITLE_LENGTH, prefix -> topicId == null
-                ? noteRepository.findRootTitlesStartingWith(prefix, spaceId)
-                : noteRepository.findByTopicTitlesStartingWith(prefix, spaceId, topicId));
+                ? noteRepository.findRootTitlesStartingWith(prefix, spaceId, noteId)
+                : noteRepository.findByTopicTitlesStartingWith(prefix, spaceId, topicId, noteId));
     }
 
     @Transactional(readOnly = true)
@@ -124,5 +121,22 @@ public class NoteService {
                         Collectors.mapping(NoteTreeResponse::from, Collectors.toList())));
 
         return new GetNotesResponse(notesInRoot, notesInTopic);
+    }
+
+    @Transactional
+    public RenameNoteResponse renameNote(UUID noteId, RenameNoteRequest request, String userId) {
+        var note = noteRepository.getByIdAndUserId(noteId, UUID.fromString(userId))
+                .orElseThrow(() -> new NoSuchElementException("Note not found"));
+
+        if (!Objects.equals(note.getVersion(), request.version()))
+            throw new NoteVersionConflictException(note.getVersion(), note.getUpdatedAt());
+
+        if (note.isIntro())
+            throw new IllegalArgumentException("An intro note can be only renamed by its topic");
+
+        note.setTitle(resolveUniqueTitle(request.title(), note.getSpaceId(), note.getTopicId(), noteId));
+        noteRepository.saveAndFlush(note);
+
+        return new RenameNoteResponse(note.getTitle(), note.getVersion(), note.getUpdatedAt());
     }
 }

@@ -1,0 +1,13 @@
+package com.nido.nido_backend.note.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+import java.util.UUID;
+
+public record RenameNoteRequest(
+        @NotBlank @Size(max = 150) String title,
+        @NotNull Long version,
+        UUID topicId) {
+}
