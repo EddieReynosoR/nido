@@ -155,6 +155,9 @@ public class NoteService {
         var note = noteRepository.getByIdAndUserId(noteId, userIdConverted)
                 .orElseThrow(() -> new NoSuchElementException("Note not found"));
 
+        if (note.isIntro())
+            throw new IllegalArgumentException("An intro note can only be moved together with its topic");
+
         if (note.getTopicId() == request.topicId())
             throw new IllegalArgumentException("Cannot assign the same topic value");
 

@@ -282,4 +282,21 @@ class NoteServiceTest {
 
         assertEquals("Algebra (2)", response.title());
     }
+
+    @Test
+    void rejectsMovingAnIntroNote() {
+        var note = regularNote("Math");
+        note.setIntro(true);
+        var destination = new TopicEntity();
+        destination.setTopicId(UUID.randomUUID());
+        destination.setSpaceId(spaceId);
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(topicRepository.getByIdAndUserId(destination.getTopicId(), userId)).thenReturn(Optional.of(destination));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                noteService.moveNote(
+                        note.getNoteId(), new MoveNoteRequest(destination.getTopicId()), userId.toString()));
+
+        assertEquals(topicId, note.getTopicId());
+    }
 }
