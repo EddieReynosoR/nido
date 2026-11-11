@@ -160,10 +160,10 @@ public class NoteService {
         if (note.isIntro())
             throw new IllegalArgumentException("An intro note can only be moved together with its topic");
 
-        if (note.getTopicId() == request.topicId())
+        if (Objects.equals(note.getTopicId(), request.topicId()))
             throw new IllegalArgumentException("Cannot assign the same topic value");
 
-        if (topicSpaceId != null && topicSpaceId != note.getSpaceId())
+        if (topicSpaceId != null && !topicSpaceId.equals(note.getSpaceId()))
             throw new IllegalArgumentException("A note cannot be moved to a topic in a different space");
 
         note.setTitle(resolveUniqueTitle(note.getTitle(), note.getSpaceId(), topicId, note.getNoteId()));
