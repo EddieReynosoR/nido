@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { HttpError } from '@/lib/http';
+import { errorToast } from '@/lib/toast';
 import { moveNote, renameNote, updateNoteContent } from '@/api/note';
 import {
   useRenameNote,
@@ -18,6 +20,11 @@ vi.mock('@/api/note', () => ({
   moveNote: vi.fn(),
   renameNote: vi.fn(),
   updateNoteContent: vi.fn(),
+}));
+
+vi.mock('@/lib/toast', () => ({
+  errorToast: vi.fn(),
+  invalidSessionToast: vi.fn(),
 }));
 
 const NOTE_ID = 'note-1';
@@ -294,5 +301,29 @@ describe('useTopicNote', () => {
       version: 5,
       topicId: TOPIC_ID,
     });
+  });
+
+  it('on failure, restores the tree and shows an error toast', async () => {
+    vi.mocked(moveNote).mockRejectedValue(new HttpError('Server error', 500));
+    const { result, queryClient } = renderHooks();
+    const before = queryClient.getQueryData<SpaceContent>([
+      'content',
+      SPACE_ID,
+    ]);
+
+    await act(async () => {
+      await result.current.move
+        .mutateAsync({
+          noteId: NOTE_ID,
+          fromTopicId: null,
+          topicId: TOPIC_ID,
+        })
+        .catch(() => {});
+    });
+
+    expect(queryClient.getQueryData(['content', SPACE_ID])).toEqual(before);
+    expect(errorToast).toHaveBeenCalledWith(
+      expect.objectContaining({ id: `note-move-error-${NOTE_ID}` })
+    );
   });
 });

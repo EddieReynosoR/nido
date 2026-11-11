@@ -254,7 +254,8 @@ export function useTopicNote(
   return useMutation<
     MoveNoteResponse,
     HttpError,
-    { noteId: string; fromTopicId: string | null; topicId: string | null }
+    { noteId: string; fromTopicId: string | null; topicId: string | null },
+    { previous?: SpaceContent | null }
   >({
     mutationFn: async ({ noteId, topicId }) => {
       if (!accessToken) throw new HttpError('NO_SESSION', 400);
@@ -272,6 +273,8 @@ export function useTopicNote(
       const queryKey = spaceContentKey(spaceId);
       await queryClient.cancelQueries({ queryKey });
 
+      const previous = queryClient.getQueryData<SpaceContent | null>(queryKey);
+
       queryClient.setQueryData<SpaceContent | null>(queryKey, (old) => {
         const item = old ? findNoteInContent(old, noteId) : null;
         if (!item) return old;
@@ -283,6 +286,8 @@ export function useTopicNote(
           ? insertTopicNoteSorted(removed, topicId, moved)
           : insertRootNoteSorted(removed, moved);
       });
+
+      return { previous };
     },
     onSuccess: (response, { noteId, topicId }) => {
       queryClient.setQueryData<SpaceContent | null>(
@@ -292,6 +297,22 @@ export function useTopicNote(
       queryClient.setQueryData<Note>(['note', noteId], (old) =>
         old ? { ...old, ...response, topicId } : old
       );
+    },
+    onError: (error, { noteId }, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(spaceContentKey(spaceId), context.previous);
+      }
+
+      if (error.message === 'NO_SESSION') invalidSessionToast();
+      else
+        errorToast({
+          id: `note-move-error-${noteId}`,
+          error,
+          title: 'Could not move the note',
+        });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: spaceContentKey(spaceId) });
     },
   });
 }
