@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -222,5 +223,17 @@ class NoteServiceTest {
         assertEquals("Algebra", response.title());
         assertEquals(1L, response.version());
         assertEquals(destination.getTopicId(), note.getTopicId());
+    }
+
+    @Test
+    void movesANoteFromATopicToTheSpaceRootWhenTheTopicIdIsEmpty() {
+        var note = regularNote("Algebra");
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+
+        var response = noteService.moveNote(note.getNoteId(), new MoveNoteRequest(null), userId.toString());
+
+        assertEquals("Algebra", response.title());
+        assertEquals(1L, response.version());
+        assertNull(note.getTopicId());
     }
 }

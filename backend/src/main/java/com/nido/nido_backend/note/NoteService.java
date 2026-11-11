@@ -143,8 +143,14 @@ public class NoteService {
     @Transactional
     public MoveNoteResponse moveNote(UUID noteId, MoveNoteRequest request, String userId) {
         UUID userIdConverted = UUID.fromString(userId);
-        var topic = topicRepository.getByIdAndUserId(request.topicId(), userIdConverted)
-                .orElseThrow(() -> new NoSuchElementException("Topic not found"));
+        UUID topicId = null;
+
+        if (request.topicId() != null) {
+            var topic = topicRepository.getByIdAndUserId(request.topicId(), userIdConverted)
+                    .orElseThrow(() -> new NoSuchElementException("Topic not found"));
+
+            topicId = topic.getTopicId();
+        }
 
         var note = noteRepository.getByIdAndUserId(noteId, userIdConverted)
                 .orElseThrow(() -> new NoSuchElementException("Note not found"));
@@ -152,7 +158,6 @@ public class NoteService {
         if (note.getTopicId() == request.topicId())
             throw new IllegalArgumentException("Cannot assign the same topic value");
 
-        UUID topicId = topic.getTopicId();
         note.setTitle(resolveUniqueTitle(note.getTitle(), note.getSpaceId(), topicId, note.getNoteId()));
         note.setTopicId(topicId);
         noteRepository.saveAndFlush(note);
