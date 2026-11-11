@@ -315,4 +315,22 @@ class NoteServiceTest {
 
         assertEquals(topicId, note.getTopicId());
     }
+
+    @Test
+    void throwsNotFoundWhenTheDestinationTopicIsDeletedOrDoesNotBelongToTheUser() {
+        var destinationId = UUID.randomUUID();
+        when(topicRepository.getByIdAndUserId(destinationId, userId)).thenReturn(Optional.empty());
+
+        assertThrows(NoSuchElementException.class, () ->
+                noteService.moveNote(UUID.randomUUID(), new MoveNoteRequest(destinationId), userId.toString()));
+    }
+
+    @Test
+    void throwsNotFoundWhenTheNoteToMoveDoesNotExistOrDoesNotBelongToTheUser() {
+        var noteId = UUID.randomUUID();
+        when(noteRepository.getByIdAndUserId(noteId, userId)).thenReturn(Optional.empty());
+
+        assertThrows(NoSuchElementException.class, () ->
+                noteService.moveNote(noteId, new MoveNoteRequest(null), userId.toString()));
+    }
 }
