@@ -225,4 +225,39 @@ describe('useTopicNote', () => {
       ]);
     });
   });
+
+  it('waits for a content save already queued for that note', async () => {
+    let finishSave!: () => void;
+    vi.mocked(updateNoteContent).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishSave = () =>
+            resolve({ version: 2, updatedAt: '2026-11-02T00:00:00Z' });
+        })
+    );
+    vi.mocked(moveNote).mockResolvedValue({ title: 'Old title', version: 3 });
+    const { result } = renderHooks();
+
+    act(() => {
+      void result.current.content.save(NOTE_ID, []);
+    });
+    await waitFor(() => expect(updateNoteContent).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      result.current.move.mutate({
+        noteId: NOTE_ID,
+        fromTopicId: null,
+        topicId: TOPIC_ID,
+      });
+    });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(moveNote).not.toHaveBeenCalled();
+
+    await act(async () => finishSave());
+
+    await waitFor(() => expect(moveNote).toHaveBeenCalledTimes(1));
+    expect(
+      vi.mocked(updateNoteContent).mock.invocationCallOrder[0]
+    ).toBeLessThan(vi.mocked(moveNote).mock.invocationCallOrder[0]);
+  });
 });

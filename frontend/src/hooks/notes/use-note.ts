@@ -259,7 +259,9 @@ export function useTopicNote(
     mutationFn: async ({ noteId, topicId }) => {
       if (!accessToken) throw new HttpError('NO_SESSION', 400);
 
-      const response = await moveNote(noteId, { topicId }, accessToken);
+      const response = await enqueueNoteSave(noteId, () =>
+        moveNote(noteId, { topicId }, accessToken)
+      );
       if (!response) {
         throw new HttpError('The server did not return the moved note.', 500);
       }
