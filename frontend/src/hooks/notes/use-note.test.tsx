@@ -203,7 +203,13 @@ describe('useTopicNote', () => {
   });
 
   it("moves the note in ['content', spaceId] before the request finishes", async () => {
-    vi.mocked(moveNote).mockImplementation(() => new Promise(() => {}));
+    let finishMove!: () => void;
+    vi.mocked(moveNote).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishMove = () => resolve({ title: 'Old title', version: 3 });
+        })
+    );
     const { result, queryClient } = renderHooks();
 
     act(() => {
@@ -224,6 +230,8 @@ describe('useTopicNote', () => {
         NOTE_ID,
       ]);
     });
+
+    await act(async () => finishMove());
   });
 
   it('waits for a content save already queued for that note', async () => {
@@ -259,5 +267,32 @@ describe('useTopicNote', () => {
     expect(
       vi.mocked(updateNoteContent).mock.invocationCallOrder[0]
     ).toBeLessThan(vi.mocked(moveNote).mock.invocationCallOrder[0]);
+  });
+
+  it('on success, writes the returned title into the content cache, and the title, version and topicId into the note cache', async () => {
+    vi.mocked(moveNote).mockResolvedValue({
+      title: 'Old title (2)',
+      version: 5,
+    });
+    const { result, queryClient } = renderHooks(1);
+
+    await act(async () => {
+      await result.current.move.mutateAsync({
+        noteId: NOTE_ID,
+        fromTopicId: null,
+        topicId: TOPIC_ID,
+      });
+    });
+
+    const content = queryClient.getQueryData<SpaceContent>([
+      'content',
+      SPACE_ID,
+    ]);
+    expect(content?.topics[0].notes[0].title).toBe('Old title (2)');
+    expect(queryClient.getQueryData<Note>(['note', NOTE_ID])).toMatchObject({
+      title: 'Old title (2)',
+      version: 5,
+      topicId: TOPIC_ID,
+    });
   });
 });

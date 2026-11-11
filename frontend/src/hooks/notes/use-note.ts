@@ -284,6 +284,15 @@ export function useTopicNote(
           : insertRootNoteSorted(removed, moved);
       });
     },
+    onSuccess: (response, { noteId, topicId }) => {
+      queryClient.setQueryData<SpaceContent | null>(
+        spaceContentKey(spaceId),
+        (old) => updateNoteInContent(old, noteId, topicId, response)
+      );
+      queryClient.setQueryData<Note>(['note', noteId], (old) =>
+        old ? { ...old, ...response, topicId } : old
+      );
+    },
   });
 }
 
