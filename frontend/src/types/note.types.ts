@@ -59,6 +59,13 @@ export type NoteTreeItem = {
   updatedAt: string;
 };
 
+export type NoteDragData = {
+  kind: 'note';
+  noteId: string;
+  topicId: string | null;
+  title: string;
+};
+
 export type NoteTab = {
   type: 'topic' | 'note';
   id: string;
