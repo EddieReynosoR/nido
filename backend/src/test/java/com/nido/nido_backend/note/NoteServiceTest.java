@@ -270,4 +270,16 @@ class NoteServiceTest {
 
         assertEquals("Algebra (2)", response.title());
     }
+
+    @Test
+    void addsTwoInParenthesesWhenTheSpaceRootAlreadyHasANoteWithThatTitle() {
+        var note = regularNote("Algebra");
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(noteRepository.findRootTitlesStartingWith(anyString(), eq(spaceId), eq(note.getNoteId())))
+                .thenReturn(List.of("Algebra"));
+
+        var response = noteService.moveNote(note.getNoteId(), new MoveNoteRequest(null), userId.toString());
+
+        assertEquals("Algebra (2)", response.title());
+    }
 }
