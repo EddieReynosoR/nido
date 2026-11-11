@@ -4,6 +4,7 @@ import {
   createNote,
   deleteNote,
   getNote,
+  moveNote,
   renameNote,
   updateNoteContent,
 } from '@/api/note';
@@ -17,6 +18,7 @@ import {
 import { errorToast, invalidSessionToast } from '@/lib/toast';
 import { spaceContentKey } from '@/hooks/spaces/use-space-content';
 import {
+  findNoteInContent,
   insertRootNoteSorted,
   insertTopicNoteSorted,
   mapTopicsInContent,
@@ -26,6 +28,7 @@ import {
 } from '@/lib/topic-tree';
 import type {
   CreateNoteRequest,
+  MoveNoteResponse,
   Note,
   NoteContentResponse,
   RenameNoteResponse,
@@ -238,6 +241,46 @@ export function useRenameNote(
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: spaceContentKey(spaceId) });
+    },
+  });
+}
+
+export function useTopicNote(
+  accessToken: string | null,
+  spaceId: string | undefined
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    MoveNoteResponse,
+    HttpError,
+    { noteId: string; fromTopicId: string | null; topicId: string | null }
+  >({
+    mutationFn: async ({ noteId, topicId }) => {
+      if (!accessToken) throw new HttpError('NO_SESSION', 400);
+
+      const response = await moveNote(noteId, { topicId }, accessToken);
+      if (!response) {
+        throw new HttpError('The server did not return the moved note.', 500);
+      }
+
+      return response;
+    },
+    onMutate: async ({ noteId, fromTopicId, topicId }) => {
+      const queryKey = spaceContentKey(spaceId);
+      await queryClient.cancelQueries({ queryKey });
+
+      queryClient.setQueryData<SpaceContent | null>(queryKey, (old) => {
+        const item = old ? findNoteInContent(old, noteId) : null;
+        if (!item) return old;
+
+        const moved = { ...item, topicId };
+        const removed = removeNoteFromContent(old, noteId, fromTopicId);
+
+        return topicId
+          ? insertTopicNoteSorted(removed, topicId, moved)
+          : insertRootNoteSorted(removed, moved);
+      });
     },
   });
 }

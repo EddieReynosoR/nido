@@ -2,20 +2,27 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { renameNote, updateNoteContent } from '@/api/note';
-import { useRenameNote, useSaveNoteContent } from '@/hooks/notes/use-note';
+import { moveNote, renameNote, updateNoteContent } from '@/api/note';
+import {
+  useRenameNote,
+  useSaveNoteContent,
+  useTopicNote,
+} from '@/hooks/notes/use-note';
 import type { Note } from '@/types/note.types';
+import type { SpaceContent } from '@/types/space.types';
 
 vi.mock('@/api/note', () => ({
   createNote: vi.fn(),
   deleteNote: vi.fn(),
   getNote: vi.fn(),
+  moveNote: vi.fn(),
   renameNote: vi.fn(),
   updateNoteContent: vi.fn(),
 }));
 
 const NOTE_ID = 'note-1';
 const SPACE_ID = 'space-1';
+const TOPIC_ID = 'topic-1';
 
 function cachedNote(version: number) {
   return {
@@ -35,18 +42,46 @@ function renderHooks(version = 1) {
     defaultOptions: { queries: { retry: false } },
   });
   queryClient.setQueryData(['note', NOTE_ID], cachedNote(version));
+  queryClient.setQueryData<SpaceContent>(['content', SPACE_ID], {
+    topics: [
+      {
+        topicId: TOPIC_ID,
+        name: 'Topic',
+        color: '#000000',
+        parentId: null,
+        spaceId: SPACE_ID,
+        deletedAt: null,
+        topics: [],
+        noteId: null,
+        notes: [],
+      },
+    ],
+    notes: [
+      {
+        noteId: NOTE_ID,
+        title: 'Old title',
+        spaceId: SPACE_ID,
+        topicId: null,
+        version,
+        updatedAt: '2026-11-01T00:00:00Z',
+      },
+    ],
+  });
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 
-  return renderHook(
+  const hooks = renderHook(
     () => ({
       content: useSaveNoteContent('token'),
       rename: useRenameNote('token', SPACE_ID),
+      move: useTopicNote('token', SPACE_ID),
     }),
     { wrapper }
   );
+
+  return { ...hooks, queryClient };
 }
 
 describe('useRenameNote', () => {
@@ -159,5 +194,35 @@ describe('useRenameNote', () => {
       { content: [], version: 3 },
       'token'
     );
+  });
+});
+
+describe('useTopicNote', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("moves the note in ['content', spaceId] before the request finishes", async () => {
+    vi.mocked(moveNote).mockImplementation(() => new Promise(() => {}));
+    const { result, queryClient } = renderHooks();
+
+    act(() => {
+      result.current.move.mutate({
+        noteId: NOTE_ID,
+        fromTopicId: null,
+        topicId: TOPIC_ID,
+      });
+    });
+
+    await waitFor(() => {
+      const content = queryClient.getQueryData<SpaceContent>([
+        'content',
+        SPACE_ID,
+      ]);
+      expect(content?.notes).toEqual([]);
+      expect(content?.topics[0].notes.map((note) => note.noteId)).toEqual([
+        NOTE_ID,
+      ]);
+    });
   });
 });
