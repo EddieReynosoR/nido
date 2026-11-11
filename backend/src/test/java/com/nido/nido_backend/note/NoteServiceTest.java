@@ -299,4 +299,20 @@ class NoteServiceTest {
 
         assertEquals(topicId, note.getTopicId());
     }
+
+    @Test
+    void rejectsADestinationTopicThatIsInAnotherSpace() {
+        var note = regularNote("Algebra");
+        var destination = new TopicEntity();
+        destination.setTopicId(UUID.randomUUID());
+        destination.setSpaceId(UUID.randomUUID());
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(topicRepository.getByIdAndUserId(destination.getTopicId(), userId)).thenReturn(Optional.of(destination));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                noteService.moveNote(
+                        note.getNoteId(), new MoveNoteRequest(destination.getTopicId()), userId.toString()));
+
+        assertEquals(topicId, note.getTopicId());
+    }
 }

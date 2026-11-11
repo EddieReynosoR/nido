@@ -144,12 +144,14 @@ public class NoteService {
     public MoveNoteResponse moveNote(UUID noteId, MoveNoteRequest request, String userId) {
         UUID userIdConverted = UUID.fromString(userId);
         UUID topicId = null;
+        UUID topicSpaceId = null;
 
         if (request.topicId() != null) {
             var topic = topicRepository.getByIdAndUserId(request.topicId(), userIdConverted)
                     .orElseThrow(() -> new NoSuchElementException("Topic not found"));
 
             topicId = topic.getTopicId();
+            topicSpaceId = topic.getSpaceId();
         }
 
         var note = noteRepository.getByIdAndUserId(noteId, userIdConverted)
@@ -160,6 +162,9 @@ public class NoteService {
 
         if (note.getTopicId() == request.topicId())
             throw new IllegalArgumentException("Cannot assign the same topic value");
+
+        if (topicSpaceId != null && topicSpaceId != note.getSpaceId())
+            throw new IllegalArgumentException("A note cannot be moved to a topic in a different space");
 
         note.setTitle(resolveUniqueTitle(note.getTitle(), note.getSpaceId(), topicId, note.getNoteId()));
         note.setTopicId(topicId);
