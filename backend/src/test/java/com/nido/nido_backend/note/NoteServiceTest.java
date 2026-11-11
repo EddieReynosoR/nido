@@ -236,4 +236,21 @@ class NoteServiceTest {
         assertEquals(1L, response.version());
         assertNull(note.getTopicId());
     }
+
+    @Test
+    void keepsTheTitleWhenTheDestinationHasNoNoteWithThatTitle() {
+        var note = regularNote("Algebra");
+        var destination = new TopicEntity();
+        destination.setTopicId(UUID.randomUUID());
+        destination.setSpaceId(spaceId);
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(topicRepository.getByIdAndUserId(destination.getTopicId(), userId)).thenReturn(Optional.of(destination));
+        when(noteRepository.findByTopicTitlesStartingWith(anyString(), eq(spaceId), eq(destination.getTopicId()), eq(note.getNoteId())))
+                .thenReturn(List.of("Algebra basics"));
+
+        var response = noteService.moveNote(
+                note.getNoteId(), new MoveNoteRequest(destination.getTopicId()), userId.toString());
+
+        assertEquals("Algebra", response.title());
+    }
 }
