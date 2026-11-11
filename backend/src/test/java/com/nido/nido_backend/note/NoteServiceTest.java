@@ -1,9 +1,11 @@
 package com.nido.nido_backend.note;
 
+import com.nido.nido_backend.note.dto.MoveNoteRequest;
 import com.nido.nido_backend.note.dto.RenameNoteRequest;
 import com.nido.nido_backend.note.exception.NoteVersionConflictException;
 import com.nido.nido_backend.shared.util.NoteContentMapper;
 import com.nido.nido_backend.spaces.SpaceRepository;
+import com.nido.nido_backend.topic.TopicEntity;
 import com.nido.nido_backend.topic.TopicRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -203,5 +205,22 @@ class NoteServiceTest {
         assertThrows(NoSuchElementException.class, () ->
                 noteService.renameNote(
                         noteId, new RenameNoteRequest("Algebra", 1L, topicId), userId.toString()));
+    }
+
+    @Test
+    void movesARegularNoteToATopicInTheSameSpaceAndReturnsTheNewTitleAndVersion() {
+        var note = regularNote("Algebra");
+        var destination = new TopicEntity();
+        destination.setTopicId(UUID.randomUUID());
+        destination.setSpaceId(spaceId);
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(topicRepository.getByIdAndUserId(destination.getTopicId(), userId)).thenReturn(Optional.of(destination));
+
+        var response = noteService.moveNote(
+                note.getNoteId(), new MoveNoteRequest(destination.getTopicId()), userId.toString());
+
+        assertEquals("Algebra", response.title());
+        assertEquals(1L, response.version());
+        assertEquals(destination.getTopicId(), note.getTopicId());
     }
 }

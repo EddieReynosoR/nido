@@ -139,4 +139,24 @@ public class NoteService {
 
         return new RenameNoteResponse(note.getTitle(), note.getVersion(), note.getUpdatedAt());
     }
+
+    @Transactional
+    public MoveNoteResponse moveNote(UUID noteId, MoveNoteRequest request, String userId) {
+        UUID userIdConverted = UUID.fromString(userId);
+        var topic = topicRepository.getByIdAndUserId(request.topicId(), userIdConverted)
+                .orElseThrow(() -> new NoSuchElementException("Topic not found"));
+
+        var note = noteRepository.getByIdAndUserId(noteId, userIdConverted)
+                .orElseThrow(() -> new NoSuchElementException("Note not found"));
+
+        if (note.getTopicId() == request.topicId())
+            throw new IllegalArgumentException("Cannot assign the same topic value");
+
+        UUID topicId = topic.getTopicId();
+        note.setTitle(resolveUniqueTitle(note.getTitle(), note.getSpaceId(), topicId, note.getNoteId()));
+        note.setTopicId(topicId);
+        noteRepository.saveAndFlush(note);
+
+        return new MoveNoteResponse(note.getTitle(), note.getVersion());
+    }
 }
