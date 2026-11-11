@@ -199,8 +199,13 @@ export function useRenameNote(
       if (!accessToken) throw new HttpError('NO_SESSION', 400);
 
       const response = await enqueueNoteSave(noteId, () => {
+        const content = queryClient.getQueryData<SpaceContent | null>(
+          spaceContentKey(spaceId)
+        );
         const version =
-          queryClient.getQueryData<Note>(['note', noteId])?.version ?? 0;
+          queryClient.getQueryData<Note>(['note', noteId])?.version ??
+          (content ? findNoteInContent(content, noteId)?.version : undefined) ??
+          0;
 
         return renameNote(noteId, { title, version, topicId }, accessToken);
       });

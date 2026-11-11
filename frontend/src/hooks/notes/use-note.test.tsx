@@ -173,6 +173,30 @@ describe('useRenameNote', () => {
     );
   });
 
+  it('falls back to the version in the content tree when the note is not cached', async () => {
+    vi.mocked(renameNote).mockResolvedValue({
+      title: 'New title',
+      version: 5,
+      updatedAt: '2026-11-03T00:00:00Z',
+    });
+    const { result, queryClient } = renderHooks(4);
+    queryClient.removeQueries({ queryKey: ['note', NOTE_ID] });
+
+    await act(async () => {
+      await result.current.rename.mutateAsync({
+        noteId: NOTE_ID,
+        title: 'New title',
+        topicId: null,
+      });
+    });
+
+    expect(renameNote).toHaveBeenCalledWith(
+      NOTE_ID,
+      { title: 'New title', version: 4, topicId: null },
+      'token'
+    );
+  });
+
   it('after a rename, the next content save sends the version returned by the rename', async () => {
     vi.mocked(renameNote).mockResolvedValue({
       title: 'New title',
