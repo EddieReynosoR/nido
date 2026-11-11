@@ -9,12 +9,13 @@ import {
 } from 'react';
 import { cn } from '@/lib/utils';
 
-import { canDropTopic, collectDescendantIds } from '@/lib/topic-tree';
+import { canDrop, collectDescendantIds } from '@/lib/topic-tree';
 import { useSidebar } from '@/components/ui/sidebar';
 import type {
   Topic,
   TopicTreeItemProps,
   TopicDragData,
+  DragData,
 } from '@/types/topic.types';
 import { AUTO_EXPAND_DELAY_MS } from '@/constants/const';
 
@@ -36,6 +37,7 @@ export function useTopicDnd(
     id: topic.topicId,
     disabled: dragDisabled,
     data: {
+      kind: 'topic',
       topicId: topic.topicId,
       parentId: topic.parentId,
       name: topic.name,
@@ -46,8 +48,7 @@ export function useTopicDnd(
   const { ref: dropRef, isDropTarget } = useDroppable({
     id: topic.topicId,
     collisionPriority: CollisionPriority.Normal,
-    accept: (source) =>
-      canDropTopic(source.data as TopicDragData, topic.topicId),
+    accept: (source) => canDrop(source.data as DragData, topic.topicId),
   });
 
   const setRowRef = useCallback(

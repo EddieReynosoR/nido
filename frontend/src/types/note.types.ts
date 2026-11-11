@@ -41,6 +41,15 @@ export type RenameNoteResponse = {
   updatedAt: string;
 };
 
+export type MoveNoteRequest = {
+  topicId: string | null;
+};
+
+export type MoveNoteResponse = {
+  title: string;
+  version: number;
+};
+
 export type NoteTreeItem = {
   noteId: string;
   title: string;
@@ -48,6 +57,13 @@ export type NoteTreeItem = {
   topicId: string | null;
   version: number;
   updatedAt: string;
+};
+
+export type NoteDragData = {
+  kind: 'note';
+  noteId: string;
+  topicId: string | null;
+  title: string;
 };
 
 export type NoteTab = {

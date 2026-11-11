@@ -139,4 +139,37 @@ public class NoteService {
 
         return new RenameNoteResponse(note.getTitle(), note.getVersion(), note.getUpdatedAt());
     }
+
+    @Transactional
+    public MoveNoteResponse moveNote(UUID noteId, MoveNoteRequest request, String userId) {
+        UUID userIdConverted = UUID.fromString(userId);
+        UUID topicId = null;
+        UUID topicSpaceId = null;
+
+        if (request.topicId() != null) {
+            var topic = topicRepository.getByIdAndUserId(request.topicId(), userIdConverted)
+                    .orElseThrow(() -> new NoSuchElementException("Topic not found"));
+
+            topicId = topic.getTopicId();
+            topicSpaceId = topic.getSpaceId();
+        }
+
+        var note = noteRepository.getByIdAndUserId(noteId, userIdConverted)
+                .orElseThrow(() -> new NoSuchElementException("Note not found"));
+
+        if (note.isIntro())
+            throw new IllegalArgumentException("An intro note can only be moved together with its topic");
+
+        if (Objects.equals(note.getTopicId(), request.topicId()))
+            throw new IllegalArgumentException("Cannot assign the same topic value");
+
+        if (topicSpaceId != null && !topicSpaceId.equals(note.getSpaceId()))
+            throw new IllegalArgumentException("A note cannot be moved to a topic in a different space");
+
+        note.setTitle(resolveUniqueTitle(note.getTitle(), note.getSpaceId(), topicId, note.getNoteId()));
+        note.setTopicId(topicId);
+        noteRepository.saveAndFlush(note);
+
+        return new MoveNoteResponse(note.getTitle(), note.getVersion());
+    }
 }

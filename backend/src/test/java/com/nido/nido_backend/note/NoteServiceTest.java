@@ -1,9 +1,11 @@
 package com.nido.nido_backend.note;
 
+import com.nido.nido_backend.note.dto.MoveNoteRequest;
 import com.nido.nido_backend.note.dto.RenameNoteRequest;
 import com.nido.nido_backend.note.exception.NoteVersionConflictException;
 import com.nido.nido_backend.shared.util.NoteContentMapper;
 import com.nido.nido_backend.spaces.SpaceRepository;
+import com.nido.nido_backend.topic.TopicEntity;
 import com.nido.nido_backend.topic.TopicRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +19,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -203,5 +206,131 @@ class NoteServiceTest {
         assertThrows(NoSuchElementException.class, () ->
                 noteService.renameNote(
                         noteId, new RenameNoteRequest("Algebra", 1L, topicId), userId.toString()));
+    }
+
+    @Test
+    void movesARegularNoteToATopicInTheSameSpaceAndReturnsTheNewTitleAndVersion() {
+        var note = regularNote("Algebra");
+        var destination = new TopicEntity();
+        destination.setTopicId(UUID.randomUUID());
+        destination.setSpaceId(spaceId);
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(topicRepository.getByIdAndUserId(destination.getTopicId(), userId)).thenReturn(Optional.of(destination));
+
+        var response = noteService.moveNote(
+                note.getNoteId(), new MoveNoteRequest(destination.getTopicId()), userId.toString());
+
+        assertEquals("Algebra", response.title());
+        assertEquals(1L, response.version());
+        assertEquals(destination.getTopicId(), note.getTopicId());
+    }
+
+    @Test
+    void movesANoteFromATopicToTheSpaceRootWhenTheTopicIdIsEmpty() {
+        var note = regularNote("Algebra");
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+
+        var response = noteService.moveNote(note.getNoteId(), new MoveNoteRequest(null), userId.toString());
+
+        assertEquals("Algebra", response.title());
+        assertEquals(1L, response.version());
+        assertNull(note.getTopicId());
+    }
+
+    @Test
+    void keepsTheTitleWhenTheDestinationHasNoNoteWithThatTitle() {
+        var note = regularNote("Algebra");
+        var destination = new TopicEntity();
+        destination.setTopicId(UUID.randomUUID());
+        destination.setSpaceId(spaceId);
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(topicRepository.getByIdAndUserId(destination.getTopicId(), userId)).thenReturn(Optional.of(destination));
+        when(noteRepository.findByTopicTitlesStartingWith(anyString(), eq(spaceId), eq(destination.getTopicId()), eq(note.getNoteId())))
+                .thenReturn(List.of("Algebra basics"));
+
+        var response = noteService.moveNote(
+                note.getNoteId(), new MoveNoteRequest(destination.getTopicId()), userId.toString());
+
+        assertEquals("Algebra", response.title());
+    }
+
+    @Test
+    void addsTwoInParenthesesWhenTheDestinationTopicAlreadyHasANoteWithThatTitle() {
+        var note = regularNote("Algebra");
+        var destination = new TopicEntity();
+        destination.setTopicId(UUID.randomUUID());
+        destination.setSpaceId(spaceId);
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(topicRepository.getByIdAndUserId(destination.getTopicId(), userId)).thenReturn(Optional.of(destination));
+        when(noteRepository.findByTopicTitlesStartingWith(anyString(), eq(spaceId), eq(destination.getTopicId()), eq(note.getNoteId())))
+                .thenReturn(List.of("Algebra"));
+
+        var response = noteService.moveNote(
+                note.getNoteId(), new MoveNoteRequest(destination.getTopicId()), userId.toString());
+
+        assertEquals("Algebra (2)", response.title());
+    }
+
+    @Test
+    void addsTwoInParenthesesWhenTheSpaceRootAlreadyHasANoteWithThatTitle() {
+        var note = regularNote("Algebra");
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(noteRepository.findRootTitlesStartingWith(anyString(), eq(spaceId), eq(note.getNoteId())))
+                .thenReturn(List.of("Algebra"));
+
+        var response = noteService.moveNote(note.getNoteId(), new MoveNoteRequest(null), userId.toString());
+
+        assertEquals("Algebra (2)", response.title());
+    }
+
+    @Test
+    void rejectsMovingAnIntroNote() {
+        var note = regularNote("Math");
+        note.setIntro(true);
+        var destination = new TopicEntity();
+        destination.setTopicId(UUID.randomUUID());
+        destination.setSpaceId(spaceId);
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(topicRepository.getByIdAndUserId(destination.getTopicId(), userId)).thenReturn(Optional.of(destination));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                noteService.moveNote(
+                        note.getNoteId(), new MoveNoteRequest(destination.getTopicId()), userId.toString()));
+
+        assertEquals(topicId, note.getTopicId());
+    }
+
+    @Test
+    void rejectsADestinationTopicThatIsInAnotherSpace() {
+        var note = regularNote("Algebra");
+        var destination = new TopicEntity();
+        destination.setTopicId(UUID.randomUUID());
+        destination.setSpaceId(UUID.randomUUID());
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(topicRepository.getByIdAndUserId(destination.getTopicId(), userId)).thenReturn(Optional.of(destination));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                noteService.moveNote(
+                        note.getNoteId(), new MoveNoteRequest(destination.getTopicId()), userId.toString()));
+
+        assertEquals(topicId, note.getTopicId());
+    }
+
+    @Test
+    void throwsNotFoundWhenTheDestinationTopicIsDeletedOrDoesNotBelongToTheUser() {
+        var destinationId = UUID.randomUUID();
+        when(topicRepository.getByIdAndUserId(destinationId, userId)).thenReturn(Optional.empty());
+
+        assertThrows(NoSuchElementException.class, () ->
+                noteService.moveNote(UUID.randomUUID(), new MoveNoteRequest(destinationId), userId.toString()));
+    }
+
+    @Test
+    void throwsNotFoundWhenTheNoteToMoveDoesNotExistOrDoesNotBelongToTheUser() {
+        var noteId = UUID.randomUUID();
+        when(noteRepository.getByIdAndUserId(noteId, userId)).thenReturn(Optional.empty());
+
+        assertThrows(NoSuchElementException.class, () ->
+                noteService.moveNote(noteId, new MoveNoteRequest(null), userId.toString()));
     }
 }

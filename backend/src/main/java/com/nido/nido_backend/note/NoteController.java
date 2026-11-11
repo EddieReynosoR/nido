@@ -57,4 +57,13 @@ public class NoteController {
         var response = noteService.renameNote(noteId, request, userDetails.getUsername());
         return ResponseEntity.ok(response);
     }
+
+    @PatchMapping("/{noteId}/move")
+    public ResponseEntity<MoveNoteResponse> move(
+            @PathVariable UUID noteId,
+            @Valid @RequestBody MoveNoteRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var response = noteService.moveNote(noteId, request, userDetails.getUsername());
+        return ResponseEntity.ok(response);
+    }
 }

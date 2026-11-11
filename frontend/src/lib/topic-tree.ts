@@ -1,6 +1,6 @@
 import type { NoteTreeItem } from '@/types/note.types';
 import type { SpaceContent } from '@/types/space.types';
-import type { Topic, TopicDragData } from '@/types/topic.types';
+import type { DragData, Topic, TopicDragData } from '@/types/topic.types';
 
 const byName = (a: Topic, b: Topic) => a.name.localeCompare(b.name);
 
@@ -224,6 +224,12 @@ export function canDropTopic(
     targetId !== dragged.topicId &&
     !(targetId !== null && dragged.descendantIds.has(targetId))
   );
+}
+
+export function canDrop(dragged: DragData, targetId: string | null): boolean {
+  return dragged.kind === 'note'
+    ? targetId !== dragged.topicId
+    : canDropTopic(dragged, targetId);
 }
 
 export function mapTopicsInContent(
