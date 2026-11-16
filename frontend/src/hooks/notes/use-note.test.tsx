@@ -238,7 +238,12 @@ describe('useTopicNote', () => {
     vi.mocked(moveNote).mockImplementation(
       () =>
         new Promise((resolve) => {
-          finishMove = () => resolve({ title: 'Old title', version: 3 });
+          finishMove = () =>
+            resolve({
+              title: 'Old title',
+              version: 3,
+              updatedAt: '2026-11-03T00:00:00Z',
+            });
         })
     );
     const { result, queryClient } = renderHooks();
@@ -274,7 +279,11 @@ describe('useTopicNote', () => {
             resolve({ version: 2, updatedAt: '2026-11-02T00:00:00Z' });
         })
     );
-    vi.mocked(moveNote).mockResolvedValue({ title: 'Old title', version: 3 });
+    vi.mocked(moveNote).mockResolvedValue({
+      title: 'Old title',
+      version: 3,
+      updatedAt: '2026-11-03T00:00:00Z',
+    });
     const { result } = renderHooks();
 
     act(() => {
@@ -300,10 +309,11 @@ describe('useTopicNote', () => {
     ).toBeLessThan(vi.mocked(moveNote).mock.invocationCallOrder[0]);
   });
 
-  it('on success, writes the returned title into the content cache, and the title, version and topicId into the note cache', async () => {
+  it('on success, writes the returned title and updatedAt into the content cache, and the title, version, topicId and updatedAt into the note cache', async () => {
     vi.mocked(moveNote).mockResolvedValue({
       title: 'Old title (2)',
       version: 5,
+      updatedAt: '2026-11-03T00:00:00Z',
     });
     const { result, queryClient } = renderHooks(1);
 
@@ -319,11 +329,15 @@ describe('useTopicNote', () => {
       'content',
       SPACE_ID,
     ]);
-    expect(content?.topics[0].notes[0].title).toBe('Old title (2)');
+    expect(content?.topics[0].notes[0]).toMatchObject({
+      title: 'Old title (2)',
+      updatedAt: '2026-11-03T00:00:00Z',
+    });
     expect(queryClient.getQueryData<Note>(['note', NOTE_ID])).toMatchObject({
       title: 'Old title (2)',
       version: 5,
       topicId: TOPIC_ID,
+      updatedAt: '2026-11-03T00:00:00Z',
     });
   });
 

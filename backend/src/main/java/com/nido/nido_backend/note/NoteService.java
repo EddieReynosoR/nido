@@ -170,6 +170,6 @@ public class NoteService {
         note.setTopicId(topicId);
         noteRepository.saveAndFlush(note);
 
-        return new MoveNoteResponse(note.getTitle(), note.getVersion());
+        return new MoveNoteResponse(note.getTitle(), note.getVersion(), note.getUpdatedAt());
     }
 }

@@ -48,6 +48,7 @@ export type MoveNoteRequest = {
 export type MoveNoteResponse = {
   title: string;
   version: number;
+  updatedAt: string;
 };
 
 export type NoteTreeItem = {

@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -212,8 +213,9 @@ class NoteServiceTest {
     }
 
     @Test
-    void movesARegularNoteToATopicInTheSameSpaceAndReturnsTheNewTitleAndVersion() {
+    void movesARegularNoteToATopicInTheSameSpaceAndReturnsTheNewTitleVersionAndUpdatedAt() {
         var note = regularNote("Algebra");
+        note.setUpdatedAt(Instant.parse("2026-11-03T00:00:00Z"));
         var destination = new TopicEntity();
         destination.setTopicId(UUID.randomUUID());
         destination.setSpaceId(spaceId);
@@ -225,6 +227,7 @@ class NoteServiceTest {
 
         assertEquals("Algebra", response.title());
         assertEquals(1L, response.version());
+        assertEquals(note.getUpdatedAt(), response.updatedAt());
         assertEquals(destination.getTopicId(), note.getTopicId());
     }
 
