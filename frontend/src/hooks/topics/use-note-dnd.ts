@@ -1,12 +1,7 @@
 import { useDraggable } from '@dnd-kit/react';
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  type MouseEvent as ReactMouseEvent,
-} from 'react';
 import { cn } from '@/lib/utils';
 
+import { useSuppressClickAfterDrag } from '@/hooks/use-suppress-click-after-drag';
 import { useSidebar } from '@/components/ui/sidebar';
 import type { NoteDragData, NoteTreeItem } from '@/types/note.types';
 
@@ -30,29 +25,12 @@ export function useNoteDnd(note: NoteTreeItem) {
     },
   });
 
-  const draggedRef = useRef(false);
-
-  useEffect(() => {
-    if (isDragging) draggedRef.current = true;
-  }, [isDragging]);
-
-  const onPointerDownCapture = useCallback(() => {
-    draggedRef.current = false;
-  }, []);
-
-  const onClickCapture = useCallback((event: ReactMouseEvent) => {
-    if (!draggedRef.current) return;
-
-    draggedRef.current = false;
-    event.preventDefault();
-    event.stopPropagation();
-  }, []);
+  const suppressClickProps = useSuppressClickAfterDrag(isDragging);
 
   return {
     rowProps: {
       ref: rowRef,
-      onPointerDownCapture,
-      onClickCapture,
+      ...suppressClickProps,
       className: cn(isDragSource && 'opacity-40'),
     },
     handleProps: { ref: handleRef },

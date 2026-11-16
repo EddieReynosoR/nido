@@ -1,15 +1,10 @@
 import { useDraggable, useDroppable } from '@dnd-kit/react';
 import { CollisionPriority } from '@dnd-kit/abstract';
-import {
-  useMemo,
-  useCallback,
-  useEffect,
-  useRef,
-  type MouseEvent as ReactMouseEvent,
-} from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 import { canDrop, collectDescendantIds } from '@/lib/topic-tree';
+import { useSuppressClickAfterDrag } from '@/hooks/use-suppress-click-after-drag';
 import { useSidebar } from '@/components/ui/sidebar';
 import type {
   Topic,
@@ -72,29 +67,12 @@ export function useTopicDnd(
     return () => clearTimeout(timer);
   }, [isDropTarget, hasChildren, onOpenChange, topic.topicId]);
 
-  const draggedRef = useRef(false);
-
-  useEffect(() => {
-    if (isDragging) draggedRef.current = true;
-  }, [isDragging]);
-
-  const onPointerDownCapture = useCallback(() => {
-    draggedRef.current = false;
-  }, []);
-
-  const onClickCapture = useCallback((event: ReactMouseEvent) => {
-    if (!draggedRef.current) return;
-
-    draggedRef.current = false;
-    event.preventDefault();
-    event.stopPropagation();
-  }, []);
+  const suppressClickProps = useSuppressClickAfterDrag(isDragging);
 
   return {
     rowProps: {
       ref: setRowRef,
-      onPointerDownCapture,
-      onClickCapture,
+      ...suppressClickProps,
       className: cn(
         'relative rounded-md',
         isDragSource && 'opacity-40',
