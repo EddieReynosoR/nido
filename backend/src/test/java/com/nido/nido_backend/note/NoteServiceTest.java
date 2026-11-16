@@ -21,8 +21,11 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -314,6 +317,34 @@ class NoteServiceTest {
                         note.getNoteId(), new MoveNoteRequest(destination.getTopicId()), userId.toString()));
 
         assertEquals(topicId, note.getTopicId());
+    }
+
+    @Test
+    void rejectsMovingANoteToTheTopicItIsAlreadyIn() {
+        var note = regularNote("Algebra");
+        var current = new TopicEntity();
+        current.setTopicId(topicId);
+        current.setSpaceId(spaceId);
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+        when(topicRepository.getByIdAndUserId(topicId, userId)).thenReturn(Optional.of(current));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                noteService.moveNote(note.getNoteId(), new MoveNoteRequest(topicId), userId.toString()));
+
+        assertEquals("Algebra", note.getTitle());
+        verify(noteRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void rejectsMovingARootNoteToTheSpaceRoot() {
+        var note = regularNote("Algebra");
+        note.setTopicId(null);
+        when(noteRepository.getByIdAndUserId(note.getNoteId(), userId)).thenReturn(Optional.of(note));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                noteService.moveNote(note.getNoteId(), new MoveNoteRequest(null), userId.toString()));
+
+        verify(noteRepository, never()).saveAndFlush(any());
     }
 
     @Test
