@@ -12,7 +12,7 @@ import {
   useDragOperation,
   useDroppable,
 } from '@dnd-kit/react';
-import { Folder } from 'lucide-react';
+import { FileText, Folder } from 'lucide-react';
 import { toast } from 'sonner';
 import AddTopicDialog from '@/components/topics/AddTopicDialog';
 import AddNoteDialog from '@/components/notes/AddNoteDialog';
@@ -24,16 +24,12 @@ import TopicTreeItem from '@/components/topics/TopicTreeItem';
 import NoteTreeItem from '@/components/notes/NoteTreeItem';
 import { SidebarMenu } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
-import { useDeleteNote } from '@/hooks/notes/use-note';
+import { useDeleteNote, useTopicNote } from '@/hooks/notes/use-note';
 import { useDeleteTopic, useReparent } from '@/hooks/topics/use-topic';
-import {
-  canDropTopic,
-  findNoteTopicPath,
-  findTopicPath,
-} from '@/lib/topic-tree';
+import { canDrop, findNoteTopicPath, findTopicPath } from '@/lib/topic-tree';
 import { cn } from '@/lib/utils';
 import type { NoteTreeItem as NoteTreeItemType } from '@/types/note.types';
-import type { Topic, TopicDragData } from '@/types/topic.types';
+import type { DragData, Topic } from '@/types/topic.types';
 import { useNavigate, useParams } from 'react-router';
 import { useNoteTabs } from '@/hooks/notes/use-note-tabs';
 import { tabPath } from '@/lib/note-tabs';
@@ -86,14 +82,14 @@ function TopicTreeRoot({
   onRenameNoteItem,
 }: TopicTreeRootProps) {
   const { source } = useDragOperation();
-  const dragged = source?.data as TopicDragData | undefined;
+  const dragged = source?.data as DragData | undefined;
 
-  const showRootStrip = !!dragged && canDropTopic(dragged, null);
+  const showRootStrip = !!dragged && canDrop(dragged, null);
 
   const { ref, isDropTarget } = useDroppable({
     id: ROOT_DROPPABLE_ID,
     collisionPriority: CollisionPriority.Lowest,
-    accept: (candidate) => canDropTopic(candidate.data as TopicDragData, null),
+    accept: (candidate) => canDrop(candidate.data as DragData, null),
   });
 
   const { topicId } = useParams();
@@ -146,6 +142,7 @@ function TopicTreeRoot({
 export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
   const { accessToken } = useAuth();
   const { mutate: reparentTopic } = useReparent(accessToken);
+  const { mutate: moveNote } = useTopicNote(accessToken, spaceId);
   const { mutate: deleteTopic, isPending: isDeleting } =
     useDeleteTopic(accessToken);
   const { mutate: deleteNote, isPending: isDeletingNote } = useDeleteNote(
@@ -291,13 +288,22 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
     const { source, target } = event.operation;
     if (event.canceled || !source || !target) return;
 
-    const dragged = source.data as TopicDragData;
+    const dragged = source.data as DragData;
     const newParentId =
       target.id === ROOT_DROPPABLE_ID ? null : String(target.id);
 
-    if (!canDropTopic(dragged, newParentId)) return;
+    if (!canDrop(dragged, newParentId)) return;
 
     if (newParentId) handleOpenChange(newParentId, true);
+
+    if (dragged.kind === 'note') {
+      moveNote({
+        noteId: dragged.noteId,
+        fromTopicId: dragged.topicId,
+        topicId: newParentId,
+      });
+      return;
+    }
 
     reparentTopic({ topicId: dragged.topicId, spaceId, newParentId });
   };
@@ -393,14 +399,19 @@ export default function TopicTree({ topics, notes, spaceId }: TopicTreeProps) {
       />
 
       <DragOverlay dropAnimation={null}>
-        {(source) => (
-          <div className="pointer-events-none flex items-center gap-2 rounded-md bg-sidebar px-2 py-1.5 text-sm text-sidebar-foreground shadow-md ring-1 ring-sidebar-border select-none">
-            <Folder className="size-4 text-sidebar-foreground/50" />
-            <span className="truncate">
-              {(source.data as TopicDragData).name}
-            </span>
-          </div>
-        )}
+        {(source) => {
+          const data = source.data as DragData;
+          const Icon = data.kind === 'note' ? FileText : Folder;
+
+          return (
+            <div className="pointer-events-none flex items-center gap-2 rounded-md bg-sidebar px-2 py-1.5 text-sm text-sidebar-foreground shadow-md ring-1 ring-sidebar-border select-none">
+              <Icon className="size-4 text-sidebar-foreground/50" />
+              <span className="truncate">
+                {data.kind === 'note' ? data.title : data.name}
+              </span>
+            </div>
+          );
+        }}
       </DragOverlay>
     </DragDropProvider>
   );

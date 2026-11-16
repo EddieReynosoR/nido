@@ -1,5 +1,7 @@
 import type {
   CreateNoteRequest,
+  MoveNoteRequest,
+  MoveNoteResponse,
   Note,
   NoteContentResponse,
   RenameNoteRequest,
@@ -71,6 +73,25 @@ export function renameNote(
       body: JSON.stringify(request),
     },
     'There was an error renaming the note.'
+  );
+}
+
+export function moveNote(
+  noteId: string,
+  request: MoveNoteRequest,
+  accessToken: string
+) {
+  return executeFetch<MoveNoteResponse>(
+    `${BASE_URL}/api/note/${encodeURIComponent(noteId)}/move`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(request),
+    },
+    'There was an error moving the note.'
   );
 }
 

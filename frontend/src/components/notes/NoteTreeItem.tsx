@@ -8,7 +8,8 @@ import {
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import type { NoteTreeItem as NoteTreeItemType } from '@/types/note.types';
-import { revealOnHover, revealOnHoverSub } from '@/constants/const';
+import { useNoteDnd } from '@/hooks/topics/use-note-dnd';
+import { grabCursor, revealOnHover, revealOnHoverSub } from '@/constants/const';
 
 function NoteLabel({ note }: { note: NoteTreeItemType }) {
   return (
@@ -34,16 +35,17 @@ export default function NoteTreeItem({
   const { noteId } = useParams();
   const isActive = noteId === note.noteId;
   const onSelect = () => navigate(`/notes/${note.noteId}`);
+  const { rowProps, handleProps } = useNoteDnd(note);
 
   if (nested) {
     return (
-      <SidebarMenuSubItem>
+      <SidebarMenuSubItem {...rowProps}>
         <SidebarMenuSubButton
           asChild
           isActive={isActive}
-          className="w-full text-sidebar-foreground/80"
+          className={`w-full text-sidebar-foreground/80 ${grabCursor}`}
         >
-          <button type="button" onClick={onSelect}>
+          <button type="button" {...handleProps} onClick={onSelect}>
             <NoteLabel note={note} />
           </button>
         </SidebarMenuSubButton>
@@ -58,12 +60,13 @@ export default function NoteTreeItem({
   }
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem {...rowProps}>
       <SidebarMenuButton
+        {...handleProps}
         tooltip={note.title}
         isActive={isActive}
         onClick={onSelect}
-        className="text-sidebar-foreground/80"
+        className={`text-sidebar-foreground/80 ${grabCursor}`}
       >
         <NoteLabel note={note} />
       </SidebarMenuButton>

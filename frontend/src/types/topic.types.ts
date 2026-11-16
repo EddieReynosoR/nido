@@ -1,4 +1,4 @@
-import type { NoteTreeItem } from '@/types/note.types';
+import type { NoteDragData, NoteTreeItem } from '@/types/note.types';
 
 export type Topic = {
   topicId: string;
@@ -26,11 +26,14 @@ export type CreateTopicRequest = {
 };
 
 export type TopicDragData = {
+  kind: 'topic';
   topicId: string;
   parentId: string | null;
   name: string;
   descendantIds: Set<string>;
 };
+
+export type DragData = TopicDragData | NoteDragData;
 
 export type DeleteTopicRequest = {
   topicId: string;

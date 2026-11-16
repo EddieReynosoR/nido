@@ -1,20 +1,16 @@
 import { useDraggable, useDroppable } from '@dnd-kit/react';
 import { CollisionPriority } from '@dnd-kit/abstract';
-import {
-  useMemo,
-  useCallback,
-  useEffect,
-  useRef,
-  type MouseEvent as ReactMouseEvent,
-} from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
-import { canDropTopic, collectDescendantIds } from '@/lib/topic-tree';
+import { canDrop, collectDescendantIds } from '@/lib/topic-tree';
+import { useSuppressClickAfterDrag } from '@/hooks/use-suppress-click-after-drag';
 import { useSidebar } from '@/components/ui/sidebar';
 import type {
   Topic,
   TopicTreeItemProps,
   TopicDragData,
+  DragData,
 } from '@/types/topic.types';
 import { AUTO_EXPAND_DELAY_MS } from '@/constants/const';
 
@@ -36,6 +32,7 @@ export function useTopicDnd(
     id: topic.topicId,
     disabled: dragDisabled,
     data: {
+      kind: 'topic',
       topicId: topic.topicId,
       parentId: topic.parentId,
       name: topic.name,
@@ -46,8 +43,7 @@ export function useTopicDnd(
   const { ref: dropRef, isDropTarget } = useDroppable({
     id: topic.topicId,
     collisionPriority: CollisionPriority.Normal,
-    accept: (source) =>
-      canDropTopic(source.data as TopicDragData, topic.topicId),
+    accept: (source) => canDrop(source.data as DragData, topic.topicId),
   });
 
   const setRowRef = useCallback(
@@ -71,29 +67,12 @@ export function useTopicDnd(
     return () => clearTimeout(timer);
   }, [isDropTarget, hasChildren, onOpenChange, topic.topicId]);
 
-  const draggedRef = useRef(false);
-
-  useEffect(() => {
-    if (isDragging) draggedRef.current = true;
-  }, [isDragging]);
-
-  const onPointerDownCapture = useCallback(() => {
-    draggedRef.current = false;
-  }, []);
-
-  const onClickCapture = useCallback((event: ReactMouseEvent) => {
-    if (!draggedRef.current) return;
-
-    draggedRef.current = false;
-    event.preventDefault();
-    event.stopPropagation();
-  }, []);
+  const suppressClickProps = useSuppressClickAfterDrag(isDragging);
 
   return {
     rowProps: {
       ref: setRowRef,
-      onPointerDownCapture,
-      onClickCapture,
+      ...suppressClickProps,
       className: cn(
         'relative rounded-md',
         isDragSource && 'opacity-40',
