@@ -8,9 +8,19 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
-    Optional<UserEntity> findByUserId(UUID userId);
+    @Query("""
+        SELECT u FROM UserEntity u
+        WHERE u.userId=:userId
+            AND u.deletedAt IS NULL
+    """)
+    Optional<UserEntity> findByUserId(@Param("userId") UUID userId);
 
-    Optional<UserEntity> findByEmail(String email);
+    @Query("""
+        SELECT u FROM UserEntity u
+        WHERE u.email=:email
+            AND u.deletedAt IS NULL
+    """)
+    Optional<UserEntity> findByEmail(@Param("email") String email);
 
     @Query("""
         SELECT u.email FROM UserEntity u

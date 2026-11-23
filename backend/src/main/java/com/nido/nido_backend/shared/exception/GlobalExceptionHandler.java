@@ -117,6 +117,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "Invalid argument: " + ex.getMessage());
     }
 
+    @ExceptionHandler(AccountUnavailableException.class)
+    public ProblemDetail handleAccountUnavailable(AccountUnavailableException ex) {
+        log.warn("Account unavailable: {}", ex.getMessage());
+        return build(HttpStatus.UNAUTHORIZED, "Account unavailable", "account_unavailable", "The account is no longer available");
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         String constraint = constraintNameOf(ex);
