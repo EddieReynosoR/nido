@@ -19,10 +19,12 @@ public class AuthController {
 
     private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
+    private final CookieUtils cookieUtils;
 
-    public AuthController(AuthService authService, RefreshTokenService refreshTokenService) {
+    public AuthController(AuthService authService, RefreshTokenService refreshTokenService, CookieUtils cookieUtils) {
         this.authService = authService;
         this.refreshTokenService = refreshTokenService;
+        this.cookieUtils = cookieUtils;
     }
 
     @PostMapping("/signup")
@@ -35,7 +37,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<TokensResponse> authenticate(@RequestBody LoginRequest request) {
         RefreshTokenDto refreshTokenDto = authService.signin(request);
-        ResponseCookie cookie = CookieUtils.createRefreshTokenCookie(refreshTokenDto.getRefreshToken());
+        ResponseCookie cookie = cookieUtils.createRefreshTokenCookie(refreshTokenDto.getRefreshToken());
 
         TokensResponse response = new TokensResponse(refreshTokenDto.getAccessToken(), refreshTokenDto.getExpiration());
 
@@ -49,7 +51,7 @@ public class AuthController {
             @CookieValue(value = "refreshToken", required = false) String refreshToken
     ) {
         RefreshTokenDto refreshTokenDto = refreshTokenService.refreshToken(refreshToken);
-        ResponseCookie cookie = CookieUtils.createRefreshTokenCookie(refreshTokenDto.getRefreshToken());
+        ResponseCookie cookie = cookieUtils.createRefreshTokenCookie(refreshTokenDto.getRefreshToken());
 
         TokensResponse response = new TokensResponse(refreshTokenDto.getAccessToken(), refreshTokenDto.getExpiration());
 
@@ -64,7 +66,7 @@ public class AuthController {
     ) {
         refreshTokenService.deleteToken(refreshToken);
 
-        ResponseCookie cookie = CookieUtils.deleteRefreshToken();
+        ResponseCookie cookie = cookieUtils.deleteRefreshToken();
 
         return ResponseEntity.noContent()
             .header(HttpHeaders.SET_COOKIE, cookie.toString())

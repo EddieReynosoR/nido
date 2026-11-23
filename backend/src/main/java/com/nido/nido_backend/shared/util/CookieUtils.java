@@ -2,14 +2,19 @@ package com.nido.nido_backend.shared.util;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
+import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 
+@Component
 public class CookieUtils {
-    @Value("{app.cookie.secure:false}")
-    private static boolean secure;
+    private final boolean secure;
 
-    public static ResponseCookie createRefreshTokenCookie(String token) {
+    public CookieUtils(@Value("${app.cookie.secure:false}") boolean secure) {
+        this.secure = secure;
+    }
+
+    public ResponseCookie createRefreshTokenCookie(String token) {
         return ResponseCookie.from("refreshToken", token)
             .httpOnly(true)
             .secure(secure)
@@ -19,7 +24,7 @@ public class CookieUtils {
             .build();
     }
 
-    public static ResponseCookie deleteRefreshToken() {
+    public ResponseCookie deleteRefreshToken() {
         return ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .secure(secure)
