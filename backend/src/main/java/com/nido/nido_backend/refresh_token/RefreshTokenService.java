@@ -2,6 +2,7 @@ package com.nido.nido_backend.refresh_token;
 
 import com.nido.nido_backend.auth.JwtService;
 import com.nido.nido_backend.refresh_token.dto.RefreshTokenDto;
+import com.nido.nido_backend.shared.exception.AccountUnavailableException;
 import com.nido.nido_backend.shared.exception.NoRowsAffectedException;
 import com.nido.nido_backend.refresh_token.exception.RefreshTokenExpiredException;
 import com.nido.nido_backend.refresh_token.exception.RefreshTokenInvalidException;
@@ -95,7 +96,7 @@ public class RefreshTokenService {
 
         UUID userId = entity.getUserId();
         String email = userService.getUserEmail(userId)
-                .orElseThrow(RefreshTokenInvalidException::new);
+                .orElseThrow(AccountUnavailableException::new);
 
         String accessToken = jwtService.generateToken(userId, email);
 
