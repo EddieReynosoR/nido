@@ -1,6 +1,10 @@
 server:
   port: 9000
 
+app:
+  cookie:
+    secure: true
+
 logging:
   level:
     org.springframework.security: warn
