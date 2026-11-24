@@ -13,8 +13,8 @@ export const ERROR_MESSAGES: Record<string, ErrorMessage> = {
     description: 'Please check your credentials and try again.',
   },
   account_unavailable: {
-    title: 'Account unavailable',
-    description: 'This account is no longer available.',
+    title: 'Your account is no longer available',
+    description: 'Please sign in again.',
   },
   expired_token: {
     title: 'Session expired',

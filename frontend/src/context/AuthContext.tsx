@@ -21,6 +21,7 @@ import { useRefreshToken } from '@/hooks/use-refresh-token';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { toast, Toaster } from 'sonner';
 import { ACTIVE_SPACE_KEY } from '@/lib/space';
+import { ApiError } from '@/lib/http';
 import { useAccountUnavailableHandler } from '@/context/QueryProvider';
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -144,7 +145,11 @@ export function AuthProvider() {
         setStatus('authed');
       })
       .catch((error: Error) => {
-        errorToast({ id: 'auth-refresh-error', error });
+        if (!(
+          error instanceof ApiError && error.code === 'account_unavailable'
+        )) {
+          errorToast({ id: 'auth-refresh-error', error });
+        }
         finishLogout();
       });
   }, [getCsrf, refreshTokenAsync, csrfToken, finishLogout]);
