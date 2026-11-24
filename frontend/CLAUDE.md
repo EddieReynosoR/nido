@@ -43,8 +43,9 @@ manager and the checks to run before finishing.
   notes, built with `spaceContentKey`), `['note', noteId]`.
   Reuse them exactly; invalidation depends on them.
 - Hooks take `accessToken` (from `useAuth()`) as an argument. Queries use
-  `enabled: !!accessToken` (and any id); mutations throw `HttpError('NO_SESSION', 400)`
-  when there is no token and show `invalidSessionToast()` for it.
+  `enabled: !!accessToken` (and any id); mutations throw `noSessionError()` from
+  `lib/http.ts` when there is no token, and `errorToast` turns it into the invalid
+  session toast.
 - Mutations on the topic tree are optimistic: `cancelQueries`, snapshot `previous`,
   update with the helpers in `lib/topic-tree.ts`, roll back in `onError`, and
   `invalidateQueries` in `onSettled`.
@@ -53,12 +54,17 @@ manager and the checks to run before finishing.
 
 ## Errors and feedback
 
-- `executeFetch` throws `HttpError` (has `status`), `TokenError` (auth codes), or
-  `TypeError` (server unreachable). Branch on these classes rather than on message text (the one
-  exception is the `NO_SESSION` sentinel above).
+- `executeFetch` throws `ApiError` (`status`, `code` from the backend's `error`,
+  `description` from `error_description`) or `TypeError` (server unreachable). Branch
+  on `error.code`, never on message text or bare status.
 - Show failures with `errorToast({ id, title, error, customMessage })` from
   `lib/toast.ts`. Give each toast a stable `id` (`<resource>-<action>-error-<id>`) so
-  repeats replace each other. Map a `409` to a specific `customMessage`.
+  repeats replace each other.
+- Toast text resolves as: title = caller `title` → `ERROR_MESSAGES[code]`
+  (`lib/error-messages.ts`) → generic; description = caller `customMessage` → backend
+  `description` → `ERROR_MESSAGES[code]` → generic. Only pass `customMessage` when the
+  frontend knows more than the backend (e.g. a `version_conflict` that also refetches).
+  Add new backend codes to `ERROR_MESSAGES`.
 
 ## Forms
 

@@ -19,7 +19,6 @@ import { useEditSpace } from '@/hooks/use-space';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { HttpError } from '@/lib/http';
 import { errorToast } from '@/lib/toast';
 import type { Space } from '@/types/space.types';
 import { useLastValue } from '@/hooks/use-last-value';
@@ -72,10 +71,6 @@ export default function EditSpaceDialog({
             id: 'spaces-edit-error',
             title: 'Could not rename the space',
             error,
-            customMessage:
-              error instanceof HttpError && error.status == 409
-                ? 'That space name is already in use.'
-                : error.message,
           });
         },
       }

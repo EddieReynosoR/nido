@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getNote, renameNote } from '@/api/note';
-import { HttpError } from '@/lib/http';
+import { ApiError } from '@/lib/http';
 import { renderSidebar, resetServerContent } from '@/test/topic-tree-utils';
 import { server } from '@/test/topic-tree-mocks';
 
@@ -152,7 +152,9 @@ describe('TopicTree note rename', () => {
   });
 
   it('on a server error the dialog stays open, the old title is kept and a toast appears', async () => {
-    vi.mocked(renameNote).mockRejectedValue(new HttpError('Server error', 500));
+    vi.mocked(renameNote).mockRejectedValue(
+      new ApiError({ status: 500, code: 'internal_error' })
+    );
     const user = userEvent.setup();
     renderSidebar('/notes/note-root');
     const tabs = await screen.findByRole('navigation', { name: 'Open notes' });
@@ -184,7 +186,7 @@ describe('TopicTree note rename', () => {
 
   it('on a version conflict the note is refetched and a specific message is shown', async () => {
     vi.mocked(renameNote).mockRejectedValue(
-      new HttpError('Version conflict', 409)
+      new ApiError({ status: 409, code: 'version_conflict' })
     );
     const user = userEvent.setup();
     renderSidebar('/notes/note-root');

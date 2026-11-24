@@ -1,7 +1,6 @@
 import type { LoginRequest, TokenResponse } from '@/types/auth.types';
-import { HttpError, TokenError } from '@/lib/http';
+import { ApiError } from '@/lib/http';
 import { hasProp } from '@/lib/auth';
-import { TOKEN_ERROR_CODES, type TokenErrorCode } from '@/lib/http';
 
 export const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -10,40 +9,28 @@ export async function executeFetch<T>(
   props: RequestInit,
   errorMessage: string
 ): Promise<T | null> {
-  try {
-    const res = await fetch(url, props);
+  const res = await fetch(url, props);
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const data: unknown = await res.json().catch(() => null);
 
-      if (
-        res.status === 401 &&
-        hasProp(data, 'error') &&
-        TOKEN_ERROR_CODES.includes(data.error as TokenErrorCode)
-      ) {
-        throw new TokenError(data.error as TokenErrorCode);
-      }
-
-      throw new HttpError(
-        `${errorMessage} Response status: ${res.status}`,
-        res.status
-      );
-    }
-
-    const text = await res.text();
-    return text ? (JSON.parse(text) as T) : null;
-  } catch (e) {
-    if (e instanceof HttpError || e instanceof TokenError) {
-      throw e;
-    }
-
-    if (e instanceof TypeError) {
-      throw new TypeError(`Server cannot be fetched. ${e.message}.`);
-    }
-
-    const message = e instanceof Error ? e.message : String(e);
-    throw new Error(`There was an error: ${message}`);
+    throw new ApiError({
+      status: res.status,
+      code:
+        hasProp(data, 'error') && typeof data.error === 'string'
+          ? data.error
+          : `http_${res.status}`,
+      description:
+        hasProp(data, 'error_description') &&
+        typeof data.error_description === 'string'
+          ? data.error_description
+          : undefined,
+      message: errorMessage,
+    });
   }
+
+  const text = await res.text();
+  return text ? (JSON.parse(text) as T) : null;
 }
 
 export function login(data: LoginRequest) {

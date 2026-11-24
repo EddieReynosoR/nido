@@ -19,7 +19,6 @@ import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { useSpace } from '@/context/SpaceContext';
-import { HttpError } from '@/lib/http';
 import { errorToast } from '@/lib/toast';
 
 export default function AddSpaceForm({
@@ -57,10 +56,6 @@ export default function AddSpaceForm({
           id: 'spaces-create-error',
           title: 'Could not create the space',
           error,
-          customMessage:
-            error instanceof HttpError && error.status == 409
-              ? 'The space already exists.'
-              : error.message,
         });
       },
     });

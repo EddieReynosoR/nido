@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpError } from '@/lib/http';
+import { ApiError } from '@/lib/http';
 import { errorToast } from '@/lib/toast';
 import { moveNote, renameNote, updateNoteContent } from '@/api/note';
 import {
@@ -24,7 +24,6 @@ vi.mock('@/api/note', () => ({
 
 vi.mock('@/lib/toast', () => ({
   errorToast: vi.fn(),
-  invalidSessionToast: vi.fn(),
 }));
 
 const NOTE_ID = 'note-1';
@@ -342,7 +341,9 @@ describe('useTopicNote', () => {
   });
 
   it('on failure, restores the tree and shows an error toast', async () => {
-    vi.mocked(moveNote).mockRejectedValue(new HttpError('Server error', 500));
+    vi.mocked(moveNote).mockRejectedValue(
+      new ApiError({ status: 500, code: 'internal_error' })
+    );
     const { result, queryClient } = renderHooks();
     const before = queryClient.getQueryData<SpaceContent>([
       'content',

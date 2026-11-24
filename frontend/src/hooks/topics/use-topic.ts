@@ -1,7 +1,7 @@
 import { create, deleteTopic, reparent, updateTopic } from '@/api/topic';
 import { spaceContentKey } from '@/hooks/spaces/use-space-content';
-import { HttpError } from '@/lib/http';
-import { errorToast, invalidSessionToast } from '@/lib/toast';
+import { ApiError, noSessionError } from '@/lib/http';
+import { errorToast } from '@/lib/toast';
 import {
   insertTopicInTree,
   mapTopicsInContent,
@@ -24,12 +24,12 @@ export function useCreate(accessToken: string | null) {
 
   return useMutation<
     void,
-    HttpError,
+    ApiError,
     CreateTopicRequest,
     { previous?: SpaceContent | null; tempId: string }
   >({
     mutationFn: async (request) => {
-      if (!accessToken) throw new HttpError('NO_SESSION', 400);
+      if (!accessToken) throw noSessionError();
       await create(request, accessToken);
     },
     onMutate: async (request) => {
@@ -67,18 +67,11 @@ export function useCreate(accessToken: string | null) {
         );
       }
 
-      if (error.message === 'NO_SESSION') invalidSessionToast();
-      else {
-        errorToast({
-          id: `topics-create-error-${context?.tempId}`,
-          error,
-          customMessage:
-            error.status === 409
-              ? `Topic with name ${request.name} already exists at the current level.`
-              : undefined,
-          title: 'Could not create the folder',
-        });
-      }
+      errorToast({
+        id: `topics-create-error-${context?.tempId}`,
+        error,
+        title: 'Could not create the folder',
+      });
     },
     onSettled: (_data, _error, request) => {
       queryClient.invalidateQueries({
@@ -93,12 +86,12 @@ export function useReparent(accessToken: string | null) {
 
   return useMutation<
     void,
-    Error,
+    ApiError,
     ReparentRequest,
     { previous?: SpaceContent | null }
   >({
     mutationFn: async (request) => {
-      if (!accessToken) throw new Error('NO_SESSION');
+      if (!accessToken) throw noSessionError();
       await reparent(request, accessToken);
     },
     onMutate: async (request) => {
@@ -124,14 +117,11 @@ export function useReparent(accessToken: string | null) {
         );
       }
 
-      if (error.message === 'NO_SESSION') invalidSessionToast();
-      else {
-        errorToast({
-          id: `topics-reparent-error-${request.topicId}`,
-          error,
-          title: 'Could not move the folder',
-        });
-      }
+      errorToast({
+        id: `topics-reparent-error-${request.topicId}`,
+        error,
+        title: 'Could not move the folder',
+      });
     },
     onSettled: (_data, _error, request) => {
       queryClient.invalidateQueries({
@@ -146,12 +136,12 @@ export function useDeleteTopic(accessToken: string | null) {
 
   return useMutation<
     void,
-    HttpError,
+    ApiError,
     DeleteTopicRequest,
     { previous?: SpaceContent | null }
   >({
     mutationFn: async (request) => {
-      if (!accessToken) throw new HttpError('NO_SESSION', 400);
+      if (!accessToken) throw noSessionError();
       await deleteTopic(request.topicId, accessToken);
     },
     onMutate: async (request) => {
@@ -176,14 +166,11 @@ export function useDeleteTopic(accessToken: string | null) {
         );
       }
 
-      if (error.message === 'NO_SESSION') invalidSessionToast();
-      else {
-        errorToast({
-          id: `topics-delete-error-${request.topicId}`,
-          error,
-          title: 'Could not delete the folder',
-        });
-      }
+      errorToast({
+        id: `topics-delete-error-${request.topicId}`,
+        error,
+        title: 'Could not delete the folder',
+      });
     },
     onSettled: (_data, _error, request) => {
       queryClient.invalidateQueries({
@@ -198,12 +185,12 @@ export function useUpdateTopic(accessToken: string | null) {
 
   return useMutation<
     void,
-    HttpError,
+    ApiError,
     UpdateTopicRequest,
     { previous?: SpaceContent | null }
   >({
     mutationFn: async (request) => {
-      if (!accessToken) throw new HttpError('NO_SESSION', 400);
+      if (!accessToken) throw noSessionError();
       await updateTopic(request, accessToken);
     },
     onMutate: async (request) => {
@@ -231,18 +218,11 @@ export function useUpdateTopic(accessToken: string | null) {
         );
       }
 
-      if (error.message === 'NO_SESSION') invalidSessionToast();
-      else {
-        errorToast({
-          id: `topics-update-error-${request.topicId}`,
-          error,
-          customMessage:
-            error.status === 409
-              ? `Topic with name ${request.name} already exists at the current level.`
-              : undefined,
-          title: 'Could not update the folder',
-        });
-      }
+      errorToast({
+        id: `topics-update-error-${request.topicId}`,
+        error,
+        title: 'Could not update the folder',
+      });
     },
     onSettled: (_data, _error, request) => {
       queryClient.invalidateQueries({
