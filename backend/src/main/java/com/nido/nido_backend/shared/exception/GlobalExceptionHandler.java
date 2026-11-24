@@ -151,9 +151,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(NoteVersionConflictException.class)
     public ProblemDetail handleVersionConflict(NoteVersionConflictException ex) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                HttpStatus.CONFLICT, "The note was modified elsewhere");
-        problem.setTitle("Version conflict");
+        ProblemDetail problem = build(HttpStatus.CONFLICT, "Version conflict",
+                "version_conflict", "The note was modified elsewhere");
         problem.setProperty("currentVersion", ex.getCurrentVersion());
         problem.setProperty("updatedAt", ex.getUpdatedAt());
         return problem;
@@ -161,10 +160,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(OptimisticLockingFailureException.class)
     public ProblemDetail handleConcurrentUpdate(OptimisticLockingFailureException ex) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                HttpStatus.CONFLICT, "The note was modified concurrently");
-        problem.setTitle("Version conflict");
-        return problem;
+        return build(HttpStatus.CONFLICT, "Version conflict",
+                "version_conflict", "The note was modified concurrently");
     }
 
     @Override
