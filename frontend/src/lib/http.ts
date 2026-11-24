@@ -22,3 +22,15 @@ export class ApiError extends Error {
 export function noSessionError(): ApiError {
   return new ApiError({ status: 400, code: 'no_session' });
 }
+
+const TOKEN_ERROR_CODES = new Set([
+  'expired_token',
+  'invalid_token',
+  'refresh_token_expired',
+  'refresh_token_invalid',
+  'account_unavailable',
+]);
+
+export function isTokenError(code: string): boolean {
+  return TOKEN_ERROR_CODES.has(code);
+}

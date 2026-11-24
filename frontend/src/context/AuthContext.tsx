@@ -21,6 +21,7 @@ import { useRefreshToken } from '@/hooks/use-refresh-token';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { toast, Toaster } from 'sonner';
 import { ACTIVE_SPACE_KEY } from '@/lib/space';
+import { useAccountUnavailableHandler } from '@/context/QueryProvider';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -48,6 +49,8 @@ export function AuthProvider() {
     navigate('/login');
     setStatus('guest');
   }, [navigate]);
+
+  useAccountUnavailableHandler(finishLogout);
 
   const login = (request: LoginRequest) => {
     executeLogin(request, {
