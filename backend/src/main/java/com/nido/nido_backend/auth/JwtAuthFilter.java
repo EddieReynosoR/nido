@@ -1,32 +1,34 @@
 package com.nido.nido_backend.auth;
 
+import com.nido.nido_backend.shared.exception.AccountUnavailableException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.nido.nido_backend.user.UserEntity;
+import com.nido.nido_backend.user.UserRepository;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final UserDetailsService userDetailsService;
+    private final UserRepository userRepository;
     private final JwtService jwtService;
 
-    public JwtAuthFilter(UserDetailsService userDetailsService, JwtService jwtService) {
-        this.userDetailsService = userDetailsService;
+    public JwtAuthFilter(UserRepository userRepository, JwtService jwtService) {
+        this.userRepository = userRepository;
         this.jwtService = jwtService;
     }
 
@@ -58,17 +60,22 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         try {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
+            UserEntity user = userRepository.findByUserId(UUID.fromString(userId))
+                    .orElseThrow(AccountUnavailableException::new);
 
-            if (jwtService.validateToken(token, userDetails)) {
+            if (jwtService.validateToken(token, user)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
+                        user,
                         null,
-                        userDetails.getAuthorities());
+                        user.getAuthorities());
 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
+        }
+        catch (AccountUnavailableException e) {
+            writeUnauthorized(response, "account_unavailable", "The account is no longer available");
+            return;
         }
         catch (IllegalArgumentException e) {
             writeUnauthorized(response, "invalid_token", "The access token is invalid");

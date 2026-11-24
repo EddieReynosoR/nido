@@ -1,23 +1,24 @@
-export const TOKEN_ERROR_CODES = [
-  'expired_token',
-  'invalid_token',
-  'refresh_token_invalid',
-  'refresh_token_expired',
-] as const;
-export type TokenErrorCode = (typeof TOKEN_ERROR_CODES)[number];
-
-export class HttpError extends Error {
+interface ApiErrorOptions {
   status: number;
-  constructor(message: string, status: number) {
-    super(message);
+  code: string;
+  description?: string;
+  message?: string;
+}
+
+export class ApiError extends Error {
+  status: number;
+  code: string;
+  description?: string;
+
+  constructor({ status, code, description, message }: ApiErrorOptions) {
+    super(message ?? description ?? `Request failed with status ${status}`);
+    this.name = 'ApiError';
     this.status = status;
+    this.code = code;
+    this.description = description;
   }
 }
 
-export class TokenError extends Error {
-  typeError: TokenErrorCode;
-  constructor(typeError: TokenErrorCode) {
-    super(`Token error: ${typeError}`);
-    this.typeError = typeError;
-  }
+export function noSessionError(): ApiError {
+  return new ApiError({ status: 400, code: 'no_session' });
 }

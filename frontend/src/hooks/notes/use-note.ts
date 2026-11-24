@@ -8,14 +8,14 @@ import {
   renameNote,
   updateNoteContent,
 } from '@/api/note';
-import { HttpError } from '@/lib/http';
+import { ApiError, noSessionError } from '@/lib/http';
 import {
   discardNoteSaves,
   enqueueNoteSave,
   isNoteDiscarded,
   restoreNoteSaves,
 } from '@/lib/note-save-queue';
-import { errorToast, invalidSessionToast } from '@/lib/toast';
+import { errorToast } from '@/lib/toast';
 import { spaceContentKey } from '@/hooks/spaces/use-space-content';
 import {
   findNoteInContent,
@@ -54,13 +54,17 @@ export function useCreateNote(
 ) {
   const queryClient = useQueryClient();
 
-  return useMutation<Note, HttpError, CreateNoteRequest>({
+  return useMutation<Note, ApiError, CreateNoteRequest>({
     mutationFn: async (request) => {
-      if (!accessToken) throw new HttpError('NO_SESSION', 400);
+      if (!accessToken) throw noSessionError();
 
       const note = await createNote(request, accessToken);
       if (!note) {
-        throw new HttpError('The server did not return the created note.', 500);
+        throw new ApiError({
+          status: 500,
+          code: 'empty_response',
+          description: 'The server did not return the created note.',
+        });
       }
 
       return note;
@@ -100,20 +104,13 @@ export function useCreateNote(
           )
       );
     },
-    onError: (error, request) => {
-      if (error.message === 'NO_SESSION') invalidSessionToast();
-      else {
-        queryClient.invalidateQueries({ queryKey: spaceContentKey(spaceId) });
-        errorToast({
-          id: `note-create-error-${spaceId}`,
-          error,
-          customMessage:
-            error.status === 409
-              ? `A note titled "${request.title}" already exists here.`
-              : undefined,
-          title: 'Could not create the note',
-        });
-      }
+    onError: (error) => {
+      queryClient.invalidateQueries({ queryKey: spaceContentKey(spaceId) });
+      errorToast({
+        id: `note-create-error-${spaceId}`,
+        error,
+        title: 'Could not create the note',
+      });
     },
     onSettled: (_data, _error, request) => {
       if (request.isIntro) return;
@@ -130,12 +127,12 @@ export function useDeleteNote(
 
   return useMutation<
     void,
-    HttpError,
+    ApiError,
     { noteId: string; topicId: string | null; isIntro: boolean },
     { previous?: SpaceContent | null }
   >({
     mutationFn: async ({ noteId }) => {
-      if (!accessToken) throw new HttpError('NO_SESSION', 400);
+      if (!accessToken) throw noSessionError();
       // Runs after any save already queued for this note, so a PATCH can
       // never land after the DELETE.
       await enqueueNoteSave(noteId, () => deleteNote(noteId, accessToken));
@@ -170,13 +167,11 @@ export function useDeleteNote(
         queryClient.setQueryData(spaceContentKey(spaceId), context.previous);
       }
 
-      if (error.message === 'NO_SESSION') invalidSessionToast();
-      else
-        errorToast({
-          id: `note-delete-error-${noteId}`,
-          error,
-          title: 'Could not delete the note',
-        });
+      errorToast({
+        id: `note-delete-error-${noteId}`,
+        error,
+        title: 'Could not delete the note',
+      });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: spaceContentKey(spaceId) });
@@ -192,11 +187,11 @@ export function useRenameNote(
 
   return useMutation<
     RenameNoteResponse,
-    HttpError,
+    ApiError,
     { noteId: string; title: string; topicId: string | null }
   >({
     mutationFn: async ({ noteId, title, topicId }) => {
-      if (!accessToken) throw new HttpError('NO_SESSION', 400);
+      if (!accessToken) throw noSessionError();
 
       const response = await enqueueNoteSave(noteId, () => {
         const content = queryClient.getQueryData<SpaceContent | null>(
@@ -210,7 +205,11 @@ export function useRenameNote(
         return renameNote(noteId, { title, version, topicId }, accessToken);
       });
       if (!response) {
-        throw new HttpError('The server did not return the renamed note.', 500);
+        throw new ApiError({
+          status: 500,
+          code: 'empty_response',
+          description: 'The server did not return the renamed note.',
+        });
       }
 
       return response;
@@ -225,22 +224,18 @@ export function useRenameNote(
       );
     },
     onError: (error, { noteId }) => {
-      if (error.message === 'NO_SESSION') {
-        invalidSessionToast();
-        return;
-      }
+      const isVersionConflict = error.code === 'version_conflict';
 
-      if (error.status === 409) {
+      if (isVersionConflict) {
         queryClient.invalidateQueries({ queryKey: ['note', noteId] });
       }
 
       errorToast({
         id: `note-rename-error-${noteId}`,
         error,
-        customMessage:
-          error.status === 409
-            ? 'This note was changed elsewhere. Reloaded the latest version, try renaming again.'
-            : undefined,
+        customMessage: isVersionConflict
+          ? 'This note was changed elsewhere. Reloaded the latest version, try renaming again.'
+          : undefined,
         title: 'Could not rename the note',
       });
     },
@@ -258,18 +253,22 @@ export function useTopicNote(
 
   return useMutation<
     MoveNoteResponse,
-    HttpError,
+    ApiError,
     { noteId: string; fromTopicId: string | null; topicId: string | null },
     { previous?: SpaceContent | null }
   >({
     mutationFn: async ({ noteId, topicId }) => {
-      if (!accessToken) throw new HttpError('NO_SESSION', 400);
+      if (!accessToken) throw noSessionError();
 
       const response = await enqueueNoteSave(noteId, () =>
         moveNote(noteId, { topicId }, accessToken)
       );
       if (!response) {
-        throw new HttpError('The server did not return the moved note.', 500);
+        throw new ApiError({
+          status: 500,
+          code: 'empty_response',
+          description: 'The server did not return the moved note.',
+        });
       }
 
       return response;
@@ -308,13 +307,11 @@ export function useTopicNote(
         queryClient.setQueryData(spaceContentKey(spaceId), context.previous);
       }
 
-      if (error.message === 'NO_SESSION') invalidSessionToast();
-      else
-        errorToast({
-          id: `note-move-error-${noteId}`,
-          error,
-          title: 'Could not move the note',
-        });
+      errorToast({
+        id: `note-move-error-${noteId}`,
+        error,
+        title: 'Could not move the note',
+      });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: spaceContentKey(spaceId) });
@@ -327,15 +324,19 @@ export function useUpdateNoteContent(accessToken: string | null) {
 
   return useMutation<
     NoteContentResponse,
-    HttpError,
+    ApiError,
     UpdateNoteContentRequest & { noteId: string }
   >({
     mutationFn: async ({ noteId, ...request }) => {
-      if (!accessToken) throw new HttpError('NO_SESSION', 400);
+      if (!accessToken) throw noSessionError();
 
       const response = await updateNoteContent(noteId, request, accessToken);
       if (!response) {
-        throw new HttpError('The server did not return the saved note.', 500);
+        throw new ApiError({
+          status: 500,
+          code: 'empty_response',
+          description: 'The server did not return the saved note.',
+        });
       }
 
       return response;
@@ -347,13 +348,11 @@ export function useUpdateNoteContent(accessToken: string | null) {
     },
     onError: (error, { noteId }) => {
       queryClient.invalidateQueries({ queryKey: ['note', noteId] });
-      if (error.message === 'NO_SESSION') invalidSessionToast();
-      else
-        errorToast({
-          id: `note-update-error-${noteId}`,
-          error,
-          title: 'Could not save the note',
-        });
+      errorToast({
+        id: `note-update-error-${noteId}`,
+        error,
+        title: 'Could not save the note',
+      });
     },
   });
 }

@@ -3,6 +3,8 @@ package com.nido.nido_backend.auth;
 import com.nido.nido_backend.config.SecurityConfig;
 import com.nido.nido_backend.refresh_token.RefreshTokenService;
 import com.nido.nido_backend.refresh_token.dto.RefreshTokenDto;
+import com.nido.nido_backend.shared.exception.AccountUnavailableException;
+import com.nido.nido_backend.shared.exception.GlobalExceptionHandler;
 import com.nido.nido_backend.shared.util.CookieUtils;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Nested;
@@ -28,6 +30,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(
         controllers = AuthController.class,
@@ -37,8 +41,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         )
 )
 @AutoConfigureMockMvc(addFilters = false)
-@Import(CookieUtils.class)
-class AuthControllerSecureCookieTest {
+@Import({CookieUtils.class, GlobalExceptionHandler.class})
+class AuthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -84,6 +88,16 @@ class AuthControllerSecureCookieTest {
                         .cookie(new Cookie("refreshToken", "refresh-token")))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, not(containsString("Secure"))));
+    }
+
+    @Test
+    void refreshRespondsWith401AndAccountUnavailableWhenTheAccountIsUnavailable() throws Exception {
+        when(refreshTokenService.refreshToken("old-refresh-token")).thenThrow(new AccountUnavailableException());
+
+        mockMvc.perform(post("/auth/refresh")
+                        .cookie(new Cookie("refreshToken", "old-refresh-token")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("account_unavailable"));
     }
 
     @Nested

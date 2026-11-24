@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { deleteNote } from '@/api/note';
-import { HttpError } from '@/lib/http';
+import { ApiError } from '@/lib/http';
 import { isNoteDiscarded } from '@/lib/note-save-queue';
 import {
   note,
@@ -307,7 +307,7 @@ describe('TopicTree note deletion', () => {
 
     expect(isNoteDiscarded('note-root')).toBe(true);
 
-    rejectDelete(new HttpError('Server error', 500));
+    rejectDelete(new ApiError({ status: 500, code: 'internal_error' }));
 
     expect(await screen.findByText('Root note')).toBeInTheDocument();
     expect(

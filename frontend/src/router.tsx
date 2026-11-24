@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import App from './App';
 
+import QueryProvider from './context/QueryProvider';
 import { AuthProvider } from './context/AuthContext';
 import { SpaceProvider } from './context/SpaceContext';
 import RequireAuth from './components/RequireAuth';
@@ -14,34 +15,42 @@ import NotePage from './pages/NotePage';
 
 export const router = createBrowserRouter([
   {
-    Component: AuthProvider,
+    Component: QueryProvider,
     children: [
       {
-        Component: RequireAuth,
+        Component: AuthProvider,
         children: [
           {
-            Component: SpaceProvider,
+            Component: RequireAuth,
             children: [
               {
-                Component: App,
-                path: '/',
+                Component: SpaceProvider,
                 children: [
                   {
-                    Component: HomePage,
+                    Component: App,
+                    path: '/',
                     children: [
-                      { index: true, Component: EmptyState },
-                      { path: 'topics/:topicId', Component: TopicNotePage },
-                      { path: 'notes/:noteId', Component: NotePage },
+                      {
+                        Component: HomePage,
+                        children: [
+                          { index: true, Component: EmptyState },
+                          {
+                            path: 'topics/:topicId',
+                            Component: TopicNotePage,
+                          },
+                          { path: 'notes/:noteId', Component: NotePage },
+                        ],
+                      },
                     ],
                   },
                 ],
               },
             ],
           },
+          { path: 'login', Component: LoginPage },
+          { path: 'home', Component: LandingPage },
         ],
       },
-      { path: 'login', Component: LoginPage },
-      { path: 'home', Component: LandingPage },
     ],
   },
 ]);

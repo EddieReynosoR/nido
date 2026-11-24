@@ -20,8 +20,9 @@ import { isValidTokenResponse, getCookie, isAuthenticated } from '@/lib/auth';
 import { useRefreshToken } from '@/hooks/use-refresh-token';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { toast, Toaster } from 'sonner';
-import { TokenError } from '@/lib/http';
 import { ACTIVE_SPACE_KEY } from '@/lib/space';
+import { ApiError } from '@/lib/http';
+import { useAccountUnavailableHandler } from '@/context/QueryProvider';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -50,6 +51,8 @@ export function AuthProvider() {
     setStatus('guest');
   }, [navigate]);
 
+  useAccountUnavailableHandler(finishLogout);
+
   const login = (request: LoginRequest) => {
     executeLogin(request, {
       onSuccess: (data) => {
@@ -67,11 +70,7 @@ export function AuthProvider() {
         navigate(from);
       },
       onError: (error) => {
-        errorToast({
-          error,
-          title: 'Invalid email or password',
-          customMessage: 'Please check your credentials and try again.',
-        });
+        errorToast({ id: 'auth-login-error', error });
       },
     });
   };
@@ -90,7 +89,11 @@ export function AuthProvider() {
         finishLogout();
       },
       onError: (error) => {
-        errorToast({ error, customMessage: 'Something went wrong' });
+        errorToast({
+          id: 'auth-logout-error',
+          error,
+          title: 'Could not log out',
+        });
         finishLogout();
       },
     });
@@ -131,10 +134,8 @@ export function AuthProvider() {
     if (refreshAttempted.current) return;
     refreshAttempted.current = true;
 
-    (async () => {
-      try {
-        const data = await refreshTokenAsync(csrfToken);
-
+    refreshTokenAsync(csrfToken)
+      .then((data) => {
         if (!isValidTokenResponse(data)) {
           finishLogout();
           return;
@@ -142,28 +143,15 @@ export function AuthProvider() {
 
         setAccessToken(data.accessToken);
         setStatus('authed');
-      } catch (error) {
-        if (error instanceof TokenError) {
-          if (
-            error.typeError === 'refresh_token_invalid' ||
-            error.typeError === 'refresh_token_expired'
-          ) {
-            toast.error('Session expired', {
-              description: 'Please sign in again',
-              position: 'bottom-right',
-            });
-
-            finishLogout();
-            return;
-          }
+      })
+      .catch((error: Error) => {
+        if (!(
+          error instanceof ApiError && error.code === 'account_unavailable'
+        )) {
+          errorToast({ id: 'auth-refresh-error', error });
         }
-
-        const err = error instanceof Error ? error : new Error(String(error));
-
-        errorToast({ error: err, title: 'Authentication Refreshing Error' });
         finishLogout();
-      }
-    })();
+      });
   }, [getCsrf, refreshTokenAsync, csrfToken, finishLogout]);
 
   return (
